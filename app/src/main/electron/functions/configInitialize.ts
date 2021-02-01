@@ -49,8 +49,6 @@ export default (cmdConfig: ICommandLineConfig) => {
     const { config = 'entry', lang } = cmdConfig;
     const externalConfig = getFileConfig(config);
     let locale = (lang || externalConfig.language || app.getLocale()).substr(0, 2);
-    
-    locale = 'uz'; // Set default lang to uz for uz version
 
     if (locale === 'ja') {
         locale = 'jp';
