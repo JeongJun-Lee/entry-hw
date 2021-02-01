@@ -7,6 +7,7 @@ declare type LocalizedString = RequireAtLeastOne<{
     ko: string;
     jp: string;
     en: string;
+    uz: string;
 }>;
 declare type SupportedLanguage = keyof LocalizedString;
 
