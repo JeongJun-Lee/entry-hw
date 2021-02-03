@@ -2,7 +2,8 @@
 	"en": {
 		"en-GB": "en",
 		"en-US": "en",
-		"ko": "ko"
+    "ko": "ko",
+    "uz": "uz"
 	},
 	"If unexpected problem occurs while operating,": {
 		"ko": "하드웨어 연결과 작동 시 예기치 못한 문제가 발생할 수 있습니다.",
@@ -37,7 +38,7 @@
 	"Install Firmware": {
 		"ko": "펌웨어 설치",
     "jp": "ファームウェア・インストール",
-    "uz": "Qurilma kichik dastur o'rnatish"
+    "uz": "Qurilma kichik dasturi o'rnatish"
 	},
 	"Possible Install Firmware": {
 		"ko": "펌웨어 설치 가능",
@@ -82,15 +83,18 @@
 	},
 	"Firmware Uploaded!": {
 		"ko": "펌웨어가 업로드 되었습니다.",
-		"jp": "ファームウェアがアップロードされました"
+    "jp": "ファームウェアがアップロードされました",
+    "uz": "Qurilma kichik dasturi yuklab qo'yish yaxshi tugagan."
 	},
 	"Failed Firmware Upload": {
 		"ko": "펌웨어 업로드가 실패하였습니다.",
-		"jp": "ファームウェアのアップロードに失敗しました"
+    "jp": "ファームウェアのアップロードに失敗しました",
+    "uz": "Qurilma kichik dasturi yuklab qo'yish bo'lmadi."
 	},
 	"Firmware Uploading...": {
 		"ko": "펌웨어 업로드 중입니다...",
-		"jp": "ファームウェアのアップロード中..."
+    "jp": "ファームウェアのアップロード中...",
+    "uz": "Qurilma kichik dasturi yuklab qo'ymoqda..."
 	},
 	"hardware > connecting": {
 		"ko": "하드웨어 > 연결 대기",
@@ -124,15 +128,18 @@
 	},
 	"Connection failed. please restart application or reconnect manually.": {
 		"ko": "하드웨어 연결에 실패했습니다. 연결을 재시도하거나 프로그램을 재실행해주세요.",
-		"jp": "ハードウェアの接続に失敗しました。接続を再試行するか、プログラムを再実行してください。"
+    "jp": "ハードウェアの接続に失敗しました。接続を再試行するか、プログラムを再実行してください。",
+    "uz": "Qurilmaga ulash bo'lmagan. Yana urinish yoki dasturni yana ishga tushiring."
 	},
 	"Hardware device is disconnected. Please restart this program.": {
 		"ko": "하드웨어 연결이 끊어졌습니다. 연결 프로그램을 다시 시작해 주세요.",
-		"jp": "ハードウェアとの接続が解除されました。接続ソフトを再起動してください。"
+    "jp": "ハードウェアとの接続が解除されました。接続ソフトを再起動してください。",
+    "uz": "Qurilma bilan ulagani uzilgan. Ulash dasturini yana ishga tushiring."
 	},
 	"Connection to the hardware will terminate once program is closed.": {
 		"ko": "프로그램 종료 시 하드웨어와 연결이 끊어집니다.",
-		"jp": "プログラムが終了するとハードウェアとの接続が解除されます。"
+    "jp": "プログラムが終了するとハードウェアとの接続が解除されます。",
+    "uz": "Bu dasturni o'chirishda qurilma bilan ulangani uziladi."
 	},
 	"Copied to clipboard": {
 		"ko": "이메일 주소가 복사되었습니다.",
@@ -176,7 +183,8 @@
 	},
 	"Please select the firmware.": {
 		"ko": "펌웨어를 선택해 주세요.",
-		"jp": "ファームウェアを選択してください。"
+    "jp": "ファームウェアを選択してください。",
+    "uz": "Qurilma kichik dasturini tanlab bering"
 	},
 	"Opensource lincense": {
 		"ko": "오픈소스 라이선스",
