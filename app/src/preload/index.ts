@@ -11,8 +11,7 @@ const isOSWin64 = () => (
 
 function getInitializeList(): Preload {
     const rendererRouter = new RendererRouter();
-    // Set default lang to uz for uz version
-    const locale = "uz"; // rendererRouter.sharedObject.language; 
+    const locale = rendererRouter.sharedObject.language; 
     const translator = new Translator(locale);
     new BleRouter();
 
