@@ -13,7 +13,7 @@ function Module() {
         READ_BLUETOOTH: 9,
         WRITE_BLUETOOTH: 10,
         LCD: 11,
-        RGBLED: 12,
+        //RGBLED: 12,
         DCMOTOR: 13,
         OLED: 14,
         PIR : 15,
@@ -65,6 +65,7 @@ function Module() {
         PULSEIN: {},
         TIMER: 0,
         READ_BLUETOOTH: 0,
+        DHT: 0,                 // DHT Added
     };
 
     this.defaultOutput = {};
@@ -191,6 +192,8 @@ Module.prototype.handleRemoteData = function(handler) {
     if (buffer.length) {
         this.sendBuffers.push(buffer);
     }
+
+    // Anyway, Data was sent to Device, dosen't matter whether set or get data.
 };
 
 Module.prototype.isRecentData = function(port, type, data) {
@@ -283,6 +286,11 @@ Module.prototype.handleLocalData = function(data) {
             case self.sensorTypes.READ_BLUETOOTH: {
                 self.sensorData.READ_BLUETOOTH = value;
                 break;
+            }
+            case self.sensorTypes.DHT: {
+                self.sensorData.DHT = value;
+                break;
+                // DHT SensorData-Type Added By Remoted 2021-02-25
             }
             default: {
                 break;
