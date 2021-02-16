@@ -13,7 +13,10 @@ function Module() {
         READ_BLUETOOTH: 9,
         WRITE_BLUETOOTH: 10,
         LCD: 11,
+<<<<<<< HEAD
         DHT : 12,
+=======
+>>>>>>> 8ae86026 (RichShield Dht Module Process Charged I)
         //RGBLED: 12,
         DCMOTOR: 13,
         OLED: 14,
