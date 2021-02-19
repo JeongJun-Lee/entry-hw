@@ -184,7 +184,7 @@
 	"Please select the firmware.": {
 		"ko": "펌웨어를 선택해 주세요.",
     "jp": "ファームウェアを選択してください。",
-    "uz": "Qurilma kichik dasturini tanlab bering"
+    "uz": "Qurilma kichik dasturini o'rnating."
 	},
 	"Opensource lincense": {
 		"ko": "오픈소스 라이선스",
@@ -236,7 +236,8 @@
 	},
 	"Connected to the Entry server": {
 		"ko": "엔트리 서버 연결됨",
-		"jp": "エントリーサーバー接続"
+		"jp": "エントリーサーバー接続",
+    "uz": "Entry serverga bog'langan"
 	},
 	"Disconnected from the Entry server": {
 		"ko": "엔트리 서버 연결 안 됨",
