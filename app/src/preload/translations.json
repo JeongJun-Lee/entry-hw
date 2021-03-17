@@ -241,6 +241,7 @@
 	},
 	"Disconnected from the Entry server": {
 		"ko": "엔트리 서버 연결 안 됨",
-		"jp": "エントリーサーバー未接続"
+		"jp": "エントリーサーバー未接続",
+    "uz": "Entry serverga bog'lamagan"
 	}
 }
