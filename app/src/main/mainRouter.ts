@@ -503,7 +503,6 @@ class MainRouter {
 
         const driverFullPath = path.join(directoryPaths.driver(), driverPath);
         logger.info(`execute driver requested. filePath : ${driverFullPath}`);
-        console.log('###############shell= ', shell)
         shell.openPath(driverFullPath);
     }
 
