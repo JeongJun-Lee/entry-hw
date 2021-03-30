@@ -55,6 +55,7 @@ class Neobot extends BaseModule {
     // init
     this.currMode = CurrMode.ENTRY_MODE;
     this.needAckChk = false;
+    this.dataFrame = null;
     this.hwSendBuf.length = 0;
   }
 
