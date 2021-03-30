@@ -51,6 +51,11 @@ class Neobot extends BaseModule {
   init(handler, config) {
     this.handler = handler;
 		this.config = config;
+
+    // init
+    this.currMode = CurrMode.ENTRY_MODE;
+    this.needAckChk = false;
+    this.hwSendBuf.length = 0;
   }
 
   lostController(connector, stateCallback) {
