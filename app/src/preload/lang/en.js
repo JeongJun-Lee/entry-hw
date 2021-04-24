@@ -5923,7 +5923,7 @@ Lang.template = {
     "turtle_follow_line_until": "follow black line until %1 %2",
     "turtle_follow_line_until_black": "follow %1 line until black %2",
     "turtle_is_color_pattern": "color pattern %1 %2 ?",
-    "turtle_move_backward_unit": "To'g'riga %1 %2 yurish %3",
+    "turtle_move_backward_unit": "move backward %1 %2 %3",
     "turtle_move_forward_unit": "move forward %1 %2 %3",
     "turtle_pivot_around_wheel_unit_in_direction": "pivot around %1 wheel %2 %3 in %4 direction %5",
     "turtle_play_note": "play note %1 %2 %3",

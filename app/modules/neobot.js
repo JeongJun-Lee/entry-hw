@@ -69,7 +69,7 @@ class Neobot extends BaseModule {
   이 두 함수가 정의되어있어야 로직이 동작합니다. 필요없으면 작성하지 않아도 됩니다.
   */
   requestInitialData() {
-    return true;
+    return null;
   }
 
   // 연결 후 초기에 수신받아서 정상연결인지를 확인해야하는 경우 사용합니다.
