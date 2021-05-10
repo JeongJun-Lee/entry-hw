@@ -23,11 +23,13 @@ declare type IESP32TypeFirmware = {
     offset: string;
     name: string;
 };
+declare type IUploadableFirmware = { name: string; fileName: string };
 declare type IFirmwareInfo =
     | string
     | [{ name: string; translate: string }]
     | ICopyTypeFirmware
-    | IESP32TypeFirmware;
+    | IESP32TypeFirmware
+    | IUploadableFirmware; // Should be compliled from Arduino source file
 
 declare type IHardwareType = 'serial' | 'bluetooth' | 'hid' | 'ble';
 declare type IHardwareControlType = 'slave' | 'master';

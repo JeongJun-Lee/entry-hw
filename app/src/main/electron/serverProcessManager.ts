@@ -99,6 +99,8 @@ class ServerProcessManager {
                 break;
             }
             case 'data': {
+                // 'message'를 제외한 다른 event 이름은 server.txt 프로세스에서 필터링으로 막혀있는 것으로 보이며,
+                // key값도 'data'로 고정되어 있는 것으로 보임
                 this.router.handleServerData(value);
                 break;
             }

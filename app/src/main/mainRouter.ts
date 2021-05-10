@@ -2,6 +2,7 @@ import { BrowserWindow, ipcMain, shell } from 'electron';
 import path from 'path';
 import ScannerManager from './core/scannerManager';
 import Flasher from './core/serial/flasher';
+import Compiler from './core/serial/compiler';
 import rendererConsole from './core/rendererConsole';
 import IpcManager from './core/ipcMainManager';
 import HardwareListManager from './core/hardwareListManager';
@@ -41,6 +42,7 @@ class MainRouter {
     private readonly server: IEntryServer;
     private hardwareListManager: HardwareListManager;
     private flasher: Flasher;
+    private compiler: Compiler;
 
     public selectedPort?: string;
     public selectedPayload?: string;
@@ -75,6 +77,7 @@ class MainRouter {
         this.hardwareListManager = new HardwareListManager(this);
         this.scannerManager = new ScannerManager(this);
         this.flasher = new Flasher();
+        this.compiler = new Compiler();
 
         entryServer.setRouter(this);
         entryServer.open();
@@ -94,7 +97,7 @@ class MainRouter {
      * @param firmwareName 다중 펌웨어 존재시 펌웨어명을 명시
      * @returns {Promise<void|Error>}
      */
-    flashFirmware(firmwareName: IFirmwareInfo): Promise<IFirmwareInfo> {
+    async flashFirmware(firmwareName: IFirmwareInfo): Promise<IFirmwareInfo> {
         logger.info(`firmware flash requested. firmwareName: ${firmwareName}`);
         const connectorSerialPort =
             this.connector && (this.connector as SerialConnector).serialPort;
@@ -105,7 +108,7 @@ class MainRouter {
             (connectorSerialPort || (firmwareName as ICopyTypeFirmware).type === 'copy')
         ) {
             this.sendState(HardwareStatement.flash);
-            const firmware = firmwareName;
+            let firmware = firmwareName;
             const {
                 firmwareBaudRate: baudRate,
                 firmwareMCUType: MCUType,
@@ -113,6 +116,17 @@ class MainRouter {
             } = this.config;
             const lastSerialPortCOMPort = connectorSerialPort && connectorSerialPort.path;
             this.firmwareTryCount = 0;
+
+            if ((firmwareName as IUploadableFirmware).name == 'Arduino') { 
+              logger.info('source compile requested');
+              try {
+                  await this.compiler.compile((firmwareName as IUploadableFirmware).name);
+                  logger.info('source compile finished');
+                  firmware = 'firmwares.ino'; // Set the name of hex file
+              } catch {
+                  return Promise.reject(new Error('Firmware compile is Failed!!!'));
+              }              
+            }
 
             this.stopScan({ saveSelectedPort: true }); // 서버 통신 중지, 시리얼포트 연결 해제
 
@@ -394,9 +408,22 @@ class MainRouter {
         const hwModule = this.hwModule;
         const handler = this.handler;
         handler.decode(data);
-        if (hwModule.handleRemoteData) {
+        if (handler.read('name') == 'arduino' || handler.read('name') == 'ArduinoExt') {
+            this.handleFlashFirmware(handler.read('frame'));
+        } else if (hwModule.handleRemoteData) {
             hwModule.handleRemoteData(handler);
-        }
+        } 
+    }
+
+    async handleFlashFirmware(source: string) {
+        // Save the source to firmwares.ino
+        const fs = require('fs');
+        fs.writeFileSync('app/firmwares/firmwares.ino', source);
+
+        await this.flashFirmware({ name: 'Arduino', fileName: 'firmwares.ino' });
+
+        this.compiler.kill();
+        this.sendState(HardwareStatement.scanFailed); // Since flash has finished, reconnection needs
     }
 
     /**
