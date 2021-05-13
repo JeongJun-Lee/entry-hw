@@ -1,6 +1,8 @@
 import { ChildProcess, exec } from 'child_process';
 import createLogger from '../../electron/functions/createLogger';
 import directoryPaths from '../directoryPaths';
+import rendererConsole from '../rendererConsole';
+import alert from 'alert';
 
 const logger = createLogger('core/SerialFlasher.ts');
 
@@ -39,7 +41,7 @@ class Compiler {
                 outputDir,
             ].join('');
 
-            logger.info(`arduino board compile requested.\nparameter is ${cmd}`);
+            logger.info(`arduino code compile requested.\nparameter is ${cmd}`);
 
             this.compilerProcess = exec(
                 cmd,
@@ -48,17 +50,30 @@ class Compiler {
                 },
                 (...args) => {
                     resolve(args);
-                }
+                },
             );
         });
     }
 
 
-    compile(firmwareName: string): Promise<any[]> {
+    compile(firmwareName: string): Promise<boolean> {
         if (firmwareName == 'Arduino' || firmwareName == 'ArduinoEx') {
-            return this._compileArduino();
+            return new Promise((resolve, reject) => {this._compileArduino()
+                    .then(([error, ...args]) => {
+                        if (error) {
+                            rendererConsole.log('CompileError', error.message);
+                            console.log(error.message);
+                            alert(error.message);
+                            reject(new Error('Firmware compile is Failed!!!'));
+                            
+                        } else {
+                            logger.info('firmware flash success');
+                            resolve(true);
+                        }
+                    });
+                });
         } else {
-            return Promise.reject(new Error());
+            return Promise.reject(new Error('Not supported compile request'));
         }
     }
 

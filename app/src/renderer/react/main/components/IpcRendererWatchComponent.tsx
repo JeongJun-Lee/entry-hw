@@ -98,6 +98,13 @@ class IpcRendererWatchComponent extends React.PureComponent<IProps> {
                     props.changeAlertMessage({
                         message: translator.translate('Firmware Uploading...'),
                     });
+                    break;
+                }
+                case HardwareStatement.compile: {
+                    props.changeAlertMessage({
+                        message: translator.translate('Compile Error'),
+                    });
+                    break;
                 }
             }
         });

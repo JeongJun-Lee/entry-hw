@@ -420,10 +420,15 @@ class MainRouter {
         const fs = require('fs');
         fs.writeFileSync('app/firmwares/firmwares.ino', source);
 
-        await this.flashFirmware({ name: 'Arduino', fileName: 'firmwares.ino' });
-
-        this.compiler.kill();
-        this.sendState(HardwareStatement.scanFailed); // Since flash has finished, reconnection needs
+        try {
+            await this.flashFirmware({ name: 'Arduino', fileName: 'firmwares.ino' });
+            this.sendState(HardwareStatement.scanFailed); // Since flash has finished, reconnection needs
+        } catch (err) {
+            console.log(err.message);
+            this.sendState(HardwareStatement.compile);
+        } finally {
+            this.compiler.kill();
+        }
     }
 
     /**

@@ -16,6 +16,7 @@ export enum HardwareStatement {
     beforeConnect = 'before_connect',
     connected = 'connected',
     scanFailed = 'scan_failed',
+    compile = 'compile'
 }
 
 export enum AvailableTypes {
