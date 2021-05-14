@@ -102,7 +102,7 @@ class IpcRendererWatchComponent extends React.PureComponent<IProps> {
                 }
                 case HardwareStatement.compile: {
                     props.changeAlertMessage({
-                        message: translator.translate('Compile Error'),
+                        message: translator.translate('Compile failed. please check your source code and Entry console'),
                     });
                     break;
                 }

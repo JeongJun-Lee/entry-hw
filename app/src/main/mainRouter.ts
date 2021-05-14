@@ -123,8 +123,8 @@ class MainRouter {
                   await this.compiler.compile((firmwareName as IUploadableFirmware).name);
                   logger.info('source compile finished');
                   firmware = 'firmwares.ino'; // Set the name of hex file
-              } catch {
-                  return Promise.reject(new Error('Firmware compile is Failed!!!'));
+              } catch (error) {
+                  return Promise.reject(error);
               }              
             }
 
@@ -422,10 +422,11 @@ class MainRouter {
 
         try {
             await this.flashFirmware({ name: 'Arduino', fileName: 'firmwares.ino' });
+            this.sendEncodedDataToServer({ upload: 'Upload success!!!' });
             this.sendState(HardwareStatement.scanFailed); // Since flash has finished, reconnection needs
-        } catch (err) {
-            console.log(err.message);
+        } catch (error) {
             this.sendState(HardwareStatement.compile);
+            this.sendEncodedDataToServer({ upload: error.message });
         } finally {
             this.compiler.kill();
         }

@@ -2,7 +2,6 @@ import { ChildProcess, exec } from 'child_process';
 import createLogger from '../../electron/functions/createLogger';
 import directoryPaths from '../directoryPaths';
 import rendererConsole from '../rendererConsole';
-import alert from 'alert';
 
 const logger = createLogger('core/SerialFlasher.ts');
 
@@ -63,8 +62,7 @@ class Compiler {
                         if (error) {
                             rendererConsole.log('CompileError', error.message);
                             console.log(error.message);
-                            alert(error.message);
-                            reject(new Error('Firmware compile is Failed!!!'));
+                            reject(error);
                             
                         } else {
                             logger.info('firmware flash success');

@@ -17,10 +17,12 @@ Module.prototype.checkInitialData = function(data, config) {
     return true;
 };
 
+// 주기적으로 하드웨어에서 받은 데이터의 검증이 필요한 경우 사용
 Module.prototype.validateLocalData = function(data) {
     return true;
 };
 
+// 엔트리에서 받은 데이터에 대한 처리
 Module.prototype.handleRemoteData = function(handler) {
     this.readablePorts = handler.read('readablePorts');
     var digitalValue = this.remoteDigitalValue;
@@ -29,6 +31,11 @@ Module.prototype.handleRemoteData = function(handler) {
     }
 };
 
+/*
+  엔트리에서 받은 데이터 처리된 내용을 하드웨어로 전달
+  slave 모드인 경우 duration 속성 간격으로 지속적으로 기기에 요청을 보내고,
+  master 모드인 경우 하드웨어로부터 데이터 받자마자 바로 송신한다.
+*/
 Module.prototype.requestLocalData = function() {
     var queryString = [];
 
@@ -60,6 +67,7 @@ Module.prototype.requestLocalData = function() {
     return queryString;
 };
 
+// 하드웨어에서 온 데이터 처리
 Module.prototype.handleLocalData = function(data) {
     // data: Native Buffer
     var pointer = 0;
@@ -92,6 +100,7 @@ Module.prototype.handleLocalData = function(data) {
     }
 };
 
+// 하드웨어에서 온 데이터 처리된 내용을 엔트리로 전달
 Module.prototype.requestRemoteData = function(handler) {
     for (var i = 0; i < this.analogValue.length; i++) {
         var value = this.analogValue[i];

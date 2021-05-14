@@ -244,8 +244,8 @@
 		"jp": "エントリーサーバー未接続",
     "uz": "Entry serverga bog'lamagan"
 	},
-	"Compile Error": {
-		"ko": "컴파일 중 에러가 발생했습니다. 소스코드를 확인하세요.",
-    "uz": "Kompilyatsiya qilishda error bor. Manba kodlarini teshiring."
+	"Compile failed. please check your source code and Entry console": {
+		"ko": "컴파일 중 에러가 발생했습니다. 소스코드와 엔트리 콘솔창을 확인하세요.",
+    "uz": "Kompilyatsiya qilishda error bor. Manba kodlari va Entry konsolni teshiring."
 	}
 }

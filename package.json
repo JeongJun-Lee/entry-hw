@@ -68,7 +68,6 @@
         "webpack-merge": "^4.2.2"
     },
     "dependencies": {
-        "alert": "^5.0.10",
         "cross-spawn": "^7.0.0",
         "fs-extra": "^8.1.0",
         "lodash": "^4.17.19",
