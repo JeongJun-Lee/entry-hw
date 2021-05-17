@@ -418,7 +418,8 @@ class MainRouter {
     async handleFlashFirmware(source: string) {
         // Save the source to firmwares.ino
         const fs = require('fs');
-        fs.writeFileSync('app/firmwares/firmwares.ino', source);
+        const path = require('path');
+        fs.writeFileSync(path.join(__dirname, '..', '..', 'firmwares/firmwares.ino'), source);
 
         try {
             await this.flashFirmware({ name: 'Arduino', fileName: 'firmwares.ino' });
