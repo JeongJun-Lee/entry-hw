@@ -107,7 +107,19 @@ Module.prototype.requestRemoteData = function(handler) {
     }
     Object.keys(this.sensorData).forEach(function(key) {
         if (self.sensorData[key] != undefined) {
-            handler.write(key, self.sensorData[key]);
+            if (key === 'DIGITAL') { // For legacy port reading
+                for (var i = 0; i < Object.keys(self.sensorData[key]).length; i++) {
+                    var value = self.sensorData[key][i];
+                    handler.write(i, value);
+                }
+            } else if (key === 'ANALOG') { // For legacy port reading
+                for (var i = 0; i < Object.keys(self.sensorData[key]).length; i++) {
+                    var value = self.sensorData[key][i];
+                    handler.write('a' + i, value);
+                }
+            } else {
+                handler.write(key, self.sensorData[key]); 
+            }
         }
     });
 };
