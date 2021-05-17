@@ -3,8 +3,8 @@ board_manager:
 daemon:
   port: "50051"
 directories:
-  data: Arduino15
-  downloads: Arduino15/staging
+  data: Arduino15_win
+  downloads: Arduino15_win/staging
   user: 
 library:
   enable_unsafe_install: false
