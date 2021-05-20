@@ -419,9 +419,9 @@ class MainRouter {
         // Save the source to firmwares.ino
         const fs = require('fs');
         const path = require('path');
-        fs.writeFileSync(path.join(__dirname, '..', '..', 'firmwares/firmwares.ino'), source);
-
+        
         try {
+            fs.writeFileSync(path.join(directoryPaths.firmware(), 'firmwares.ino'), source);
             await this.flashFirmware({ name: 'Arduino', fileName: 'firmwares.ino' });
             this.sendEncodedDataToServer({ upload: 'Upload success!!!' });
             this.sendState(HardwareStatement.scanFailed); // Since flash has finished, reconnection needs
