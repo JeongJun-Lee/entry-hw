@@ -1,5 +1,6 @@
 import { BrowserWindow, ipcMain, shell } from 'electron';
 import path from 'path';
+import fs from 'fs';
 import ScannerManager from './core/scannerManager';
 import Flasher from './core/serial/flasher';
 import Compiler from './core/serial/compiler';
@@ -416,10 +417,7 @@ class MainRouter {
     }
 
     async handleFlashFirmware(source: string) {
-        // Save the source to firmwares.ino
-        const fs = require('fs');
-        const path = require('path');
-        
+        // Save the source to firmwares.ino      
         try {
             fs.writeFileSync(path.join(directoryPaths.firmware(), 'firmwares.ino'), source);
             await this.flashFirmware({ name: 'Arduino', fileName: 'firmwares.ino' });
@@ -501,6 +499,7 @@ class MainRouter {
 
         const driverFullPath = path.join(directoryPaths.driver(), driverPath);
         logger.info(`execute driver requested. filePath : ${driverFullPath}`);
+        console.log('###############shell= ', shell)
         shell.openPath(driverFullPath);
     }
 
