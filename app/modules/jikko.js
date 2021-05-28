@@ -439,6 +439,7 @@ Module.prototype.requestLocalData = function () {
   return null;
 };
 
+<<<<<<< HEAD
 /*
 ff 55 idx size data a
 */
@@ -470,6 +471,46 @@ Module.prototype.handleLocalData = function (data) {
         if (key !== portString && recent.type == that.sensorTypes.ULTRASONIC) {
           delete that.recentCheckData[key];
           isGarbageClear = true;
+=======
+Module.prototype.isRecentData = function (port, type, data) {
+    // var that = this;
+    // var isRecent = false;
+
+    // if (type == this.sensorTypes.ULTRASONIC) {
+    //     var portString = port.toString();
+    //     var isGarbageClear = false;
+    //     Object.keys(this.recentCheckData).forEach(function (key) {
+    //         var recent = that.recentCheckData[key];
+    //         if (key === portString) {
+    //         }
+    //         if (key !== portString && recent.type == that.sensorTypes.ULTRASONIC) {
+    //             delete that.recentCheckData[key];
+    //             isGarbageClear = true;
+    //         }
+    //     });
+
+    //     if ((port in this.recentCheckData && isGarbageClear) || !(port in this.recentCheckData)) {
+    //         isRecent = false;
+    //     } else {
+    //         isRecent = true;
+    //     }
+    // } else if (port in this.recentCheckData && type != this.sensorTypes.TONE) {
+    //     if (this.recentCheckData[port].type === type && this.recentCheckData[port].data === data) {
+    //         isRecent = true;
+    //     }
+    // }
+
+    // return isRecent;
+    var isRecent = false;
+
+    if (port in this.recentCheckData) {
+        if (
+            type != this.sensorTypes.TONE &&
+            this.recentCheckData[port].type === type &&
+            this.recentCheckData[port].data === data
+        ) {
+            isRecent = true;
+>>>>>>> 5a08d09c (isRecentData함수 ultrasonic 제거)
         }
       });
   
@@ -622,169 +663,68 @@ ff 55 len idx action device port  slot  data a
 */
 
 Module.prototype.makeSensorReadBuffer = function (device, port, data) {
-  let buffer;
-  const dummy = new Buffer([10]);
-  if (device == this.sensorTypes.DIGITAL) {
-    //data 2: pull up, 0: normal
-    //console.log(data)
-    buffer = new Buffer([
-      255,
-      85,
-      6,
-      sensorIdx,
-      this.actionTypes.GET,
-      device,
-      port,
-      data,
-      10,
-    ]);
-  } else if (device == this.sensorTypes.PULLUP) {
-    //data 2: pull up, 0: normal
-    //console.log(data)
-    //pullup인 경우
-    buffer = new Buffer([
-      255,
-      85,
-      6,
-      sensorIdx,
-      this.actionTypes.GET,
-      device,
-      port,
-      data,
-      10,
-    ]);
-    //console.log(buffer);
-  } else if (device == this.sensorTypes.RFIDTAP) {
-    buffer = new Buffer([
-      255,
-      85,
-      5,
-      sensorIdx,
-      this.actionTypes.GET,
-      device,
-      port,
-      10,
-    ]);
-  } else if (device == this.sensorTypes.ULTRASONIC) {
-    buffer = new Buffer([
-      255,
-      85,
-      6,
-      sensorIdx,
-      this.actionTypes.GET,
-      device,
-      port[0],
-      port[1],
-      10,
-    ]);
-  } else if (device == this.sensorTypes.DUST) {
-    buffer = new Buffer([
-      255,
-      85,
-      6,
-      sensorIdx,
-      this.actionTypes.GET,
-      device,
-      port[0],
-      port[1],
-      10,
-    ]);
-  } else if (device == this.sensorTypes.DHTTEMP) {
-    buffer = new Buffer([
-      255,
-      85,
-      5,
-      sensorIdx,
-      this.actionTypes.GET,
-      device,
-      port,
-      10,
-    ]);
-  } else if (device == this.sensorTypes.DHTHUMI) {
-    buffer = new Buffer([
-      255,
-      85,
-      5,
-      sensorIdx,
-      this.actionTypes.GET,
-      device,
-      port,
-      10,
-    ]);
-  } else if (device == this.sensorTypes.LOADVALUE) {
-    buffer = new Buffer([
-      255,
-      85,
-      5,
-      sensorIdx,
-      this.actionTypes.GET,
-      device,
-      port,
-      10,
-    ]);
-  } else if (device == this.sensorTypes.RFIDVALUE) {
-    buffer = new Buffer([
-      255,
-      85,
-      5,
-      sensorIdx,
-      this.actionTypes.GET,
-      device,
-      port,
-      10,
-    ]);
-  } else if (device == this.sensorTypes.MLXOBJ) {
-    buffer = new Buffer([
-      255,
-      85,
-      5,
-      sensorIdx,
-      this.actionTypes.GET,
-      device,
-      port,
-      10,
-    ]);
-  } else if (device == this.sensorTypes.MLXAMB) {
-    buffer = new Buffer([
-      255,
-      85,
-      5,
-      sensorIdx,
-      this.actionTypes.GET,
-      device,
-      port,
-      10,
-    ]);
-  } else if (!data) {
-    buffer = new Buffer([
-      255,
-      85,
-      5,
-      sensorIdx,
-      this.actionTypes.GET,
-      device,
-      port,
-      10,
-    ]);
-  } else {
-    value = new Buffer(2);
-    value.writeInt16LE(data);
-    buffer = new Buffer([
-      255,
-      85,
-      7,
-      sensorIdx,
-      this.actionTypes.GET,
-      device,
-      port,
-      10,
-    ]);
-    buffer = Buffer.concat([buffer, value, dummy]);
-  }
-  sensorIdx++;
-  if (sensorIdx > 254) {
-    sensorIdx = 0;
-  }
+    let buffer;
+    const dummy = new Buffer([10]);
+    if (device == this.sensorTypes.DIGITAL) {
+        //data 2: pull up, 0: normal
+        //console.log(data)
+        buffer = new Buffer([255, 85, 6, sensorIdx, this.actionTypes.GET, device, port, data, 10]);
+    } else if (device == this.sensorTypes.PULLUP) {
+        //data 2: pull up, 0: normal
+        //console.log(data)
+        //pullup인 경우
+        buffer = new Buffer([255, 85, 6, sensorIdx, this.actionTypes.GET, device, port, data, 10]);
+        //console.log(buffer);
+    } else if (device == this.sensorTypes.RFIDTAP) {
+        buffer = new Buffer([255, 85, 5, sensorIdx, this.actionTypes.GET, device, port, 10]);
+    } else if (device == this.sensorTypes.ULTRASONIC) {
+        buffer = new Buffer([
+            255,
+            85,
+            6,
+            sensorIdx,
+            this.actionTypes.GET,
+            device,
+            port[0],
+            port[1],
+            10,
+        ]);
+    } else if (device == this.sensorTypes.DUST) {
+        buffer = new Buffer([
+            255,
+            85,
+            6,
+            sensorIdx,
+            this.actionTypes.GET,
+            device,
+            port[0],
+            port[1],
+            10,
+        ]);
+    } else if (device == this.sensorTypes.DHTTEMP) {
+        buffer = new Buffer([255, 85, 5, sensorIdx, this.actionTypes.GET, device, port, 10]);
+    } else if (device == this.sensorTypes.DHTHUMI) {
+        buffer = new Buffer([255, 85, 5, sensorIdx, this.actionTypes.GET, device, port, 10]);
+    } else if (device == this.sensorTypes.LOADVALUE) {
+        buffer = new Buffer([255, 85, 5, sensorIdx, this.actionTypes.GET, device, port, 10]);
+    } else if (device == this.sensorTypes.RFIDVALUE) {
+        buffer = new Buffer([255, 85, 5, sensorIdx, this.actionTypes.GET, device, port, 10]);
+    } else if (device == this.sensorTypes.MLXOBJ) {
+        buffer = new Buffer([255, 85, 5, sensorIdx, this.actionTypes.GET, device, port, 10]);
+    } else if (device == this.sensorTypes.MLXAMB) {
+        buffer = new Buffer([255, 85, 5, sensorIdx, this.actionTypes.GET, device, port, 10]);
+    } else if (!data) {
+        buffer = new Buffer([255, 85, 5, sensorIdx, this.actionTypes.GET, device, port, 10]);
+    } else {
+        value = new Buffer(2);
+        value.writeInt16LE(data);
+        buffer = new Buffer([255, 85, 7, sensorIdx, this.actionTypes.GET, device, port, 10]);
+        buffer = Buffer.concat([buffer, value, dummy]);
+    }
+    sensorIdx++;
+    if (sensorIdx > 254) {
+        sensorIdx = 0;
+    }
 
   return buffer;
 };
@@ -1575,6 +1515,7 @@ Module.prototype.makeOutputBuffer = function (device, port, data) {
           port2.writeInt16LE(0);
           port3.writeInt16LE(0);
         }
+<<<<<<< HEAD
         buffer = new Buffer([
           255,
           85,
@@ -1613,6 +1554,43 @@ Module.prototype.makeOutputBuffer = function (device, port, data) {
           textLen = 0;
           text = Buffer.from("", "ascii");
           textLenBuf.writeInt16LE(textLen);
+=======
+        case this.sensorTypes.LCD: {
+            // var text;
+            var text;
+            var line = new Buffer(2);
+            var col = new Buffer(2);
+            var textLen = 0;
+            var textLenBuf = Buffer(2);
+
+            if ($.isPlainObject(data)) {
+                textLen = ('' + data.text).length;
+                // console.log(textLen);
+                text = Buffer.from('' + data.text, 'ascii');
+                line.writeInt16LE(data.line);
+                textLenBuf.writeInt16LE(textLen);
+                col.writeInt16LE(data.column);
+            } else {
+                textLen = 0;
+                text = Buffer.from('', 'ascii');
+                line.writeInt16LE(0);
+                textLenBuf.writeInt16LE(textLen);
+                col.writeInt16LE(0);
+            }
+
+            buffer = new Buffer([
+                255,
+                85,
+                4 + 6 + textLen,
+                sensorIdx,
+                this.actionTypes.MODUEL,
+                device,
+                port,
+            ]);
+
+            buffer = Buffer.concat([buffer, line, col, textLenBuf, text, dummy]);
+            break;
+>>>>>>> 5a08d09c (isRecentData함수 ultrasonic 제거)
         }
         buffer = new Buffer([
           255,
