@@ -68,9 +68,28 @@ class ServerProcessManager {
      * @private
      */
     _sendToChild(methodName: string, message?: any) {
-        this._isProcessLive() && this.childProcess.send({
-            key: methodName,
-            value: message,
+        this._isProcessLive() &&
+            this.childProcess.send({
+                key: methodName,
+                value: message,
+            });
+    }
+    _sendToChildSync(methodName: string, message?: any) {
+        return new Promise((resolve, reject) => {
+            if (this._isProcessLive()) {
+                this.childProcess.on('message', (message: { key: string; value: any }) => {
+                    const { key, value } = message;
+                    if (key === methodName) {
+                        this.childProcess.removeAllListeners('message');
+                        this._receiveFromChildEventRegister();
+                        resolve(value);
+                    }
+                });
+                this.childProcess.send({
+                    key: methodName,
+                    value: message,
+                });
+            }
         });
     }
 
