@@ -123,7 +123,7 @@ class MainRouter {
               try {
                   await this.compiler.compile((firmwareName as IUploadableFirmware).name);
                   logger.info('source compile finished');
-                  firmware = 'firmwares.ino'; // Set the name of hex file
+                  firmware = path.join(directoryPaths.firmwares(), 'firmwares.ino'); // Set the name of hex file
               } catch (error) {
                   return Promise.reject(error);
               }              
@@ -419,7 +419,11 @@ class MainRouter {
     async handleFlashFirmware(source: string) {
         // Save the source to firmwares.ino      
         try {
-            fs.writeFileSync(path.join(directoryPaths.firmware(), 'firmwares.ino'), source);
+            if (!fs.existsSync(directoryPaths.firmwares())) { // Check the directry is exist
+                fs.mkdirSync(directoryPaths.firmwares(), {recursive: true});
+            }
+            fs.writeFileSync(path.join(directoryPaths.firmwares(), 'firmwares.ino'), source);
+
             await this.flashFirmware({ name: 'Arduino', fileName: 'firmwares.ino' });
             this.sendEncodedDataToServer({ upload: 'Upload success!!!' });
             this.sendState(HardwareStatement.scanFailed); // Since flash has finished, reconnection needs

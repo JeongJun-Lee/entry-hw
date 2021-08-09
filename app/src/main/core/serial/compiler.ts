@@ -20,7 +20,7 @@ class Compiler {
             let cliCmd = 'compile';
             let cliFqbn = 'arduino:avr:uno';
             let cliConf = 'arduino-cli.yaml';
-            let outputDir = '.';
+            let outputDir = '"' + directoryPaths.firmwares() + '"'; // To block the blank in the middle of path
 
             if (platform === 'darwin') {
                 cliName = './arduino-cli';
@@ -38,6 +38,8 @@ class Compiler {
                 cliConf,
                 ' --output-dir ',
                 outputDir,
+                ' ',
+                outputDir
             ].join('');
 
             logger.info(`arduino code compile requested.\nparameter is ${cmd}`);
