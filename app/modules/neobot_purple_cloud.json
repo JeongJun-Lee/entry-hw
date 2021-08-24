@@ -5,16 +5,11 @@
         "ko": "NEW 네오봇(for Cloud PC)"
     },
     "category": "module",
-<<<<<<< HEAD
     "platform": [
         "win32",
         "darwin"
     ],
     "icon": "neobot_purple.png",
-=======
-    "platform": ["win32", "darwin"],
-    "icon" : "neobot_purple.png",
->>>>>>> 3d1b61b1 (신규 네오봇 추가 - NEW Neobot (5.5.1), NEW Neobot for Cloud PC (5.5.2))
     "module": "neobot.js",
     "url": "http://neobot.co.kr/",
     "email": "neobot@neobot.co.kr",
@@ -23,7 +18,6 @@
         "win32-x64": "CP210x_VCP_Windows/CP210xVCPInstaller_x64.exe",
         "darwin-x64": "Mac_OSX_VCP_Driver/SiLabsUSBDriverDisk.dmg"
     },
-<<<<<<< HEAD
     "reconnect": true,
     "selectPort": true,
     "hardware": {
@@ -35,15 +29,6 @@
             "Silicon Labs",
             "Microsoft"
         ],
-=======
-    "reconnect" : true,
-    "hardware": {
-        "pnpId" : "PID",
-        "type": "serial",
-        "control": "master",
-        "vendor": "Silicon Labs",
-        "duration": 32,
->>>>>>> 3d1b61b1 (신규 네오봇 추가 - NEW Neobot (5.5.1), NEW Neobot for Cloud PC (5.5.2))
         "baudRate": 115200
     }
 }
