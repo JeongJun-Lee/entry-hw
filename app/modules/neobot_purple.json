@@ -2,7 +2,8 @@
     "id": "050501",
     "name": {
         "en": "NEW Neobot",
-        "ko": "NEW 네오봇"
+        "ko": "NEW 네오봇",
+        "uz": "Neo SoCo"
     },
     "category": "module",
     "platform": ["win32", "darwin"],
@@ -19,9 +20,9 @@
     "hardware": {
         "pnpId" : "PID",
         "type": "serial",
-        "control": "master",
+        "control": "slave",
         "vendor": "Silicon Labs",
-        "duration": 32,
+        "duration": 100,
         "baudRate": 115200
     }
-}
+  }
