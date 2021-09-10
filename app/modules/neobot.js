@@ -5,6 +5,13 @@ const CurrMode = {
   UPLOAD_MODE: 1
 };
 
+const UploadState = {
+  None: -1,
+  Failed: 0,
+  UploadPossilbe: 1,
+  Success: 2
+};
+
 class Neobot extends BaseModule {
   // 클래스 내부에서 사용될 필드들을 이곳에서 선언합니다.
   constructor() {
@@ -30,6 +37,7 @@ class Neobot extends BaseModule {
     ];
 
     this.currMode = CurrMode.ENTRY_MODE;
+    this.isUploadSuc = UploadState.None; // 업로드 성공여부
 
     // 하드웨어용
     this.hwSendBuf = []; // 하드웨어로 전송
@@ -105,10 +113,12 @@ class Neobot extends BaseModule {
     if (this.needAckChk && new Uint8Array(revFrame, 0, 6).toString() === this.createConnAckFrame().toString()) { 
       console.log('Ack arrived from HW, CurrMode is UPLOAD_MODE');
       this.currMode = CurrMode.UPLOAD_MODE;
+      this.isUploadSuc = UploadState.UploadPossilbe;
       this.needAckChk = false;
 
     } else if (this.needAckChk && new Uint8Array(revFrame, 0, 6).toString() === this.createDataAckFrame().toString()) {
       console.log('Ack arrived from HW, Cmd is Success!');
+      this.isUploadSuc = UploadState.Success;
       this.hwSendBuf.length = 0; // init
       this.needAckChk = false;
     }
@@ -120,6 +130,7 @@ class Neobot extends BaseModule {
        new Uint8Array(revFrame, 0, 6).toString() === this.createDataNackFrame().toString()) 
     ) {
       console.log('Nack arrived from HW, Cmd is fail!');
+      this.isUploadSuc = UploadState.Failed;
       this.hwSendBuf.length = 0; // init
       this.needAckChk = false;
     }
@@ -134,6 +145,14 @@ class Neobot extends BaseModule {
         handler.write(val, this.etSendBuf[idx]);
       });
       this.initArr(this.etSendBuf);
+
+    } else { // App Mode
+      if (this.isUploadSuc === UploadState.Success) {
+        handler.write('upload', 'Upload success!!!');
+      } else if (this.isUploadSuc === UploadState.Failed) {
+        handler.write('upload', 'Upload failed!!!');
+      }
+      this.isUploadSuc = UploadState.None;  // init
     }
   }
 
@@ -330,7 +349,7 @@ class Neobot extends BaseModule {
     buffer.push(0xBB);
   }
 
-  createConnAckFrame() {
+  createConnAckFrame() { // 엔트리 모드 전환 성공
     this.hwVerfBuf.length = 0; // init
 
     this.addRecvHeader(this.hwVerfBuf);
@@ -341,7 +360,7 @@ class Neobot extends BaseModule {
     return this.hwVerfBuf;
   }
 
-  createConnNackFrame() {
+  createConnNackFrame() { // 엔트리 모드 전환 실패
     this.hwVerfBuf.length = 0; // init
 
     this.addRecvHeader(this.hwVerfBuf);
@@ -363,7 +382,7 @@ class Neobot extends BaseModule {
     return this.hwVerfBuf;
   }
 
-  createDataNackFrame() {
+  createDataNackFrame() {  // 데이터 전송 실패
     this.hwVerfBuf.length = 0; // init
 
     this.addRecvHeader(this.hwVerfBuf);
