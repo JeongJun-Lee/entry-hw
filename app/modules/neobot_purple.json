@@ -2,8 +2,12 @@
     "id": "050501",
     "name": {
         "en": "NEW Neobot",
+<<<<<<< HEAD
         "ko": "NEW 네오봇",
         "uz": "NEO SoCo"
+=======
+        "ko": "NEW 네오봇"
+>>>>>>> f1be4a6f2eb0d7f5fe10cac895190ba80628a3f5
     },
     "category": "module",
     "platform": ["win32", "darwin"],
