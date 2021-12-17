@@ -86,6 +86,45 @@
 /************************************************************************/
 /******/ ({
 
+/***/ "./app/src/renderer/fonts/NanumGothic.woff":
+/*!*************************************************!*\
+  !*** ./app/src/renderer/fonts/NanumGothic.woff ***!
+  \*************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony default export */ __webpack_exports__["default"] = ("../renderer/react/dist/resources/9f44950eb918193ef1ebd2b3366cab17.woff");
+
+/***/ }),
+
+/***/ "./app/src/renderer/images/about/fill-1.png":
+/*!**************************************************!*\
+  !*** ./app/src/renderer/images/about/fill-1.png ***!
+  \**************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony default export */ __webpack_exports__["default"] = ("../renderer/react/dist/resources/b2f29a2417c6ccf759a81d9e2964e1db.png");
+
+/***/ }),
+
+/***/ "./app/src/renderer/images/about/logo.png":
+/*!************************************************!*\
+  !*** ./app/src/renderer/images/about/logo.png ***!
+  \************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony default export */ __webpack_exports__["default"] = ("../renderer/react/dist/resources/e806bd802e2d3418653d3b28b7fe9685.png");
+
+/***/ }),
+
 /***/ "./app/src/renderer/react/about/App.tsx":
 /*!**********************************************!*\
   !*** ./app/src/renderer/react/about/App.tsx ***!
@@ -101,11 +140,37 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var react_dom_1 = __importDefault(__webpack_require__(/*! react-dom */ "./node_modules/react-dom/index.js"));
 var react_1 = __importDefault(__webpack_require__(/*! react */ "./node_modules/react/index.js"));
-var GlobalStyle_1 = __importDefault(__webpack_require__(!(function webpackMissingModule() { var e = new Error("Cannot find module './GlobalStyle'"); e.code = 'MODULE_NOT_FOUND'; throw e; }())));
+var GlobalStyle_1 = __importDefault(__webpack_require__(/*! ./GlobalStyle */ "./app/src/renderer/react/about/GlobalStyle.ts"));
 var Main_1 = __importDefault(__webpack_require__(/*! ./components/Main */ "./app/src/renderer/react/about/components/Main.tsx"));
 react_dom_1.default.render(react_1.default.createElement(react_1.default.Fragment, null,
     react_1.default.createElement(Main_1.default, null),
     react_1.default.createElement(GlobalStyle_1.default, null)), document.getElementById('__main'));
+
+
+/***/ }),
+
+/***/ "./app/src/renderer/react/about/GlobalStyle.ts":
+/*!*****************************************************!*\
+  !*** ./app/src/renderer/react/about/GlobalStyle.ts ***!
+  \*****************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var __makeTemplateObject = (this && this.__makeTemplateObject) || function (cooked, raw) {
+    if (Object.defineProperty) { Object.defineProperty(cooked, "raw", { value: raw }); } else { cooked.raw = raw; }
+    return cooked;
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+var styled_components_1 = __webpack_require__(/*! styled-components */ "./node_modules/styled-components/dist/styled-components.browser.esm.js");
+var NanumGothic_woff_1 = __importDefault(__webpack_require__(/*! ../../fonts/NanumGothic.woff */ "./app/src/renderer/fonts/NanumGothic.woff"));
+var GlobalStyle = styled_components_1.createGlobalStyle(templateObject_1 || (templateObject_1 = __makeTemplateObject(["\n    @font-face {\n        font-family: NanumGothic;\n        src: url(", ");\n    }\n    \n    * {\n        font-family: NanumGothic, serif !important;\n        user-select: none;\n        cursor: default;\n    }\n    \n    html,\n    body,\n    #__main {\n        height: 100%;\n        margin: 0;\n        background-color: #ecf4ff;\n    }\n"], ["\n    @font-face {\n        font-family: NanumGothic;\n        src: url(", ");\n    }\n    \n    * {\n        font-family: NanumGothic, serif !important;\n        user-select: none;\n        cursor: default;\n    }\n    \n    html,\n    body,\n    #__main {\n        height: 100%;\n        margin: 0;\n        background-color: #ecf4ff;\n    }\n"])), NanumGothic_woff_1.default);
+exports.default = GlobalStyle;
+var templateObject_1;
 
 
 /***/ }),
@@ -148,8 +213,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var react_1 = __importStar(__webpack_require__(/*! react */ "./node_modules/react/index.js"));
 var styled_components_1 = __importDefault(__webpack_require__(/*! styled-components */ "./node_modules/styled-components/dist/styled-components.browser.esm.js"));
-var logo_png_1 = __importDefault(__webpack_require__(!(function webpackMissingModule() { var e = new Error("Cannot find module '../../../images/about/logo.png'"); e.code = 'MODULE_NOT_FOUND'; throw e; }())));
-var fill_1_png_1 = __importDefault(__webpack_require__(!(function webpackMissingModule() { var e = new Error("Cannot find module '../../../images/about/fill-1.png'"); e.code = 'MODULE_NOT_FOUND'; throw e; }())));
+var logo_png_1 = __importDefault(__webpack_require__(/*! ../../../images/about/logo.png */ "./app/src/renderer/images/about/logo.png"));
+var fill_1_png_1 = __importDefault(__webpack_require__(/*! ../../../images/about/fill-1.png */ "./app/src/renderer/images/about/fill-1.png"));
 var translator = window.translator, rendererRouter = window.rendererRouter, ipcRenderer = window.ipcRenderer;
 var MainContainer = styled_components_1.default.div(templateObject_1 || (templateObject_1 = __makeTemplateObject(["\n    height: 100%;\n    display: flex;\n"], ["\n    height: 100%;\n    display: flex;\n"])));
 var InnerContainer = styled_components_1.default.div(templateObject_2 || (templateObject_2 = __makeTemplateObject(["\n    display: flex;\n    flex-direction: column;\n    width: 100%;\n    height: 100%;\n    text-align: center;\n    align-self: center;\n    align-items: center;\n"], ["\n    display: flex;\n    flex-direction: column;\n    width: 100%;\n    height: 100%;\n    text-align: center;\n    align-self: center;\n    align-items: center;\n"])));

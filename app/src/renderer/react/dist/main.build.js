@@ -139,6 +139,266 @@ var EntryStatePayload;
 
 /***/ }),
 
+/***/ "./app/src/renderer/fonts/NanumGothic.woff":
+/*!*************************************************!*\
+  !*** ./app/src/renderer/fonts/NanumGothic.woff ***!
+  \*************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony default export */ __webpack_exports__["default"] = ("../renderer/react/dist/resources/9f44950eb918193ef1ebd2b3366cab17.woff");
+
+/***/ }),
+
+/***/ "./app/src/renderer/images/alert.png":
+/*!*******************************************!*\
+  !*** ./app/src/renderer/images/alert.png ***!
+  \*******************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony default export */ __webpack_exports__["default"] = ("../renderer/react/dist/resources/86b677afdb0554404e9187492bd1ecb9.png");
+
+/***/ }),
+
+/***/ "./app/src/renderer/images/arrow_down.png":
+/*!************************************************!*\
+  !*** ./app/src/renderer/images/arrow_down.png ***!
+  \************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony default export */ __webpack_exports__["default"] = ("../renderer/react/dist/resources/ec91de08c985e013da6ccb77dc7e69e4.png");
+
+/***/ }),
+
+/***/ "./app/src/renderer/images/arrow_up.png":
+/*!**********************************************!*\
+  !*** ./app/src/renderer/images/arrow_up.png ***!
+  \**********************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony default export */ __webpack_exports__["default"] = ("../renderer/react/dist/resources/89ec6ac3a5fb49b81a03e9cdad7bf5a9.png");
+
+/***/ }),
+
+/***/ "./app/src/renderer/images/btn_back_dim.png":
+/*!**************************************************!*\
+  !*** ./app/src/renderer/images/btn_back_dim.png ***!
+  \**************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony default export */ __webpack_exports__["default"] = ("../renderer/react/dist/resources/3d1c34b1031a787e841fbe7f9800fd39.png");
+
+/***/ }),
+
+/***/ "./app/src/renderer/images/btn_back_off.png":
+/*!**************************************************!*\
+  !*** ./app/src/renderer/images/btn_back_off.png ***!
+  \**************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony default export */ __webpack_exports__["default"] = ("../renderer/react/dist/resources/197d57aaa98226ec57a1a39cad9051bf.png");
+
+/***/ }),
+
+/***/ "./app/src/renderer/images/btn_back_on.png":
+/*!*************************************************!*\
+  !*** ./app/src/renderer/images/btn_back_on.png ***!
+  \*************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony default export */ __webpack_exports__["default"] = ("../renderer/react/dist/resources/204f94dedb2663010c5f446ff414c239.png");
+
+/***/ }),
+
+/***/ "./app/src/renderer/images/btn_close.png":
+/*!***********************************************!*\
+  !*** ./app/src/renderer/images/btn_close.png ***!
+  \***********************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony default export */ __webpack_exports__["default"] = ("../renderer/react/dist/resources/6943c29703f840e114abf616dad60aa5.png");
+
+/***/ }),
+
+/***/ "./app/src/renderer/images/btn_refresh_off.png":
+/*!*****************************************************!*\
+  !*** ./app/src/renderer/images/btn_refresh_off.png ***!
+  \*****************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony default export */ __webpack_exports__["default"] = ("../renderer/react/dist/resources/014aae810636a4eb52c05e6d24f1dfc5.png");
+
+/***/ }),
+
+/***/ "./app/src/renderer/images/btn_refresh_on.png":
+/*!****************************************************!*\
+  !*** ./app/src/renderer/images/btn_refresh_on.png ***!
+  \****************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony default export */ __webpack_exports__["default"] = ("../renderer/react/dist/resources/efc56dd2d7b50d1894cfd5fa2e30c908.png");
+
+/***/ }),
+
+/***/ "./app/src/renderer/images/cloud.png":
+/*!*******************************************!*\
+  !*** ./app/src/renderer/images/cloud.png ***!
+  \*******************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony default export */ __webpack_exports__["default"] = ("../renderer/react/dist/resources/1aaafe24417101edd67b628c46b17d1f.png");
+
+/***/ }),
+
+/***/ "./app/src/renderer/images/computer.png":
+/*!**********************************************!*\
+  !*** ./app/src/renderer/images/computer.png ***!
+  \**********************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony default export */ __webpack_exports__["default"] = ("../renderer/react/dist/resources/1dae6441fe97ee4616f1e07a99fb812e.png");
+
+/***/ }),
+
+/***/ "./app/src/renderer/images/connection-arrow-2.png":
+/*!********************************************************!*\
+  !*** ./app/src/renderer/images/connection-arrow-2.png ***!
+  \********************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony default export */ __webpack_exports__["default"] = ("../renderer/react/dist/resources/32a6ad194e0d88511317c0ad27e95ae9.png");
+
+/***/ }),
+
+/***/ "./app/src/renderer/images/connection-arrow.png":
+/*!******************************************************!*\
+  !*** ./app/src/renderer/images/connection-arrow.png ***!
+  \******************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony default export */ __webpack_exports__["default"] = ("../renderer/react/dist/resources/6f9583bf2bdfc1da16f5ff299d24035d.png");
+
+/***/ }),
+
+/***/ "./app/src/renderer/images/email.svg":
+/*!*******************************************!*\
+  !*** ./app/src/renderer/images/email.svg ***!
+  \*******************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony default export */ __webpack_exports__["default"] = ("../renderer/react/dist/resources/57d16524c8a4fa27360e1211cb705f69.svg");
+
+/***/ }),
+
+/***/ "./app/src/renderer/images/empty_module_image.png":
+/*!********************************************************!*\
+  !*** ./app/src/renderer/images/empty_module_image.png ***!
+  \********************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony default export */ __webpack_exports__["default"] = ("../renderer/react/dist/resources/5a262e2f7c69c3158e3c48388f99feca.png");
+
+/***/ }),
+
+/***/ "./app/src/renderer/images/home.svg":
+/*!******************************************!*\
+  !*** ./app/src/renderer/images/home.svg ***!
+  \******************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony default export */ __webpack_exports__["default"] = ("../renderer/react/dist/resources/e3776dc73db6bf09774e119a92ad4679.svg");
+
+/***/ }),
+
+/***/ "./app/src/renderer/images/logo.png":
+/*!******************************************!*\
+  !*** ./app/src/renderer/images/logo.png ***!
+  \******************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony default export */ __webpack_exports__["default"] = ("../renderer/react/dist/resources/bb73a67f2c3623cfe8b512f0a1445fae.png");
+
+/***/ }),
+
+/***/ "./app/src/renderer/images/movie.svg":
+/*!*******************************************!*\
+  !*** ./app/src/renderer/images/movie.svg ***!
+  \*******************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony default export */ __webpack_exports__["default"] = ("../renderer/react/dist/resources/9b75b237e463bcd92594e26123b6013a.svg");
+
+/***/ }),
+
+/***/ "./app/src/renderer/images/search_icon.png":
+/*!*************************************************!*\
+  !*** ./app/src/renderer/images/search_icon.png ***!
+  \*************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony default export */ __webpack_exports__["default"] = ("../renderer/react/dist/resources/b1ff3bf482b442cf90a893bca8de03e4.png");
+
+/***/ }),
+
 /***/ "./app/src/renderer/react/main/App.tsx":
 /*!*********************************************!*\
   !*** ./app/src/renderer/react/main/App.tsx ***!
@@ -158,8 +418,8 @@ var Main_1 = __importDefault(__webpack_require__(/*! ./components/Main */ "./app
 var Footer_1 = __importDefault(__webpack_require__(/*! ./components/common/Footer */ "./app/src/renderer/react/main/components/common/Footer.tsx"));
 var Header_1 = __importDefault(__webpack_require__(/*! ./components/common/Header */ "./app/src/renderer/react/main/components/common/Header.tsx"));
 var react_redux_1 = __webpack_require__(/*! react-redux */ "./node_modules/react-redux/es/index.js");
-var store_1 = __importDefault(__webpack_require__(!(function webpackMissingModule() { var e = new Error("Cannot find module './store'"); e.code = 'MODULE_NOT_FOUND'; throw e; }())));
-var GlobalStyle_1 = __importDefault(__webpack_require__(!(function webpackMissingModule() { var e = new Error("Cannot find module './GlobalStyle'"); e.code = 'MODULE_NOT_FOUND'; throw e; }())));
+var store_1 = __importDefault(__webpack_require__(/*! ./store */ "./app/src/renderer/react/main/store/index.ts"));
+var GlobalStyle_1 = __importDefault(__webpack_require__(/*! ./GlobalStyle */ "./app/src/renderer/react/main/GlobalStyle.ts"));
 var IpcRendererWatchComponent_1 = __importDefault(__webpack_require__(/*! ./components/IpcRendererWatchComponent */ "./app/src/renderer/react/main/components/IpcRendererWatchComponent.tsx"));
 var makeConsoleAsciiArt_1 = __importDefault(__webpack_require__(/*! ./functions/makeConsoleAsciiArt */ "./app/src/renderer/react/main/functions/makeConsoleAsciiArt.ts"));
 var rendererRouter = window.rendererRouter;
@@ -173,6 +433,32 @@ react_dom_1.default.render(react_1.default.createElement(react_1.default.Fragmen
         react_1.default.createElement(GlobalStyle_1.default, null))), document.getElementById('__main'));
 // 첫 렌더가 완료된 후 프로그램을 업데이트한다.
 rendererRouter.checkProgramUpdate();
+
+
+/***/ }),
+
+/***/ "./app/src/renderer/react/main/GlobalStyle.ts":
+/*!****************************************************!*\
+  !*** ./app/src/renderer/react/main/GlobalStyle.ts ***!
+  \****************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var __makeTemplateObject = (this && this.__makeTemplateObject) || function (cooked, raw) {
+    if (Object.defineProperty) { Object.defineProperty(cooked, "raw", { value: raw }); } else { cooked.raw = raw; }
+    return cooked;
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+var styled_components_1 = __webpack_require__(/*! styled-components */ "./node_modules/styled-components/dist/styled-components.browser.esm.js");
+var NanumGothic_woff_1 = __importDefault(__webpack_require__(/*! ../../fonts/NanumGothic.woff */ "./app/src/renderer/fonts/NanumGothic.woff"));
+var GlobalStyle = styled_components_1.createGlobalStyle(templateObject_1 || (templateObject_1 = __makeTemplateObject(["\n    @font-face {\n        font-family: NanumGothic;\n        src: url(", ");\n    }\n    \n    .darwin ::-webkit-scrollbar {\n        -webkit-appearance: none;\n        width: 11px;\n    }\n    \n    .darwin ::-webkit-scrollbar-thumb {\n        border-radius: 8px;\n        border: 2px solid white;\n        /* should match background, can't be transparent */\n        background-color: rgba(0, 0, 0, .5);\n    }\n    \n    * {\n        font-family: NanumGothic, sans-serif !important;\n        box-sizing: border-box;\n        -moz-box-sizing: border-box;\n        -webkit-box-sizing: border-box;\n        -webkit-touch-callout: none;\n        -webkit-user-select: none;\n        -khtml-user-select: none;\n        -moz-user-select: none;\n        -ms-user-select: none;\n        user-select: none;\n        cursor: default;\n        outline: none;\n        -webkit-tap-highlight-color: rgba(255, 255, 255, 0);\n    }\n    \n    html,\n    body,\n    #__main {\n        margin: 0;\n        padding: 0;\n        border: 0;\n        outline: 0;\n        font-family: NanumGothic, sans-serif;\n        font-size: 10pt;\n        overflow: hidden !important;\n        display: flex;\n        flex-direction: column;\n        width: 100%;\n        height: 100%;\n    }\n    \n    button {\n        cursor: pointer;\n    }\n"], ["\n    @font-face {\n        font-family: NanumGothic;\n        src: url(", ");\n    }\n    \n    .darwin ::-webkit-scrollbar {\n        -webkit-appearance: none;\n        width: 11px;\n    }\n    \n    .darwin ::-webkit-scrollbar-thumb {\n        border-radius: 8px;\n        border: 2px solid white;\n        /* should match background, can't be transparent */\n        background-color: rgba(0, 0, 0, .5);\n    }\n    \n    * {\n        font-family: NanumGothic, sans-serif !important;\n        box-sizing: border-box;\n        -moz-box-sizing: border-box;\n        -webkit-box-sizing: border-box;\n        -webkit-touch-callout: none;\n        -webkit-user-select: none;\n        -khtml-user-select: none;\n        -moz-user-select: none;\n        -ms-user-select: none;\n        user-select: none;\n        cursor: default;\n        outline: none;\n        -webkit-tap-highlight-color: rgba(255, 255, 255, 0);\n    }\n    \n    html,\n    body,\n    #__main {\n        margin: 0;\n        padding: 0;\n        border: 0;\n        outline: 0;\n        font-family: NanumGothic, sans-serif;\n        font-size: 10pt;\n        overflow: hidden !important;\n        display: flex;\n        flex-direction: column;\n        width: 100%;\n        height: 100%;\n    }\n    \n    button {\n        cursor: pointer;\n    }\n"])), NanumGothic_woff_1.default);
+exports.default = GlobalStyle;
+var templateObject_1;
 
 
 /***/ }),
@@ -514,7 +800,7 @@ var react_1 = __importDefault(__webpack_require__(/*! react */ "./node_modules/r
 var styled_components_1 = __importDefault(__webpack_require__(/*! styled-components */ "./node_modules/styled-components/dist/styled-components.browser.esm.js"));
 var react_redux_1 = __webpack_require__(/*! react-redux */ "./node_modules/react-redux/es/index.js");
 var constants_1 = __webpack_require__(/*! ../../constants/constants */ "./app/src/renderer/react/main/constants/constants.ts");
-var cloud_png_1 = __importDefault(__webpack_require__(!(function webpackMissingModule() { var e = new Error("Cannot find module '../../../../images/cloud.png'"); e.code = 'MODULE_NOT_FOUND'; throw e; }())));
+var cloud_png_1 = __importDefault(__webpack_require__(/*! ../../../../images/cloud.png */ "./app/src/renderer/images/cloud.png"));
 var CloudIconContainer = styled_components_1.default.div(templateObject_1 || (templateObject_1 = __makeTemplateObject(["\n    float: left;\n    .cloud_icon {\n        display: inline-block;\n        background-size: contain;\n        background: url(", ") no-repeat;\n        width: 22px;\n        height: 14px;\n    }\n    .cloud_text {\n        display: inline-block;\n        vertical-align: top;\n        font-size: 14px;\n        font-weight: bold;\n        font-style: normal;\n        font-stretch: normal;\n        line-height: normal;\n        letter-spacing: -0.5px;\n        color: white;\n    }\n"], ["\n    float: left;\n    .cloud_icon {\n        display: inline-block;\n        background-size: contain;\n        background: url(", ") no-repeat;\n        width: 22px;\n        height: 14px;\n    }\n    .cloud_text {\n        display: inline-block;\n        vertical-align: top;\n        font-size: 14px;\n        font-weight: bold;\n        font-style: normal;\n        font-stretch: normal;\n        line-height: normal;\n        letter-spacing: -0.5px;\n        color: white;\n    }\n"])), cloud_png_1.default);
 var CloudIcon = function () {
     var isCloudMode = react_redux_1.useSelector(function (state) { return state.common.isCloudMode; });
@@ -554,7 +840,7 @@ var react_1 = __importDefault(__webpack_require__(/*! react */ "./node_modules/r
 var styled_components_1 = __importDefault(__webpack_require__(/*! styled-components */ "./node_modules/styled-components/dist/styled-components.browser.esm.js"));
 var common_1 = __webpack_require__(/*! ../../store/modules/common */ "./app/src/renderer/react/main/store/modules/common.ts");
 var react_redux_1 = __webpack_require__(/*! react-redux */ "./node_modules/react-redux/es/index.js");
-var logo_png_1 = __importDefault(__webpack_require__(!(function webpackMissingModule() { var e = new Error("Cannot find module '../../../../images/logo.png'"); e.code = 'MODULE_NOT_FOUND'; throw e; }())));
+var logo_png_1 = __importDefault(__webpack_require__(/*! ../../../../images/logo.png */ "./app/src/renderer/images/logo.png"));
 var usePreload_1 = __importDefault(__webpack_require__(/*! ../../hooks/usePreload */ "./app/src/renderer/react/main/hooks/usePreload.ts"));
 var FooterContainer = styled_components_1.default.div(templateObject_1 || (templateObject_1 = __makeTemplateObject(["\n    display: flex;\n    flex-direction: row-reverse;\n    width: 100%;\n    height: 60px;\n    background-position: 30px 15px;\n    background-repeat: no-repeat;\n    background-image: url(", ");\n    background-color: white;\n"], ["\n    display: flex;\n    flex-direction: row-reverse;\n    width: 100%;\n    height: 60px;\n    background-position: 30px 15px;\n    background-repeat: no-repeat;\n    background-image: url(", ");\n    background-color: white;\n"])), logo_png_1.default);
 var VersionLabel = styled_components_1.default.div(templateObject_2 || (templateObject_2 = __makeTemplateObject(["\n    margin: 20px 20px 20px 10px;\n    color: #595757;\n    cursor: pointer;\n    font-weight: bold;\n    display: flex;\n    align-self: flex-end;\n"], ["\n    margin: 20px 20px 20px 10px;\n    color: #595757;\n    cursor: pointer;\n    font-weight: bold;\n    display: flex;\n    align-self: flex-end;\n"])));
@@ -576,6 +862,31 @@ var Footer = function () {
 };
 exports.default = Footer;
 var templateObject_1, templateObject_2, templateObject_3, templateObject_4;
+
+
+/***/ }),
+
+/***/ "./app/src/renderer/react/main/components/common/HardwarePanelButton.tsx":
+/*!*******************************************************************************!*\
+  !*** ./app/src/renderer/react/main/components/common/HardwarePanelButton.tsx ***!
+  \*******************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var __makeTemplateObject = (this && this.__makeTemplateObject) || function (cooked, raw) {
+    if (Object.defineProperty) { Object.defineProperty(cooked, "raw", { value: raw }); } else { cooked.raw = raw; }
+    return cooked;
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+var styled_components_1 = __importDefault(__webpack_require__(/*! styled-components */ "./node_modules/styled-components/dist/styled-components.browser.esm.js"));
+var HardwarePanelButton = styled_components_1.default.button(templateObject_1 || (templateObject_1 = __makeTemplateObject(["\n    border: none;\n    margin: 20px 0 0;\n    width: 210px;\n    height: 35px;\n    text-align: center;\n    background-color: #6e5ae6;\n    color: #fff;\n    font-size: 14px;\n    border-radius: 4px;\n"], ["\n    border: none;\n    margin: 20px 0 0;\n    width: 210px;\n    height: 35px;\n    text-align: center;\n    background-color: #6e5ae6;\n    color: #fff;\n    font-size: 14px;\n    border-radius: 4px;\n"])));
+exports.default = HardwarePanelButton;
+var templateObject_1;
 
 
 /***/ }),
@@ -680,7 +991,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var computer_png_1 = __importDefault(__webpack_require__(!(function webpackMissingModule() { var e = new Error("Cannot find module '../../../../images/computer.png'"); e.code = 'MODULE_NOT_FOUND'; throw e; }())));
+var computer_png_1 = __importDefault(__webpack_require__(/*! ../../../../images/computer.png */ "./app/src/renderer/images/computer.png"));
 var DriverButtonSetElement_1 = __importDefault(__webpack_require__(/*! ./DriverButtonSetElement */ "./app/src/renderer/react/main/components/hardwareConnection/DriverButtonSetElement.tsx"));
 var react_1 = __importDefault(__webpack_require__(/*! react */ "./node_modules/react/index.js"));
 var styled_components_1 = __importDefault(__webpack_require__(/*! styled-components */ "./node_modules/styled-components/dist/styled-components.browser.esm.js"));
@@ -817,7 +1128,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var react_1 = __importStar(__webpack_require__(/*! react */ "./node_modules/react/index.js"));
-var HardwarePanelButton_1 = __importDefault(__webpack_require__(!(function webpackMissingModule() { var e = new Error("Cannot find module '../common/HardwarePanelButton'"); e.code = 'MODULE_NOT_FOUND'; throw e; }())));
+var HardwarePanelButton_1 = __importDefault(__webpack_require__(/*! ../common/HardwarePanelButton */ "./app/src/renderer/react/main/components/common/HardwarePanelButton.tsx"));
 var usePreload_1 = __importDefault(__webpack_require__(/*! ../../hooks/usePreload */ "./app/src/renderer/react/main/hooks/usePreload.ts"));
 var DriverButtonSetElement = function (props) {
     var buttonSet = props.buttonSet;
@@ -885,7 +1196,7 @@ var react_1 = __importStar(__webpack_require__(/*! react */ "./node_modules/reac
 var react_redux_1 = __webpack_require__(/*! react-redux */ "./node_modules/react-redux/es/index.js");
 var connection_1 = __webpack_require__(/*! ../../store/modules/connection */ "./app/src/renderer/react/main/store/modules/connection.ts");
 var constants_1 = __webpack_require__(/*! ../../../../../common/constants */ "./app/src/common/constants.ts");
-var HardwarePanelButton_1 = __importDefault(__webpack_require__(!(function webpackMissingModule() { var e = new Error("Cannot find module '../common/HardwarePanelButton'"); e.code = 'MODULE_NOT_FOUND'; throw e; }())));
+var HardwarePanelButton_1 = __importDefault(__webpack_require__(/*! ../common/HardwarePanelButton */ "./app/src/renderer/react/main/components/common/HardwarePanelButton.tsx"));
 var usePreload_1 = __importDefault(__webpack_require__(/*! ../../hooks/usePreload */ "./app/src/renderer/react/main/hooks/usePreload.ts"));
 var FirmwareButtonSetElement = function (props) {
     var _a = react_1.useState(true), isElementShow = _a[0], showElement = _a[1];
@@ -977,8 +1288,8 @@ var styled_components_1 = __importDefault(__webpack_require__(/*! styled-compone
 var lodash_1 = __webpack_require__(/*! lodash */ "./node_modules/lodash/lodash.js");
 var react_redux_1 = __webpack_require__(/*! react-redux */ "./node_modules/react-redux/es/index.js");
 var connection_1 = __webpack_require__(/*! ../../store/modules/connection */ "./app/src/renderer/react/main/store/modules/connection.ts");
-var connection_arrow_png_1 = __importDefault(__webpack_require__(!(function webpackMissingModule() { var e = new Error("Cannot find module '../../../../images/connection-arrow.png'"); e.code = 'MODULE_NOT_FOUND'; throw e; }())));
-var connection_arrow_2_png_1 = __importDefault(__webpack_require__(!(function webpackMissingModule() { var e = new Error("Cannot find module '../../../../images/connection-arrow-2.png'"); e.code = 'MODULE_NOT_FOUND'; throw e; }())));
+var connection_arrow_png_1 = __importDefault(__webpack_require__(/*! ../../../../images/connection-arrow.png */ "./app/src/renderer/images/connection-arrow.png"));
+var connection_arrow_2_png_1 = __importDefault(__webpack_require__(/*! ../../../../images/connection-arrow-2.png */ "./app/src/renderer/images/connection-arrow-2.png"));
 var usePreload_1 = __importDefault(__webpack_require__(/*! ../../hooks/usePreload */ "./app/src/renderer/react/main/hooks/usePreload.ts"));
 var Container = styled_components_1.default.div(templateObject_1 || (templateObject_1 = __makeTemplateObject(["\n    width: 240px;\n    display: inline-block;\n    height: 100%;\n    text-align: center;\n    vertical-align: top;\n"], ["\n    width: 240px;\n    display: inline-block;\n    height: 100%;\n    text-align: center;\n    vertical-align: top;\n"])));
 var IndicateTextDiv = styled_components_1.default.div(templateObject_2 || (templateObject_2 = __makeTemplateObject(["\n    font-size: 12px;\n    font-weight: bold;\n    color: ", ";\n    \n    margin-bottom: 25px;\n"], ["\n    font-size: 12px;\n    font-weight: bold;\n    color: ", ";\n    \n    margin-bottom: 25px;\n"])), function (_a) {
@@ -1177,9 +1488,9 @@ var react_1 = __importStar(__webpack_require__(/*! react */ "./node_modules/reac
 var react_redux_1 = __webpack_require__(/*! react-redux */ "./node_modules/react-redux/es/index.js");
 var styled_components_1 = __importDefault(__webpack_require__(/*! styled-components */ "./node_modules/styled-components/dist/styled-components.browser.esm.js"));
 var usePreload_1 = __importDefault(__webpack_require__(/*! ../../hooks/usePreload */ "./app/src/renderer/react/main/hooks/usePreload.ts"));
-var email_svg_1 = __importDefault(__webpack_require__(!(function webpackMissingModule() { var e = new Error("Cannot find module '../../../../images/email.svg'"); e.code = 'MODULE_NOT_FOUND'; throw e; }())));
-var home_svg_1 = __importDefault(__webpack_require__(!(function webpackMissingModule() { var e = new Error("Cannot find module '../../../../images/home.svg'"); e.code = 'MODULE_NOT_FOUND'; throw e; }())));
-var movie_svg_1 = __importDefault(__webpack_require__(!(function webpackMissingModule() { var e = new Error("Cannot find module '../../../../images/movie.svg'"); e.code = 'MODULE_NOT_FOUND'; throw e; }())));
+var email_svg_1 = __importDefault(__webpack_require__(/*! ../../../../images/email.svg */ "./app/src/renderer/images/email.svg"));
+var home_svg_1 = __importDefault(__webpack_require__(/*! ../../../../images/home.svg */ "./app/src/renderer/images/home.svg"));
+var movie_svg_1 = __importDefault(__webpack_require__(/*! ../../../../images/movie.svg */ "./app/src/renderer/images/movie.svg"));
 var ReferenceDiv = styled_components_1.default.div(templateObject_1 || (templateObject_1 = __makeTemplateObject(["\n    display: grid;\n    margin-bottom: 25px;\n    text-align: right;\n    font-weight: bold;\n    line-height: 25px;\n    font-size: 14px;\n    color: #595757;\n"], ["\n    display: grid;\n    margin-bottom: 25px;\n    text-align: right;\n    font-weight: bold;\n    line-height: 25px;\n    font-size: 14px;\n    color: #595757;\n"])));
 var ReferenceContentSpan = styled_components_1.default.span(templateObject_2 || (templateObject_2 = __makeTemplateObject(["\n    width: 100%;\n    height: 100%;\n    font-size: 12px;\n    color: #555555;\n    text-align: left;\n    cursor: pointer;\n    text-decoration: none;\n"], ["\n    width: 100%;\n    height: 100%;\n    font-size: 12px;\n    color: #555555;\n    text-align: left;\n    cursor: pointer;\n    text-decoration: none;\n"])));
 var ReferenceIconContainer = styled_components_1.default.div(templateObject_3 || (templateObject_3 = __makeTemplateObject(["\n    display: inline-block;\n    margin-right: 8px;\n"], ["\n    display: inline-block;\n    margin-right: 8px;\n"])));
@@ -1267,7 +1578,7 @@ var react_1 = __importStar(__webpack_require__(/*! react */ "./node_modules/reac
 var styled_components_1 = __importDefault(__webpack_require__(/*! styled-components */ "./node_modules/styled-components/dist/styled-components.browser.esm.js"));
 var react_redux_1 = __webpack_require__(/*! react-redux */ "./node_modules/react-redux/es/index.js");
 var connection_1 = __webpack_require__(/*! ../../store/modules/connection */ "./app/src/renderer/react/main/store/modules/connection.ts");
-var btn_close_png_1 = __importDefault(__webpack_require__(!(function webpackMissingModule() { var e = new Error("Cannot find module '../../../../images/btn_close.png'"); e.code = 'MODULE_NOT_FOUND'; throw e; }())));
+var btn_close_png_1 = __importDefault(__webpack_require__(/*! ../../../../images/btn_close.png */ "./app/src/renderer/images/btn_close.png"));
 var usePreload_1 = __importDefault(__webpack_require__(/*! ../../hooks/usePreload */ "./app/src/renderer/react/main/hooks/usePreload.ts"));
 var PortBoxContainer = styled_components_1.default.div(templateObject_1 || (templateObject_1 = __makeTemplateObject(["\n    background: rgba(0, 0, 0, 0.4);\n    display: flex;\n    position: fixed;\n    top: 0;\n    left: 0;\n    width: 100%;\n    height: 100%;\n    justify-content: center;\n    align-items: center;\n"], ["\n    background: rgba(0, 0, 0, 0.4);\n    display: flex;\n    position: fixed;\n    top: 0;\n    left: 0;\n    width: 100%;\n    height: 100%;\n    justify-content: center;\n    align-items: center;\n"])));
 var PortBoxBody = styled_components_1.default.div(templateObject_2 || (templateObject_2 = __makeTemplateObject(["\n    display: flex;\n    justify-content: space-between;\n    align-items: center;\n    width: 360px;\n    height: 379px;\n    flex-direction: column;\n    button {\n        cursor: pointer;\n        height: 47px;\n        width: 110px;\n    }\n"], ["\n    display: flex;\n    justify-content: space-between;\n    align-items: center;\n    width: 360px;\n    height: 379px;\n    flex-direction: column;\n    button {\n        cursor: pointer;\n        height: 47px;\n        width: 110px;\n    }\n"])));
@@ -1338,7 +1649,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var react_1 = __importDefault(__webpack_require__(/*! react */ "./node_modules/react/index.js"));
 var styled_components_1 = __importDefault(__webpack_require__(/*! styled-components */ "./node_modules/styled-components/dist/styled-components.browser.esm.js"));
-var alert_png_1 = __importDefault(__webpack_require__(!(function webpackMissingModule() { var e = new Error("Cannot find module '../../../../images/alert.png'"); e.code = 'MODULE_NOT_FOUND'; throw e; }())));
+var alert_png_1 = __importDefault(__webpack_require__(/*! ../../../../images/alert.png */ "./app/src/renderer/images/alert.png"));
 var usePreload_1 = __importDefault(__webpack_require__(/*! ../../hooks/usePreload */ "./app/src/renderer/react/main/hooks/usePreload.ts"));
 var ErrorAlertContainer = styled_components_1.default.div(templateObject_1 || (templateObject_1 = __makeTemplateObject(["\n    min-height: 118px;\n    background: #f1f1f1;\n    padding: 24px 44px 21px;\n    overflow: hidden;\n"], ["\n    min-height: 118px;\n    background: #f1f1f1;\n    padding: 24px 44px 21px;\n    overflow: hidden;\n"])));
 var ErrorImage = styled_components_1.default.img(templateObject_2 || (templateObject_2 = __makeTemplateObject(["\n    margin-right: 15px;\n"], ["\n    margin-right: 15px;\n"])));
@@ -1404,7 +1715,7 @@ var constants_1 = __webpack_require__(/*! ../../constants/constants */ "./app/sr
 var connection_1 = __webpack_require__(/*! ../../store/modules/connection */ "./app/src/renderer/react/main/store/modules/connection.ts");
 var styled_components_1 = __importDefault(__webpack_require__(/*! styled-components */ "./node_modules/styled-components/dist/styled-components.browser.esm.js"));
 var hardware_1 = __webpack_require__(/*! ../../store/modules/hardware */ "./app/src/renderer/react/main/store/modules/hardware.ts");
-var empty_module_image_png_1 = __importDefault(__webpack_require__(!(function webpackMissingModule() { var e = new Error("Cannot find module '../../../../images/empty_module_image.png'"); e.code = 'MODULE_NOT_FOUND'; throw e; }())));
+var empty_module_image_png_1 = __importDefault(__webpack_require__(/*! ../../../../images/empty_module_image.png */ "./app/src/renderer/images/empty_module_image.png"));
 var usePreload_1 = __importDefault(__webpack_require__(/*! ../../hooks/usePreload */ "./app/src/renderer/react/main/hooks/usePreload.ts"));
 var HardwareTypeDiv = styled_components_1.default.div(templateObject_1 || (templateObject_1 = __makeTemplateObject(["\n    width: 170px;\n    height: 170px;\n    display: flex;\n    flex-direction: column;\n    align-items: center;\n    justify-content: center;\n"], ["\n    width: 170px;\n    height: 170px;\n    display: flex;\n    flex-direction: column;\n    align-items: center;\n    justify-content: center;\n"])));
 var HardwareThumbnailContainer = styled_components_1.default.div(templateObject_2 || (templateObject_2 = __makeTemplateObject(["\n    width: 100px;\n    height: 100px;\n    cursor: pointer;\n    display: flex;\n"], ["\n    width: 100px;\n    height: 100px;\n    cursor: pointer;\n    display: flex;\n"])));
@@ -1561,8 +1872,8 @@ var styled_components_1 = __importDefault(__webpack_require__(/*! styled-compone
 var hardware_1 = __webpack_require__(/*! ../../store/modules/hardware */ "./app/src/renderer/react/main/store/modules/hardware.ts");
 var react_redux_1 = __webpack_require__(/*! react-redux */ "./node_modules/react-redux/es/index.js");
 var constants_1 = __webpack_require__(/*! ../../constants/constants */ "./app/src/renderer/react/main/constants/constants.ts");
-var arrow_up_png_1 = __importDefault(__webpack_require__(!(function webpackMissingModule() { var e = new Error("Cannot find module '../../../../images/arrow_up.png'"); e.code = 'MODULE_NOT_FOUND'; throw e; }())));
-var arrow_down_png_1 = __importDefault(__webpack_require__(!(function webpackMissingModule() { var e = new Error("Cannot find module '../../../../images/arrow_down.png'"); e.code = 'MODULE_NOT_FOUND'; throw e; }())));
+var arrow_up_png_1 = __importDefault(__webpack_require__(/*! ../../../../images/arrow_up.png */ "./app/src/renderer/images/arrow_up.png"));
+var arrow_down_png_1 = __importDefault(__webpack_require__(/*! ../../../../images/arrow_down.png */ "./app/src/renderer/images/arrow_down.png"));
 var DropdownContainer = styled_components_1.default.ul(templateObject_1 || (templateObject_1 = __makeTemplateObject(["\n    float: right;\n    margin-right: 5px;\n    margin-top: -15px;\n    padding: 0;\n    border: 1px #4c94f8 solid;\n"], ["\n    float: right;\n    margin-right: 5px;\n    margin-top: -15px;\n    padding: 0;\n    border: 1px #4c94f8 solid;\n"])));
 var DropdownContent = styled_components_1.default.li(templateObject_2 || (templateObject_2 = __makeTemplateObject(["\n    width: 138px;\n    height: 30px;\n    list-style-type: none;\n    cursor: pointer;\n    background-color: white;\n    padding-left: 12px;\n    \n    &.init {\n        border-bottom: 1px #4c94f8 solid;\n        &.open {\n            .arrow {\n                background-image: url(", ");\n            }\n        }\n        .arrow {\n            width: 30px;\n            height: 30px;\n            float: right;\n            margin: -1px;\n            border-left: 1px #4c94f8 solid;\n            background-image: url(", ");\n            background-repeat: no-repeat;\n            background-position: center;\n        }\n    }\n    :not(.init) {\n        &:hover,\n        &.selected {\n            background: white;        \n        }\n    }\n"], ["\n    width: 138px;\n    height: 30px;\n    list-style-type: none;\n    cursor: pointer;\n    background-color: white;\n    padding-left: 12px;\n    \n    &.init {\n        border-bottom: 1px #4c94f8 solid;\n        &.open {\n            .arrow {\n                background-image: url(", ");\n            }\n        }\n        .arrow {\n            width: 30px;\n            height: 30px;\n            float: right;\n            margin: -1px;\n            border-left: 1px #4c94f8 solid;\n            background-image: url(", ");\n            background-repeat: no-repeat;\n            background-position: center;\n        }\n    }\n    :not(.init) {\n        &:hover,\n        &.selected {\n            background: white;        \n        }\n    }\n"])), arrow_up_png_1.default, arrow_down_png_1.default);
 var ContentSpan = styled_components_1.default.span(templateObject_3 || (templateObject_3 = __makeTemplateObject(["\n    width: 100%;\n    font-size: 14px;\n    font-weight: bold;\n    color: #4c94f8;\n    line-height: 28px;\n    cursor: inherit;\n"], ["\n    width: 100%;\n    font-size: 14px;\n    font-weight: bold;\n    color: #4c94f8;\n    line-height: 28px;\n    cursor: inherit;\n"])));
@@ -1643,11 +1954,11 @@ var styled_components_1 = __importDefault(__webpack_require__(/*! styled-compone
 var react_redux_1 = __webpack_require__(/*! react-redux */ "./node_modules/react-redux/es/index.js");
 var constants_1 = __webpack_require__(/*! ../../constants/constants */ "./app/src/renderer/react/main/constants/constants.ts");
 var common_1 = __webpack_require__(/*! ../../store/modules/common */ "./app/src/renderer/react/main/store/modules/common.ts");
-var btn_back_dim_png_1 = __importDefault(__webpack_require__(!(function webpackMissingModule() { var e = new Error("Cannot find module '../../../../images/btn_back_dim.png'"); e.code = 'MODULE_NOT_FOUND'; throw e; }())));
-var btn_back_on_png_1 = __importDefault(__webpack_require__(!(function webpackMissingModule() { var e = new Error("Cannot find module '../../../../images/btn_back_on.png'"); e.code = 'MODULE_NOT_FOUND'; throw e; }())));
-var btn_back_off_png_1 = __importDefault(__webpack_require__(!(function webpackMissingModule() { var e = new Error("Cannot find module '../../../../images/btn_back_off.png'"); e.code = 'MODULE_NOT_FOUND'; throw e; }())));
-var btn_refresh_on_png_1 = __importDefault(__webpack_require__(!(function webpackMissingModule() { var e = new Error("Cannot find module '../../../../images/btn_refresh_on.png'"); e.code = 'MODULE_NOT_FOUND'; throw e; }())));
-var btn_refresh_off_png_1 = __importDefault(__webpack_require__(!(function webpackMissingModule() { var e = new Error("Cannot find module '../../../../images/btn_refresh_off.png'"); e.code = 'MODULE_NOT_FOUND'; throw e; }())));
+var btn_back_dim_png_1 = __importDefault(__webpack_require__(/*! ../../../../images/btn_back_dim.png */ "./app/src/renderer/images/btn_back_dim.png"));
+var btn_back_on_png_1 = __importDefault(__webpack_require__(/*! ../../../../images/btn_back_on.png */ "./app/src/renderer/images/btn_back_on.png"));
+var btn_back_off_png_1 = __importDefault(__webpack_require__(/*! ../../../../images/btn_back_off.png */ "./app/src/renderer/images/btn_back_off.png"));
+var btn_refresh_on_png_1 = __importDefault(__webpack_require__(/*! ../../../../images/btn_refresh_on.png */ "./app/src/renderer/images/btn_refresh_on.png"));
+var btn_refresh_off_png_1 = __importDefault(__webpack_require__(/*! ../../../../images/btn_refresh_off.png */ "./app/src/renderer/images/btn_refresh_off.png"));
 var usePreload_1 = __importDefault(__webpack_require__(/*! ../../hooks/usePreload */ "./app/src/renderer/react/main/hooks/usePreload.ts"));
 var NavigatorContainer = styled_components_1.default.div(templateObject_1 || (templateObject_1 = __makeTemplateObject(["\n    width: 100px;\n    margin: 0;\n"], ["\n    width: 100px;\n    margin: 0;\n"])));
 var NavigatorButton = styled_components_1.default.button(templateObject_2 || (templateObject_2 = __makeTemplateObject(["\n    margin-right: 1px;\n    vertical-align: top;\n    border: none;\n    width: 26px;\n    height: 26px;\n    background-image: ", ";\n    background-color: transparent;\n    &.active{\n        background-image: ", ";\n        :hover, :active {\n            background-image: ", ";\n        }\n    }\n"], ["\n    margin-right: 1px;\n    vertical-align: top;\n    border: none;\n    width: 26px;\n    height: 26px;\n    background-image: ", ";\n    background-color: transparent;\n    &.active{\n        background-image: ", ";\n        :hover, :active {\n            background-image: ", ";\n        }\n    }\n"])), function (props) { return "url('" + props.dimImage + "')"; }, function (props) { return "url('" + props.disabledImage + "')"; }, function (props) { return "url('" + props.enabledImage + "')"; });
@@ -1715,7 +2026,7 @@ var react_1 = __importStar(__webpack_require__(/*! react */ "./node_modules/reac
 var styled_components_1 = __importDefault(__webpack_require__(/*! styled-components */ "./node_modules/styled-components/dist/styled-components.browser.esm.js"));
 var react_redux_1 = __webpack_require__(/*! react-redux */ "./node_modules/react-redux/es/index.js");
 var hardware_1 = __webpack_require__(/*! ../../store/modules/hardware */ "./app/src/renderer/react/main/store/modules/hardware.ts");
-var search_icon_png_1 = __importDefault(__webpack_require__(!(function webpackMissingModule() { var e = new Error("Cannot find module '../../../../images/search_icon.png'"); e.code = 'MODULE_NOT_FOUND'; throw e; }())));
+var search_icon_png_1 = __importDefault(__webpack_require__(/*! ../../../../images/search_icon.png */ "./app/src/renderer/images/search_icon.png"));
 var SearchContainer = styled_components_1.default.div(templateObject_1 || (templateObject_1 = __makeTemplateObject(["\n    top: 15px;\n    right: 20px;\n    position: fixed;\n"], ["\n    top: 15px;\n    right: 20px;\n    position: fixed;\n"])));
 var SearchBar = styled_components_1.default.input(templateObject_2 || (templateObject_2 = __makeTemplateObject(["\n    border: solid 1px #fff;\n    background: #fff;\n    color: black;\n    height: 30px;\n    padding: 0 10px;\n    border-radius: 20px;\n    :focus {\n        background: #fff;\n        color: black;\n    }\n"], ["\n    border: solid 1px #fff;\n    background: #fff;\n    color: black;\n    height: 30px;\n    padding: 0 10px;\n    border-radius: 20px;\n    :focus {\n        background: #fff;\n        color: black;\n    }\n"])));
 var SearchButton = styled_components_1.default.button(templateObject_3 || (templateObject_3 = __makeTemplateObject(["\n    position: absolute;\n    top: 2px;\n    right: 4px;\n    background: none;\n    border: none;\n"], ["\n    position: absolute;\n    top: 2px;\n    right: 4px;\n    background: none;\n    border: none;\n"])));
@@ -1789,7 +2100,7 @@ var react_1 = __importStar(__webpack_require__(/*! react */ "./node_modules/reac
 var react_redux_1 = __webpack_require__(/*! react-redux */ "./node_modules/react-redux/es/index.js");
 var common_1 = __webpack_require__(/*! ../../../store/modules/common */ "./app/src/renderer/react/main/store/modules/common.ts");
 var styled_components_1 = __importDefault(__webpack_require__(/*! styled-components */ "./node_modules/styled-components/dist/styled-components.browser.esm.js"));
-var btn_close_png_1 = __importDefault(__webpack_require__(!(function webpackMissingModule() { var e = new Error("Cannot find module '../../../../../images/btn_close.png'"); e.code = 'MODULE_NOT_FOUND'; throw e; }())));
+var btn_close_png_1 = __importDefault(__webpack_require__(/*! ../../../../../images/btn_close.png */ "./app/src/renderer/images/btn_close.png"));
 var usePreload_1 = __importDefault(__webpack_require__(/*! ../../../hooks/usePreload */ "./app/src/renderer/react/main/hooks/usePreload.ts"));
 var ViewerContainer = styled_components_1.default.div(templateObject_1 || (templateObject_1 = __makeTemplateObject(["\n    background: rgba(0, 0, 0, 0.4);\n    display: flex;\n    position: fixed;\n    z-index: 1;\n    top: 0;\n    left: 0;\n    width: 100%;\n    height: 100%;\n    justify-content: center;\n    align-items: center;\n"], ["\n    background: rgba(0, 0, 0, 0.4);\n    display: flex;\n    position: fixed;\n    z-index: 1;\n    top: 0;\n    left: 0;\n    width: 100%;\n    height: 100%;\n    justify-content: center;\n    align-items: center;\n"])));
 var ViewerBody = styled_components_1.default.div(templateObject_2 || (templateObject_2 = __makeTemplateObject(["\n    display: flex;\n    justify-content: space-between;\n    align-items: center;\n    width: 80%;\n    height: 70%;\n    flex-direction: column;\n"], ["\n    display: flex;\n    justify-content: space-between;\n    align-items: center;\n    width: 80%;\n    height: 70%;\n    flex-direction: column;\n"])));
@@ -1881,6 +2192,62 @@ var HardwareAvailableTypeEnum;
 
 /***/ }),
 
+/***/ "./app/src/renderer/react/main/functions/filterHardware.ts":
+/*!*****************************************************************!*\
+  !*** ./app/src/renderer/react/main/functions/filterHardware.ts ***!
+  \*****************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var constants_1 = __webpack_require__(/*! ../constants/constants */ "./app/src/renderer/react/main/constants/constants.ts");
+var filterHardwareList = function (keyword, category, hardwareList) {
+    return hardwareList.filter(function (hardware) { return (categoryFilterHardware(hardware, category) &&
+        nameFilterHardware(hardware, keyword)); });
+};
+var categoryFilterHardware = function (hardwareItem, category) {
+    return category === constants_1.CategoryTypeEnum.all || hardwareItem.category === category;
+};
+var nameFilterHardware = function (hardwareItem, keyword) {
+    var _a, _b, _c, _d;
+    if (keyword === '') {
+        return true;
+    }
+    var en = (_b = (_a = hardwareItem.name) === null || _a === void 0 ? void 0 : _a.en) === null || _b === void 0 ? void 0 : _b.toLowerCase();
+    var ko = (_d = (_c = hardwareItem.name) === null || _c === void 0 ? void 0 : _c.ko) === null || _d === void 0 ? void 0 : _d.toLowerCase();
+    return (ko && ko.indexOf(keyword) > -1) || (en && en.indexOf(keyword) > -1);
+};
+exports.default = filterHardwareList;
+
+
+/***/ }),
+
+/***/ "./app/src/renderer/react/main/functions/makeAction.ts":
+/*!*************************************************************!*\
+  !*** ./app/src/renderer/react/main/functions/makeAction.ts ***!
+  \*************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.makeAction = exports.makePayloadAction = void 0;
+exports.makePayloadAction = function (type) {
+    return function (dispatch) { return function (payload) { return dispatch({
+        type: type, payload: payload,
+    }); }; };
+};
+;
+exports.makeAction = function (type) {
+    return function (dispatch) { return function () { return dispatch({ type: type }); }; };
+};
+
+
+/***/ }),
+
 /***/ "./app/src/renderer/react/main/functions/makeConsoleAsciiArt.ts":
 /*!**********************************************************************!*\
   !*** ./app/src/renderer/react/main/functions/makeConsoleAsciiArt.ts ***!
@@ -1901,6 +2268,29 @@ exports.default = (function () {
     var black = 'color:black;font-weight:bold;';
     var entryHardwareText = "\n%c\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2557%c\u2588\u2588\u2588\u2557   \u2588\u2588\u2557%c\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2557%c\u2588\u2588\u2588\u2588\u2588\u2588\u2557 %c\u2588\u2588\u2557   \u2588\u2588\u2557 %c\n%c\u2588\u2588\u2554\u2550\u2550\u2550\u2550\u255D%c\u2588\u2588\u2588\u2588\u2557  \u2588\u2588\u2551%c\u255A\u2550\u2550\u2588\u2588\u2554\u2550\u2550\u255D%c\u2588\u2588\u2554\u2550\u2550\u2588\u2588\u2557%c\u255A\u2588\u2588\u2557 \u2588\u2588\u2554\u255D %c\n%c\u2588\u2588\u2588\u2588\u2588\u2557  %c\u2588\u2588\u2554\u2588\u2588\u2557 \u2588\u2588\u2551%c   \u2588\u2588\u2551   %c\u2588\u2588\u2588\u2588\u2588\u2588\u2554\u255D%c \u255A\u2588\u2588\u2588\u2588\u2554\u255D  %c _  _             _                     \n%c\u2588\u2588\u2554\u2550\u2550\u255D  %c\u2588\u2588\u2551\u255A\u2588\u2588\u2557\u2588\u2588\u2551%c   \u2588\u2588\u2551   %c\u2588\u2588\u2554\u2550\u2550\u2588\u2588\u2557%c  \u255A\u2588\u2588\u2554\u255D   %c| || |__ _ _ _ __| |_ __ ____ _ _ _ ___ \n%c\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2557%c\u2588\u2588\u2551 \u255A\u2588\u2588\u2588\u2588\u2551%c   \u2588\u2588\u2551   %c\u2588\u2588\u2551  \u2588\u2588\u2551%c   \u2588\u2588\u2551    %c| __ / _` | '_/ _` \\ V  V / _` | '_/ -_)\n%c\u255A\u2550\u2550\u2550\u2550\u2550\u2550\u255D%c\u255A\u2550\u255D  \u255A\u2550\u2550\u2550\u255D%c   \u255A\u2550\u255D   %c\u255A\u2550\u255D  \u255A\u2550\u255D%c   \u255A\u2550\u255D    %c|_||_\\__,_|_| \\__,_|\\_/\\_/\\__,_|_| \\___|";
     console.log(entryHardwareText, green, blue, purple, yellow, red, black, green, blue, purple, yellow, red, black, green, blue, purple, yellow, red, black, green, blue, purple, yellow, red, black, green, blue, purple, yellow, red, black, green, blue, purple, yellow, red, black);
+});
+
+
+/***/ }),
+
+/***/ "./app/src/renderer/react/main/functions/refreshPriorHardwareList.ts":
+/*!***************************************************************************!*\
+  !*** ./app/src/renderer/react/main/functions/refreshPriorHardwareList.ts ***!
+  \***************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = (function (newHardwareName) {
+    var prevHardwareList = JSON.parse(localStorage.getItem('hardwareList') || '[]');
+    var foundPrevHardwareIndex = prevHardwareList.findIndex(function (hardwareName) { return hardwareName === newHardwareName; });
+    if (foundPrevHardwareIndex > -1) {
+        prevHardwareList.splice(foundPrevHardwareIndex, 1);
+    }
+    prevHardwareList.push(newHardwareName);
+    localStorage.setItem('hardwareList', JSON.stringify(prevHardwareList));
 });
 
 
@@ -1931,6 +2321,248 @@ exports.default = usePreload;
 
 /***/ }),
 
+/***/ "./app/src/renderer/react/main/store/index.ts":
+/*!****************************************************!*\
+  !*** ./app/src/renderer/react/main/store/index.ts ***!
+  \****************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+var redux_1 = __webpack_require__(/*! redux */ "./node_modules/redux/es/redux.js");
+var common_1 = __importDefault(__webpack_require__(/*! ./modules/common */ "./app/src/renderer/react/main/store/modules/common.ts"));
+var hardware_1 = __importDefault(__webpack_require__(/*! ./modules/hardware */ "./app/src/renderer/react/main/store/modules/hardware.ts"));
+var entryHardwareMiddleware_1 = __importDefault(__webpack_require__(/*! ./middlewares/entryHardwareMiddleware */ "./app/src/renderer/react/main/store/middlewares/entryHardwareMiddleware.ts"));
+var connection_1 = __importDefault(__webpack_require__(/*! ./modules/connection */ "./app/src/renderer/react/main/store/modules/connection.ts"));
+var reducers = redux_1.combineReducers({
+    common: common_1.default,
+    hardware: hardware_1.default,
+    connection: connection_1.default,
+});
+exports.default = redux_1.createStore(reducers, redux_1.applyMiddleware(entryHardwareMiddleware_1.default));
+
+
+/***/ }),
+
+/***/ "./app/src/renderer/react/main/store/middlewares/entryHardwareMiddleware.ts":
+/*!**********************************************************************************!*\
+  !*** ./app/src/renderer/react/main/store/middlewares/entryHardwareMiddleware.ts ***!
+  \**********************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __generator = (this && this.__generator) || function (thisArg, body) {
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
+    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    function verb(n) { return function (v) { return step([n, v]); }; }
+    function step(op) {
+        if (f) throw new TypeError("Generator is already executing.");
+        while (_) try {
+            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+            if (y = 0, t) op = [op[0] & 2, t.value];
+            switch (op[0]) {
+                case 0: case 1: t = op; break;
+                case 4: _.label++; return { value: op[1], done: false };
+                case 5: _.label++; y = op[1]; op = [0]; continue;
+                case 7: op = _.ops.pop(); _.trys.pop(); continue;
+                default:
+                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
+                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
+                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
+                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
+                    if (t[2]) _.ops.pop();
+                    _.trys.pop(); continue;
+            }
+            op = body.call(thisArg, _);
+        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
+        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
+    }
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+var hardware_1 = __webpack_require__(/*! ../modules/hardware */ "./app/src/renderer/react/main/store/modules/hardware.ts");
+var filterHardware_1 = __importDefault(__webpack_require__(/*! ../../functions/filterHardware */ "./app/src/renderer/react/main/functions/filterHardware.ts"));
+var common_1 = __webpack_require__(/*! ../modules/common */ "./app/src/renderer/react/main/store/modules/common.ts");
+var constants_1 = __webpack_require__(/*! ../../../../../common/constants */ "./app/src/common/constants.ts");
+var constants_2 = __webpack_require__(/*! ../../constants/constants */ "./app/src/renderer/react/main/constants/constants.ts");
+var refreshPriorHardwareList_1 = __importDefault(__webpack_require__(/*! ../../functions/refreshPriorHardwareList */ "./app/src/renderer/react/main/functions/refreshPriorHardwareList.ts"));
+var connection_1 = __webpack_require__(/*! ../modules/connection */ "./app/src/renderer/react/main/store/modules/connection.ts");
+var translator = window.translator, rendererRouter = window.rendererRouter;
+/**
+ * RendererRouter 의 ipc 통신 로직을 담당한다.
+ * 리액트 엘리먼트에서는 뷰 전환에 관련한 로직만 생각하고, 여기서는 메인프로세스와의 통신만을 다룬다.
+ */
+// eslint-disable-next-line max-len
+var entryHardwareMiddleware = function (_a) {
+    var getState = _a.getState;
+    return function (next) { return function (action) { return __awaiter(void 0, void 0, void 0, function () {
+        var type, payload, _a, hardware, hardwareFilterKeyword, hardwareFilterCategory, hardwareList, hardware, hardwareFilterCategory_1, keyword_1, nextState, hardware, value, common, moduleState, firmwareInfo;
+        return __generator(this, function (_b) {
+            switch (_b.label) {
+                case 0:
+                    type = action.type, payload = action.payload;
+                    _a = type;
+                    switch (_a) {
+                        case hardware_1.CATEGORY_CHANGED: return [3 /*break*/, 1];
+                        case hardware_1.HARDWARE_SEARCH_KEYWORD_CHANGED: return [3 /*break*/, 2];
+                        case common_1.CURRENT_PAGE_STATE_CHANGED: return [3 /*break*/, 3];
+                        case connection_1.HARDWARE_SELECTED: return [3 /*break*/, 4];
+                        case hardware_1.HARDWARE_LIST_RESET: return [3 /*break*/, 5];
+                        case connection_1.PORT_SELECTED: return [3 /*break*/, 6];
+                        case connection_1.HANDSHAKE_PAYLOAD_SET: return [3 /*break*/, 7];
+                        case connection_1.FIRMWARE_INSTALL_REQUESTED: return [3 /*break*/, 8];
+                        case hardware_1.HARDWARE_MODULE_DOWNLOAD_REQUESTED: return [3 /*break*/, 9];
+                    }
+                    return [3 /*break*/, 11];
+                case 1:
+                    {
+                        next(action);
+                        hardware = getState().hardware;
+                        hardwareFilterKeyword = hardware.hardwareFilterKeyword, hardwareFilterCategory = hardware.hardwareFilterCategory;
+                        hardwareList = filterHardware_1.default(hardwareFilterKeyword, hardwareFilterCategory, rendererRouter.hardwareList);
+                        hardware_1.changeHardwareList(next)(hardwareList);
+                        return [3 /*break*/, 12];
+                    }
+                    _b.label = 2;
+                case 2:
+                    {
+                        hardware = getState().hardware;
+                        hardwareFilterCategory_1 = hardware.hardwareFilterCategory;
+                        keyword_1 = action.payload;
+                        new Promise(function (resolve) {
+                            resolve(filterHardware_1.default(keyword_1, hardwareFilterCategory_1, rendererRouter.hardwareList));
+                        }).then(function (hardwareList) {
+                            hardware_1.changeHardwareList(next)(hardwareList);
+                        });
+                        next(action);
+                        return [3 /*break*/, 12];
+                    }
+                    _b.label = 3;
+                case 3:
+                    {
+                        nextState = action.payload;
+                        if (nextState === constants_2.HardwarePageStateEnum.list) {
+                            rendererRouter.close();
+                            //NOTE resetHardwareList 를 쓰고자 했는데 안먹힌다. 왤까?
+                            hardware_1.changeHardwareList(next)(rendererRouter.hardwareList);
+                            connection_1.changePortList(next)([]);
+                        }
+                        next(action);
+                        return [3 /*break*/, 12];
+                    }
+                    _b.label = 4;
+                case 4:
+                    {
+                        hardware = action.payload;
+                        // noinspection JSIgnoredPromiseFromCall
+                        if (hardware.name && hardware.name.ko) {
+                            refreshPriorHardwareList_1.default(hardware.name.ko);
+                        }
+                        rendererRouter.startScan(hardware);
+                        next(action);
+                        return [3 /*break*/, 12];
+                    }
+                    _b.label = 5;
+                case 5:
+                    {
+                        hardware_1.changeHardwareList(next)(rendererRouter.hardwareList);
+                        return [3 /*break*/, 12];
+                    }
+                    _b.label = 6;
+                case 6:
+                    {
+                        rendererRouter.sendSelectedPort(action.payload);
+                        next(action);
+                        return [3 /*break*/, 12];
+                    }
+                    _b.label = 7;
+                case 7:
+                    {
+                        value = action.payload;
+                        if (value) {
+                            rendererRouter.sendHandshakePayload(action.payload);
+                        }
+                        else {
+                            common_1.changeAlertMessage(next)({
+                                message: '값이 읎는데요 선생님',
+                                duration: 1000,
+                            });
+                        }
+                        next(action);
+                        return [3 /*break*/, 12];
+                    }
+                    _b.label = 8;
+                case 8:
+                    {
+                        common = getState().common;
+                        moduleState = common.moduleState;
+                        firmwareInfo = action.payload;
+                        if (typeof firmwareInfo === 'string' && firmwareInfo.startsWith('http')) {
+                            rendererRouter.openExternalUrl(firmwareInfo);
+                        }
+                        else if (firmwareInfo.type !== 'copy' &&
+                            moduleState !== constants_1.HardwareStatement.beforeConnect &&
+                            moduleState !== constants_1.HardwareStatement.connected) {
+                            alert(translator.translate('Hardware Device Is Not Connected'));
+                        }
+                        else {
+                            rendererRouter.requestFlash(firmwareInfo)
+                                .then(function () {
+                                common_1.changeAlertMessage(next)({
+                                    message: translator.translate('Firmware Uploaded!'),
+                                    duration: 1000,
+                                });
+                            })
+                                .catch(function () {
+                                common_1.changeAlertMessage(next)({
+                                    message: translator.translate('Failed Firmware Upload'),
+                                });
+                            })
+                                .finally(function () {
+                                if (action.payload.type === 'copy') {
+                                    connection_1.changeVisiblePortList(next)(false);
+                                }
+                            });
+                        }
+                        return [3 /*break*/, 12];
+                    }
+                    _b.label = 9;
+                case 9: return [4 /*yield*/, rendererRouter.requestDownloadModule(payload)];
+                case 10:
+                    _b.sent();
+                    hardware_1.changeHardwareList(next)(rendererRouter.hardwareList);
+                    return [3 /*break*/, 12];
+                case 11:
+                    next(action);
+                    _b.label = 12;
+                case 12: return [2 /*return*/];
+            }
+        });
+    }); }; };
+};
+exports.default = entryHardwareMiddleware;
+
+
+/***/ }),
+
 /***/ "./app/src/renderer/react/main/store/modules/common.ts":
 /*!*************************************************************!*\
   !*** ./app/src/renderer/react/main/store/modules/common.ts ***!
@@ -1948,7 +2580,7 @@ exports.invalidateBuild = exports.changeSocketConnectionState = exports.changeHa
 var immer_1 = __importDefault(__webpack_require__(/*! immer */ "./node_modules/immer/dist/immer.module.js"));
 var constants_1 = __webpack_require__(/*! ../../../../../common/constants */ "./app/src/common/constants.ts");
 var constants_2 = __webpack_require__(/*! ../../constants/constants */ "./app/src/renderer/react/main/constants/constants.ts");
-var makeAction_1 = __webpack_require__(!(function webpackMissingModule() { var e = new Error("Cannot find module '../../functions/makeAction'"); e.code = 'MODULE_NOT_FOUND'; throw e; }()));
+var makeAction_1 = __webpack_require__(/*! ../../functions/makeAction */ "./app/src/renderer/react/main/functions/makeAction.ts");
 var translator = window.translator, ipcRenderer = window.ipcRenderer;
 // types
 exports.LICENSE_VIEW_TOGGLE = 'common/LICENSE_VIEW_TOGGLE';
@@ -2042,7 +2674,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.requestFirmwareInstall = exports.setHandshakePayload = exports.selectPort = exports.changeVisiblePortList = exports.changePortList = exports.selectHardware = exports.FIRMWARE_INSTALL_REQUESTED = exports.HANDSHAKE_PAYLOAD_SET = exports.PORT_SELECTED = exports.PORTLIST_VISIBLE_CHANGED = exports.PORTLIST_CHANGED = exports.HARDWARE_SELECTED = void 0;
 var immer_1 = __importDefault(__webpack_require__(/*! immer */ "./node_modules/immer/dist/immer.module.js"));
-var makeAction_1 = __webpack_require__(!(function webpackMissingModule() { var e = new Error("Cannot find module '../../functions/makeAction'"); e.code = 'MODULE_NOT_FOUND'; throw e; }()));
+var makeAction_1 = __webpack_require__(/*! ../../functions/makeAction */ "./app/src/renderer/react/main/functions/makeAction.ts");
 exports.HARDWARE_SELECTED = 'connection/HARDWARE_SELECTED';
 exports.PORTLIST_CHANGED = 'connection/PORTLIST_CHANGED';
 exports.PORTLIST_VISIBLE_CHANGED = 'connection/PORTLIST_VISIBLE_CHANGED';
@@ -2106,7 +2738,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.resetHardwareList = exports.changeHardwareList = exports.changeHardwareCategory = exports.changeHardwareSearchKeyword = exports.requestHardwareModuleDownload = exports.HARDWARE_LIST_RESET = exports.HARDWARE_LIST_CHANGED = exports.CATEGORY_CHANGED = exports.HARDWARE_SEARCH_KEYWORD_CHANGED = exports.HARDWARE_MODULE_DOWNLOAD_REQUESTED = void 0;
 var immer_1 = __importDefault(__webpack_require__(/*! immer */ "./node_modules/immer/dist/immer.module.js"));
-var makeAction_1 = __webpack_require__(!(function webpackMissingModule() { var e = new Error("Cannot find module '../../functions/makeAction'"); e.code = 'MODULE_NOT_FOUND'; throw e; }()));
+var makeAction_1 = __webpack_require__(/*! ../../functions/makeAction */ "./app/src/renderer/react/main/functions/makeAction.ts");
 var constants_1 = __webpack_require__(/*! ../../constants/constants */ "./app/src/renderer/react/main/constants/constants.ts");
 // types
 exports.HARDWARE_MODULE_DOWNLOAD_REQUESTED = 'hardware/HARDWARE_MODULE_DOWNLOAD_REQUESTED';
