@@ -189,7 +189,7 @@ var Main = function () {
                             rendererRouter.openExternalUrl('https://playentry.org');
                         } }, "https://playentry.org")),
                 react_1.default.createElement("div", null, hasNewVersion ? (react_1.default.createElement(VersionUpdateButton, { onClick: function () {
-                        rendererRouter.openExternalUrl('https://playentry.org/#!/offlineEditor');
+                        rendererRouter.openExternalUrl('https://playentry.org/download/hardware');
                     } }, translator.translate('Download the latest version'))) : (react_1.default.createElement(LatestVersionNotifyText, null, translator.translate('You are running the latest version.'))))))));
 };
 exports.default = Main;

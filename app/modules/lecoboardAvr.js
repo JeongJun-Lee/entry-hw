@@ -240,6 +240,7 @@ Module.prototype.handleRemoteData = function(handler) {
                             dataObj.data,
                         ),
                     ]);
+
                 }
             }
         });
@@ -300,6 +301,7 @@ Module.prototype.isRecentData = function(port, type, data) {
         if (
             this.recentCheckData[port].type === type &&
             this.recentCheckData[port].data === data
+
         ) {
             isRecent = true;
         }

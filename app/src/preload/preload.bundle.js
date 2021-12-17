@@ -7776,28 +7776,44 @@ var RendererRouter = /** @class */ (function () {
                         return [4 /*yield*/, electron_1.ipcRenderer
                                 .invoke('checkUpdate')
                                 .then(function (_a) {
-                                var hasNewVersion = _a.hasNewVersion, latestVersion = _a.version;
+                                var hasNewVersion = _a.hasNewVersion, recentVersion = _a.recentVersion;
                                 var lastDontCheckedVersion = localStorage.getItem('lastDontCheckedVersion');
                                 if (hasNewVersion &&
-                                    (!lastDontCheckedVersion || lastDontCheckedVersion < latestVersion)) {
+                                    (!lastDontCheckedVersion || lastDontCheckedVersion < recentVersion)) {
                                     modal
-                                        .alert(translate('You can use the latest Entry Hardware version(%1).').replace(/%1/gi, latestVersion), translate('Alert'), {
+                                        .alert(translate('You can use the latest Entry Hardware version(%1).').replace(/%1/gi, recentVersion), translate('Alert'), {
                                         positiveButtonText: translate('Download'),
                                         positiveButtonStyle: {
-                                            marginTop: '16px',
+                                            marginTop: '30px',
                                             marginBottom: '16px',
                                             width: '180px',
+                                            backgroundColor: '#4F80FF',
+                                            borderColor: '#4F80FF',
+                                            borderRadius: '7px',
                                         },
-                                        parentClassName: 'versionAlert',
+                                        containerStyle: {
+                                            overflow: 'hidden',
+                                            borderRadius: '7px',
+                                            boxShadow: 'none',
+                                            width: '388px'
+                                        },
+                                        contentStyle: {
+                                            fontSize: '18px',
+                                            color: '#2C313D',
+                                            lineHeight: '24px',
+                                            fontWeight: 'bolder',
+                                        },
                                         withDontShowAgain: true,
+                                    }, {
+                                        className: 'hideShadow',
                                     })
                                         .one('click', function (event, _a) {
                                         var dontShowChecked = _a.dontShowChecked;
                                         if (event === 'ok') {
-                                            electron_1.shell.openExternal('https://playentry.org/#!/offlineEditor');
+                                            electron_1.shell.openExternal('https://playentry.org/download/hardware');
                                         }
                                         if (dontShowChecked) {
-                                            localStorage.setItem('lastDontCheckedVersion', latestVersion);
+                                            localStorage.setItem('lastDontCheckedVersion', recentVersion);
                                         }
                                     });
                                 }
