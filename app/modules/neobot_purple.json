@@ -3,7 +3,7 @@
     "name": {
         "en": "NEW Neobot",
         "ko": "NEW 네오봇",
-        "uz": "Neo SoCo"
+        "uz": "NEO SoCo"
     },
     "category": "module",
     "platform": ["win32", "darwin"],
