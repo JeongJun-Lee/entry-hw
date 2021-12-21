@@ -22,7 +22,7 @@
         "type": "serial",
         "control": "slave",
         "vendor": "Silicon Labs",
-        "duration": 100,
+        "duration": 32,
         "baudRate": 115200
     }
   }
