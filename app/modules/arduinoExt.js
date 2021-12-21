@@ -10,6 +10,7 @@ function Module() {
         PULSEIN: 6,
         ULTRASONIC: 7,
         TIMER: 8,
+        STEPPER: 9,
     };
 
     this.actionTypes = {
@@ -23,7 +24,7 @@ function Module() {
         SHORT: 3,
     };
 
-    this.digitalPortTimeList = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    this.digitalPortTimeList = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
     this.sensorData = {
         ULTRASONIC: 0,
@@ -42,6 +43,7 @@ function Module() {
             '11': 0,
             '12': 0,
             '13': 0,
+            '14': 0,    // Stepper moter
         },
         ANALOG: {
             '0': 0,
@@ -415,7 +417,39 @@ Module.prototype.makeOutputBuffer = function(device, port, data) {
             buffer = Buffer.concat([buffer, value, time, dummy]);
             break;
         }
-        case this.sensorTypes.TONE: {
+        case this.sensorTypes.STEPPER: {
+            var port1 = new Buffer(2);
+            var port2 = new Buffer(2);
+            var port3 = new Buffer(2);
+            var port4 = new Buffer(2);
+            var speed = new Buffer(2);
+            var steps = new Buffer(2);
+            if ($.isPlainObject(data)) {
+                port1.writeInt16LE(data.port1);
+                port2.writeInt16LE(data.port2);
+                port3.writeInt16LE(data.port3);
+                port4.writeInt16LE(data.port4);
+                speed.writeInt16LE(data.speed);
+                steps.writeInt16LE(data.steps);
+            } else {
+                port1.writeInt16LE(0);
+                port2.writeInt16LE(0);
+                port3.writeInt16LE(0);
+                port4.writeInt16LE(0);
+                speed.writeInt16LE(0);
+                steps.writeInt16LE(0);
+            }
+            buffer = new Buffer([
+                255,
+                85,
+                16,
+                sensorIdx,
+                this.actionTypes.SET,
+                device,
+                port,
+            ]);
+            buffer = Buffer.concat([buffer, port1, port2, port3, port4, speed, steps, dummy]);
+            break;
         }
     }
 
@@ -448,6 +482,10 @@ Module.prototype.reset = function() {
     this.lastSendTime = 0;
 
     this.sensorData.PULSEIN = {};
+};
+
+Module.prototype.lostController = function(connector, stateCallback) {
+    // 아무일도 안하지만, 해당 함수가 선언되면 lostTimer 가 선언되지 않음.
 };
 
 module.exports = new Module();
