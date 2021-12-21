@@ -5,16 +5,16 @@
 # It is necessary for linking the library.
 
 # The name that we can dlopen(3).
-dlname='liblto_plugin.0.so'
+dlname='liblto_plugin-0.dll'
 
 # Names of this library.
-library_names='liblto_plugin.0.so liblto_plugin.so'
+library_names='liblto_plugin.dll.a'
 
 # The name of the static archive.
 old_library=''
 
 # Linker flags that can not go in dependency_libs.
-inherited_linker_flags=' '
+inherited_linker_flags=''
 
 # Libraries that this one depends upon.
 dependency_libs=''
@@ -38,4 +38,4 @@ dlopen=''
 dlpreopen=''
 
 # Directory that this library needs to be installed in:
-libdir='/Users/jenkins/jenkins/workspace/avr-gcc-staging/label/mac-mini/objdir/libexec/gcc/avr/7.3.0'
+libdir='/home/jenkins-mingw32/workspace/avr-gcc-staging/label/Ubuntu14.04x64-mingw32/objdir/libexec/gcc/avr/7.3.0'
