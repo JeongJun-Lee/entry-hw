@@ -4,13 +4,15 @@
  * This software contains the following license and notice below:
  * CC-BY-SA 3.0 (https://creativecommons.org/licenses/by-sa/3.0/)
  * Author : Ander, Mark Yan
- * Updated : Ander, Mark Yan
- * Date : 01/09/2016
+ * Updated : Ander, Mark Yan, JJ Lee
+ * Date : 12/19/2021
  * Description : Firmware for Makeblock Electronic modules with Scratch.
  * Copyright (C) 2013 - 2016 Maker Works Technology Co., Ltd. All right reserved. 
  **********************************************************************************/
 // 서보 라이브러리
 #include <Servo.h>
+// 스텝퍼 라이브러리
+#include <Stepper.h>
 
 // 동작 상수
 #define ALIVE 0
@@ -22,6 +24,7 @@
 #define PULSEIN 6
 #define ULTRASONIC 7
 #define TIMER 8
+#define STEPPER 9
 
 // 상태 상수
 #define GET 1
@@ -236,6 +239,20 @@ void runModule(int device) {
       lastTime = millis()/1000.0; 
     }
     break;
+    case STEPPER:{
+      int p1 = readBuffer(7);
+      int p2 = readBuffer(9);
+      int p3 = readBuffer(11);
+      int p4 = readBuffer(13);     
+      int sp = readBuffer(15);
+      int s = readShort(17); // 값이 최대 2048이므
+      if(s>=-2048&&s<=2048) {
+        Stepper st(2048, p1, p2, p3, p4);
+        st.setSpeed(sp);
+        st.step(s);
+      }
+    }
+    break;
   }
 }
 
@@ -402,4 +419,3 @@ void callDebug(char c){
   writeSerial(c);
   writeEnd();
 }
-
