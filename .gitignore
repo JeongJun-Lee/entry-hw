@@ -16,5 +16,3 @@ build/*.zip
 *.build.js
 *.bundle.js
 *.map
-
-app/firmwares/Arduino15

@@ -453,6 +453,7 @@ Module.prototype.makeOutputBuffer = function(device, port, data) {
         }
     }
 
+    // console.log('buffer=', buffer);
     return buffer;
 };
 
