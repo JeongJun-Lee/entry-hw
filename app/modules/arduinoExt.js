@@ -11,6 +11,8 @@ function Module() {
         ULTRASONIC: 7,
         TIMER: 8,
         STEPPER: 9,
+        DHTTEMP: 10,
+        DHTHUMI: 11,
     };
 
     this.actionTypes = {
@@ -28,6 +30,8 @@ function Module() {
 
     this.sensorData = {
         ULTRASONIC: 0,
+        DHTTEMP: 0,
+        DHTHUMI: 0,
         DIGITAL: {
             '0': 0,
             '1': 0,
@@ -68,12 +72,12 @@ function Module() {
     this.isDraing = false;
 }
 
-var sensorIdx = 0;
+let sensorIdx = 0;
 
 Module.prototype.init = function(handler, config) {};
 
 Module.prototype.setSerialPort = function(sp) {
-    var self = this;
+    const self = this;
     this.sp = sp;
 };
 
@@ -103,20 +107,22 @@ Module.prototype.validateLocalData = function(data) {
 };
 
 Module.prototype.requestRemoteData = function(handler) {
-    var self = this;
+    const self = this;
     if (!self.sensorData) {
         return;
     }
-    Object.keys(this.sensorData).forEach(function(key) {
+    // console.log(self.sensorData);
+
+    Object.keys(this.sensorData).forEach(key => {
         if (self.sensorData[key] != undefined) {
             if (key === 'DIGITAL') { // For legacy port reading
-                for (var i = 0; i < Object.keys(self.sensorData[key]).length; i++) {
-                    var value = self.sensorData[key][i];
+                for (let i = 0; i < Object.keys(self.sensorData[key]).length; i++) {
+                    const value = self.sensorData[key][i];
                     handler.write(i, value);
                 }
             } else if (key === 'ANALOG') { // For legacy port reading
-                for (var i = 0; i < Object.keys(self.sensorData[key]).length; i++) {
-                    var value = self.sensorData[key][i];
+                for (let i = 0; i < Object.keys(self.sensorData[key]).length; i++) {
+                    const value = self.sensorData[key][i];
                     handler.write('a' + i, value);
                 }
             } else {
@@ -127,34 +133,34 @@ Module.prototype.requestRemoteData = function(handler) {
 };
 
 Module.prototype.handleRemoteData = function(handler) {
-    var self = this;
-    var getDatas = handler.read('GET');
-    var setDatas = handler.read('SET') || this.defaultOutput;
-    var time = handler.read('TIME');
-    var buffer = new Buffer([]);
+    const self = this;
+    const getDatas = handler.read('GET');
+    const setDatas = handler.read('SET') || this.defaultOutput;
+    const time = handler.read('TIME');
+    let buffer = new Buffer([]);
 
     if (getDatas) {
-        var keys = Object.keys(getDatas);
-        keys.forEach(function(key) {
-            var isSend = false;
-            var dataObj = getDatas[key];
+        const keys = Object.keys(getDatas);
+        keys.forEach((key) => {
+            let isSend = false;
+            const dataObj = getDatas[key];
             if (
                 typeof dataObj.port === 'string' ||
                 typeof dataObj.port === 'number'
             ) {
-                var time = self.digitalPortTimeList[dataObj.port];
+                const time = self.digitalPortTimeList[dataObj.port];
                 if (dataObj.time > time) {
                     isSend = true;
                     self.digitalPortTimeList[dataObj.port] = dataObj.time;
                 }
             } else if (Array.isArray(dataObj.port)) {
-                isSend = dataObj.port.every(function(port) {
-                    var time = self.digitalPortTimeList[port];
+                isSend = dataObj.port.every((port) => {
+                    const time = self.digitalPortTimeList[port];
                     return dataObj.time > time;
                 });
 
                 if (isSend) {
-                    dataObj.port.forEach(function(port) {
+                    dataObj.port.forEach((port) => {
                         self.digitalPortTimeList[port] = dataObj.time;
                     });
                 }
@@ -171,7 +177,7 @@ Module.prototype.handleRemoteData = function(handler) {
                         self.makeSensorReadBuffer(
                             key,
                             dataObj.port,
-                            dataObj.data
+                            dataObj.data,
                         ),
                     ]);
                 }
@@ -180,9 +186,9 @@ Module.prototype.handleRemoteData = function(handler) {
     }
 
     if (setDatas) {
-        var setKeys = Object.keys(setDatas);
-        setKeys.forEach(function(port) {
-            var data = setDatas[port];
+        const setKeys = Object.keys(setDatas);
+        setKeys.forEach((port) => {
+            const data = setDatas[port];
             if (data) {
                 if (self.digitalPortTimeList[port] < data.time) {
                     self.digitalPortTimeList[port] = data.time;
@@ -208,29 +214,28 @@ Module.prototype.handleRemoteData = function(handler) {
 };
 
 Module.prototype.isRecentData = function(port, type, data) {
-    var that = this;
-    var isRecent = false;
+    const that = this;
+    let isRecent = false;
 
-    if(type == this.sensorTypes.ULTRASONIC) {
-        var portString = port.toString();
-        var isGarbageClear = false;
-        Object.keys(this.recentCheckData).forEach(function (key) {
-            var recent = that.recentCheckData[key];
-            if(key === portString) {
+    if (type == this.sensorTypes.ULTRASONIC) {
+        const portString = port.toString();
+        let isGarbageClear = false;
+        Object.keys(this.recentCheckData).forEach((key) => {
+            const  recent = that.recentCheckData[key];
+            if (key === portString) {
                 
             }
-            if(key !== portString && recent.type == that.sensorTypes.ULTRASONIC) {
+            if (key !== portString && recent.type == that.sensorTypes.ULTRASONIC) {
                 delete that.recentCheckData[key];
                 isGarbageClear = true;
             }
         });
 
-        if((port in this.recentCheckData && isGarbageClear) || !(port in this.recentCheckData)) {
+        if ((port in this.recentCheckData && isGarbageClear) || !(port in this.recentCheckData)) {
             isRecent = false;
         } else {
             isRecent = true;
         }
-        
     } else if (port in this.recentCheckData && type != this.sensorTypes.TONE) {
         if (
             this.recentCheckData[port].type === type &&
@@ -244,13 +249,13 @@ Module.prototype.isRecentData = function(port, type, data) {
 };
 
 Module.prototype.requestLocalData = function() {
-    var self = this;
+    const self = this;
 
     if (!this.isDraing && this.sendBuffers.length > 0) {
         this.isDraing = true;
-        this.sp.write(this.sendBuffers.shift(), function() {
+        this.sp.write(this.sendBuffers.shift(), () => {
             if (self.sp) {
-                self.sp.drain(function() {
+                self.sp.drain(() => {
                     self.isDraing = false;
                 });
             }
@@ -264,15 +269,15 @@ Module.prototype.requestLocalData = function() {
 ff 55 idx size data a
 */
 Module.prototype.handleLocalData = function(data) {
-    var self = this;
-    var datas = this.getDataByBuffer(data);
+    const self = this;
+    const datas = this.getDataByBuffer(data);
 
-    datas.forEach(function(data) {
+    datas.forEach((data) => {
         if (data.length <= 4 || data[0] !== 255 || data[1] !== 85) {
             return;
         }
-        var readData = data.subarray(2, data.length);
-        var value;
+        const readData = data.subarray(2, data.length);
+        let value;
         switch (readData[0]) {
             case self.sensorValueSize.FLOAT: {
                 value = new Buffer(readData.subarray(1, 5)).readFloatLE();
@@ -289,12 +294,20 @@ Module.prototype.handleLocalData = function(data) {
             }
         }
 
-        var type = readData[readData.length - 1];
-        var port = readData[readData.length - 2];
+        const type = readData[readData.length - 1];
+        const port = readData[readData.length - 2];
 
         switch (type) {
             case self.sensorTypes.DIGITAL: {
                 self.sensorData.DIGITAL[port] = value;
+                break;
+            }
+            case self.sensorTypes.DHTTEMP: {
+                self.sensorData.DHTTEMP = value;
+                break;
+            }
+            case self.sensorTypes.DHTHUMI: {
+                self.sensorData.DHTHUMI = value;
                 break;
             }
             case self.sensorTypes.ANALOG: {
@@ -326,8 +339,8 @@ ff 55 len idx action device port  slot  data a
 */
 
 Module.prototype.makeSensorReadBuffer = function(device, port, data) {
-    var buffer;
-    var dummy = new Buffer([10]);
+    let buffer;
+    const dummy = new Buffer([10]);
     if (device == this.sensorTypes.ULTRASONIC) {
         buffer = new Buffer([
             255,
@@ -338,6 +351,17 @@ Module.prototype.makeSensorReadBuffer = function(device, port, data) {
             device,
             port[0],
             port[1],
+            10,
+        ]);
+    } else if (device == this.sensorTypes.DHTTEMP || device == this.sensorTypes.DHTHUMI) {
+        buffer = new Buffer([
+            255,
+            85,
+            5,
+            sensorIdx,
+            this.actionTypes.GET,
+            device,
+            port,
             10,
         ]);
     } else if (!data) {
@@ -376,9 +400,9 @@ Module.prototype.makeSensorReadBuffer = function(device, port, data) {
 
 //0xff 0x55 0x6 0x0 0x1 0xa 0x9 0x0 0x0 0xa
 Module.prototype.makeOutputBuffer = function(device, port, data) {
-    var buffer;
-    var value = new Buffer(2);
-    var dummy = new Buffer([10]);
+    let buffer;
+    const value = new Buffer(2);
+    const dummy = new Buffer([10]);
     switch (device) {
         case this.sensorTypes.SERVO_PIN:
         case this.sensorTypes.DIGITAL:
@@ -397,7 +421,7 @@ Module.prototype.makeOutputBuffer = function(device, port, data) {
             break;
         }
         case this.sensorTypes.TONE: {
-            var time = new Buffer(2);
+            const time = new Buffer(2);
             if ($.isPlainObject(data)) {
                 value.writeInt16LE(data.value);
                 time.writeInt16LE(data.duration);
@@ -418,12 +442,12 @@ Module.prototype.makeOutputBuffer = function(device, port, data) {
             break;
         }
         case this.sensorTypes.STEPPER: {
-            var port1 = new Buffer(2);
-            var port2 = new Buffer(2);
-            var port3 = new Buffer(2);
-            var port4 = new Buffer(2);
-            var speed = new Buffer(2);
-            var steps = new Buffer(2);
+            const port1 = new Buffer(2);
+            const port2 = new Buffer(2);
+            const port3 = new Buffer(2);
+            const port4 = new Buffer(2);
+            const speed = new Buffer(2);
+            const steps = new Buffer(2);
             if ($.isPlainObject(data)) {
                 port1.writeInt16LE(data.port1);
                 port2.writeInt16LE(data.port2);
@@ -453,13 +477,14 @@ Module.prototype.makeOutputBuffer = function(device, port, data) {
         }
     }
 
+    // console.log('buffer=', buffer);
     return buffer;
 };
 
 Module.prototype.getDataByBuffer = function(buffer) {
-    var datas = [];
-    var lastIndex = 0;
-    buffer.forEach(function(value, idx) {
+    const datas = [];
+    let lastIndex = 0;
+    buffer.forEach((value, idx) => {
         if (value == 13 && buffer[idx + 1] == 10) {
             datas.push(buffer.subarray(lastIndex, idx));
             lastIndex = idx + 2;
@@ -470,7 +495,7 @@ Module.prototype.getDataByBuffer = function(buffer) {
 };
 
 Module.prototype.disconnect = function(connect) {
-    var self = this;
+    const self = this;
     connect.close();
     if (self.sp) {
         delete self.sp;
