@@ -13,6 +13,10 @@
 #include <Servo.h>
 // 스텝퍼 라이브러리
 #include <Stepper.h>
+// 온습도계 라이브러리
+#include <DHT.h>
+// IR 라이브러리
+#include <IRremote.h>
 
 // 동작 상수
 #define ALIVE 0
@@ -25,6 +29,8 @@
 #define ULTRASONIC 7
 #define TIMER 8
 #define STEPPER 9
+#define DHTTEMP 10
+#define DHTHUMI 11
 
 // 상태 상수
 #define GET 1
@@ -51,6 +57,9 @@ Servo servos[8];
 int trigPin = 13;
 int echoPin = 12;
 
+// DHT 센서 포트
+int dhtPin = -1;
+
 //포트별 상태
 int analogs[6]={0,0,0,0,0,0};
 int digitals[14]={0,0,0,0,0,0,0,0,0,0,0,0,0,0};
@@ -58,6 +67,9 @@ int servo_pins[8]={0,0,0,0,0,0,0,0};
 
 // 울트라소닉 최종 값
 float lastUltrasonic = 0;
+// 온습도센서 최종 값
+int lastDhtTemp = 0;
+int lastDhtHumi = 0;
 
 // 버퍼
 char buffer[52];
@@ -73,7 +85,8 @@ uint8_t command_index = 0;
 
 boolean isStart = false;
 boolean isUltrasonic = false;
-// 전역변수 선언 종료
+boolean isDhtTemp = false;
+boolean isDhtHumi = false;
 
 void setup(){
   Serial.begin(115200);
@@ -174,8 +187,18 @@ void parseData() {
       } else if(port == trigPin || port == echoPin) {
         setUltrasonicMode(false);
         digitals[port] = 0;
+      } else if(device == DHTTEMP) {
+        setDhtTempMode(true);
+        digitals[port] = 1; // Disable port update to Entry
+        dhtPin = port;
+      } else if(device == DHTHUMI) {
+        setDhtHumiMode(true);
+        digitals[port] = 1; // Disable port update to Entry
+        dhtPin = port;
       } else {
         setUltrasonicMode(false);
+        setDhtTempMode(false);
+        setDhtHumiMode(false);
         digitals[port] = 0;
       }
     }
@@ -275,12 +298,36 @@ void sendPinValues() {
     sendUltrasonic();  
     callOK();
   }
+
+  if(isDhtTemp) {
+    sendDhtTempValue();  
+    callOK();
+  }
+
+  if(isDhtHumi) {
+    sendDhtHumiValue();
+    callOK();
+  }
 }
 
 void setUltrasonicMode(boolean mode) {
   isUltrasonic = mode;
   if(!mode) {
     lastUltrasonic = 0;
+  }
+}
+
+void setDhtTempMode(boolean mode) {
+  isDhtTemp = mode;
+  if(!mode) {
+    lastDhtTemp = 0;
+  }
+}
+
+void setDhtHumiMode(boolean mode) {
+  isDhtHumi = mode;
+  if(!mode) {
+    lastDhtHumi = 0;
   }
 }
 
@@ -303,6 +350,40 @@ void sendUltrasonic() {
   writeSerial(trigPin);
   writeSerial(echoPin);
   writeSerial(ULTRASONIC);
+  writeEnd();
+}
+
+void sendDhtTempValue() {
+  DHT dht(dhtPin, DHT11);
+  dht.begin();
+  int value = dht.readTemperature();
+
+  if(value == 0) {
+    value = lastDhtTemp;
+  } else {
+    lastDhtTemp = value;
+  }
+  writeHead();
+  sendShort(value);  
+  writeSerial(dhtPin);
+  writeSerial(DHTTEMP);
+  writeEnd();
+}
+
+void sendDhtHumiValue() {
+  DHT dht(dhtPin, DHT11);
+  dht.begin();
+  int value = dht.readHumidity();
+
+  if(value == 0) {
+    value = lastDhtHumi;
+  } else {
+    lastDhtHumi = value;
+  }
+  writeHead();
+  sendShort(value);  
+  writeSerial(dhtPin);
+  writeSerial(DHTHUMI);
   writeEnd();
 }
 
