@@ -26,6 +26,7 @@ function Module() {
         SHORT: 3,
     };
 
+    // Entry.js쪽에서 특정 port(예를들어 14번)를 사용한다고, 여기에 반영 필요!
     this.digitalPortTimeList = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
     this.sensorData = {
@@ -47,7 +48,6 @@ function Module() {
             '11': 0,
             '12': 0,
             '13': 0,
-            '14': 0,    // Stepper moter
         },
         ANALOG: {
             '0': 0,
@@ -81,10 +81,17 @@ Module.prototype.setSerialPort = function(sp) {
     this.sp = sp;
 };
 
+/*
+    연결 후 초기에 송신할 데이터가 필요한 경우 사용합니다.
+    requestInitialData 를 사용한 경우 checkInitialData 가 필수입니다.
+    이 두 함수가 정의되어있어야 로직이 동작합니다. 필요없으면 작성하지 않아도 됩니다.
+    그러나, 현재는 하드웨어 선택 후 이 초기값 리턴되지 않으면, 펌웨어가 없는 것으로 간주해 신규 업로드를 시작하므로 보내야 함
+*/
 Module.prototype.requestInitialData = function() {
     return this.makeSensorReadBuffer(this.sensorTypes.ANALOG, 0);
 };
 
+// 연결 후 초기에 수신받아서 정상연결인지를 확인해야하는 경우 사용합니다.
 Module.prototype.checkInitialData = function(data, config) {
     return true;
     // 이후에 체크 로직 개선되면 처리
@@ -106,6 +113,78 @@ Module.prototype.validateLocalData = function(data) {
     return true;
 };
 
+/*
+// 하드웨어에서 온 데이터 처리
+패킷구조: ff 55 value_size value port type tailer a
+value_size: Float면 2, Short면 3
+*/
+Module.prototype.handleLocalData = function(data) {
+    const self = this;
+    const datas = this.getDataByBuffer(data);
+
+    datas.forEach((data) => {
+        if (data.length <= 4 || data[0] !== 255 || data[1] !== 85) { // Skip callOK from HW
+            return;
+        }
+        const readData = data.subarray(2, data.length);
+        let value;
+        switch (readData[0]) {
+            case self.sensorValueSize.FLOAT: {
+                value = new Buffer(readData.subarray(1, 5)).readFloatLE();
+                value = Math.round(value * 100) / 100;
+                break;
+            }
+            case self.sensorValueSize.SHORT: {
+                value = new Buffer(readData.subarray(1, 3)).readInt16LE();
+                break;
+            }
+            default: {
+                value = 0;
+                break;
+            }
+        }
+
+        const type = readData[readData.length - 1];
+        const port = readData[readData.length - 2];
+
+        switch (type) {
+            case self.sensorTypes.DIGITAL: {
+                self.sensorData.DIGITAL[port] = value;
+                break;
+            }
+            case self.sensorTypes.DHTTEMP: {
+                self.sensorData.DHTTEMP = value;
+                break;
+            }
+            case self.sensorTypes.DHTHUMI: {
+                self.sensorData.DHTHUMI = value;
+                break;
+            }
+            case self.sensorTypes.ANALOG: {
+                self.sensorData.ANALOG[port] = value;
+                break;
+            }
+            case self.sensorTypes.PULSEIN: {
+                self.sensorData.PULSEIN[port] = value;
+                break;
+            }
+            case self.sensorTypes.ULTRASONIC: {
+                self.sensorData.ULTRASONIC = value;
+                break;
+            }
+            case self.sensorTypes.TIMER: {
+                self.sensorData.TIMER = value;
+                break;
+            }
+            default: {
+                break;
+            }
+        }
+    });
+};
+
+// 하드웨어로부터 와서 처리된 데이터 -> 엔트리로 전달
+// 밑단에서 먼저 handleLocalData() 호출 후 다음 순차적으로 이를 호출
 Module.prototype.requestRemoteData = function(handler) {
     const self = this;
     if (!self.sensorData) {
@@ -113,6 +192,7 @@ Module.prototype.requestRemoteData = function(handler) {
     }
     // console.log(self.sensorData);
 
+    // For port monitoring in Entry
     Object.keys(this.sensorData).forEach(key => {
         if (self.sensorData[key] != undefined) {
             if (key === 'DIGITAL') { // For legacy port reading
@@ -132,6 +212,7 @@ Module.prototype.requestRemoteData = function(handler) {
     });
 };
 
+// 엔트리에서 받은 데이터에 대한 처리
 Module.prototype.handleRemoteData = function(handler) {
     const self = this;
     const getDatas = handler.read('GET');
@@ -213,6 +294,7 @@ Module.prototype.handleRemoteData = function(handler) {
     }
 };
 
+// 엔트리 블록 연속 중복전송 방지: 아두이노가 처리 감당 안될 정도로 버퍼에 쌓여 오동작 방지용
 Module.prototype.isRecentData = function(port, type, data) {
     const that = this;
     let isRecent = false;
@@ -236,7 +318,9 @@ Module.prototype.isRecentData = function(port, type, data) {
         } else {
             isRecent = true;
         }
-    } else if (port in this.recentCheckData && type != this.sensorTypes.TONE) {
+    } else if (port in this.recentCheckData && type != this.sensorTypes.TONE // 중복전송 예외
+        && type != this.sensorTypes.STEPPER
+        && type != this.sensorTypes.DHTTEMP && type != this.sensorTypes.DHTHUMI) {
         if (
             this.recentCheckData[port].type === type &&
             this.recentCheckData[port].data === data
@@ -248,6 +332,11 @@ Module.prototype.isRecentData = function(port, type, data) {
     return isRecent;
 };
 
+/*
+    엔트리에서 받아 처리된 데이터 -> 하드웨어로 전달
+    slave 모드인 경우 duration 속성 간격으로 지속적으로 기기에 요청을 보냅니다.
+    master 모드인 경우 하드웨어로부터 데이터 받자마자 바로 송신한다.
+*/
 Module.prototype.requestLocalData = function() {
     const self = this;
 
@@ -266,81 +355,15 @@ Module.prototype.requestLocalData = function() {
 };
 
 /*
-ff 55 idx size data a
+ff 55 len idx action device port (slot) (data) (tailer) (dummy)
+0  1  2   3   4      5      6    a      7      a        10Bytes
+len은 idx~데이터 까지의 길이 
+tailer는 HW에서 송신시 Serial.println()에 의한 LF값(10)
 */
-Module.prototype.handleLocalData = function(data) {
-    const self = this;
-    const datas = this.getDataByBuffer(data);
-
-    datas.forEach((data) => {
-        if (data.length <= 4 || data[0] !== 255 || data[1] !== 85) {
-            return;
-        }
-        const readData = data.subarray(2, data.length);
-        let value;
-        switch (readData[0]) {
-            case self.sensorValueSize.FLOAT: {
-                value = new Buffer(readData.subarray(1, 5)).readFloatLE();
-                value = Math.round(value * 100) / 100;
-                break;
-            }
-            case self.sensorValueSize.SHORT: {
-                value = new Buffer(readData.subarray(1, 3)).readInt16LE();
-                break;
-            }
-            default: {
-                value = 0;
-                break;
-            }
-        }
-
-        const type = readData[readData.length - 1];
-        const port = readData[readData.length - 2];
-
-        switch (type) {
-            case self.sensorTypes.DIGITAL: {
-                self.sensorData.DIGITAL[port] = value;
-                break;
-            }
-            case self.sensorTypes.DHTTEMP: {
-                self.sensorData.DHTTEMP = value;
-                break;
-            }
-            case self.sensorTypes.DHTHUMI: {
-                self.sensorData.DHTHUMI = value;
-                break;
-            }
-            case self.sensorTypes.ANALOG: {
-                self.sensorData.ANALOG[port] = value;
-                break;
-            }
-            case self.sensorTypes.PULSEIN: {
-                self.sensorData.PULSEIN[port] = value;
-                break;
-            }
-            case self.sensorTypes.ULTRASONIC: {
-                self.sensorData.ULTRASONIC = value;
-                break;
-            }
-            case self.sensorTypes.TIMER: {
-                self.sensorData.TIMER = value;
-                break;
-            }
-            default: {
-                break;
-            }
-        }
-    });
-};
-
-/*
-ff 55 len idx action device port  slot  data a
-0  1  2   3   4      5      6     7     8
-*/
-
+// 포트값(INPUT) 또는 요청결과값 회신 요청 만들기
 Module.prototype.makeSensorReadBuffer = function(device, port, data) {
     let buffer;
-    const dummy = new Buffer([10]);
+    const dummy = new Buffer([10]); // 10Bytes
     if (device == this.sensorTypes.ULTRASONIC) {
         buffer = new Buffer([
             255,
@@ -351,20 +374,9 @@ Module.prototype.makeSensorReadBuffer = function(device, port, data) {
             device,
             port[0],
             port[1],
-            10,
+            10, // tailer
         ]);
-    } else if (device == this.sensorTypes.DHTTEMP || device == this.sensorTypes.DHTHUMI) {
-        buffer = new Buffer([
-            255,
-            85,
-            5,
-            sensorIdx,
-            this.actionTypes.GET,
-            device,
-            port,
-            10,
-        ]);
-    } else if (!data) {
+    } else if (!data) { // DigitalRead, AnalogRead
         buffer = new Buffer([
             255,
             85,
@@ -377,7 +389,7 @@ Module.prototype.makeSensorReadBuffer = function(device, port, data) {
         ]);
     } else {
         value = new Buffer(2);
-        value.writeInt16LE(data);
+        value.writeInt16LE(data); // 2Bytes
         buffer = new Buffer([
             255,
             85,
@@ -386,7 +398,7 @@ Module.prototype.makeSensorReadBuffer = function(device, port, data) {
             this.actionTypes.GET,
             device,
             port,
-            10,
+            10, // slot
         ]);
         buffer = Buffer.concat([buffer, value, dummy]);
     }
@@ -395,10 +407,17 @@ Module.prototype.makeSensorReadBuffer = function(device, port, data) {
         sensorIdx = 0;
     }
 
+    // console.log('GetCmdBuf=', buffer);
     return buffer;
 };
 
-//0xff 0x55 0x6 0x0 0x1 0xa 0x9 0x0 0x0 0xa
+/*
+ff   55   len idx action device port data     dummy
+0    1    2   3   4      5      6    7    8
+0xff 0x55 0x6 0x0 0x2    0xa    0x9  0x0  0x0 10Bytes
+len은 idx~데이터 까지의 길이 
+*/
+// 실행요청(OUTPUT) 만들기 
 Module.prototype.makeOutputBuffer = function(device, port, data) {
     let buffer;
     const value = new Buffer(2);
@@ -407,7 +426,7 @@ Module.prototype.makeOutputBuffer = function(device, port, data) {
         case this.sensorTypes.SERVO_PIN:
         case this.sensorTypes.DIGITAL:
         case this.sensorTypes.PWM: {
-            value.writeInt16LE(data);
+            value.writeInt16LE(data); // 2byptes
             buffer = new Buffer([
                 255,
                 85,
@@ -477,7 +496,7 @@ Module.prototype.makeOutputBuffer = function(device, port, data) {
         }
     }
 
-    // console.log('buffer=', buffer);
+    // console.log('SetCmdBuf=', buffer);
     return buffer;
 };
 
@@ -510,7 +529,7 @@ Module.prototype.reset = function() {
 };
 
 Module.prototype.lostController = function(connector, stateCallback) {
-    // 아무일도 안하지만, 해당 함수가 선언되면 lostTimer 가 선언되지 않음.
+    // 아무일도 안하지만, 해당 함수가 선언되면 하드웨어에서 시간 내 응답없으면 연결 종료시키는 lostTimer가 선언되지 않음
 };
 
 module.exports = new Module();
