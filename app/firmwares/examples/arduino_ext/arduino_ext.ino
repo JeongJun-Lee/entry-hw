@@ -15,8 +15,6 @@
 #include <Stepper.h>
 // 온습도계 라이브러리
 #include <DHT.h>
-// IR 라이브러리
-#include <IRremote.h>
 
 // 동작 상수
 #define ALIVE 0
@@ -51,16 +49,15 @@ union{
 }valShort;
 
 // 전역변수 선언 시작
-Servo servos[8];  
+Servo servos[8]; // 아두이노 최대 연결가능 서보모터 수
 
-//울트라 소닉 포트
+// 울트라 소닉 포트
 int trigPin = 13;
 int echoPin = 12;
-
-// DHT 센서 포트
+// 온습도 포트
 int dhtPin = -1;
 
-//포트별 상태
+// 포트별 상태: 1이 되면 값을 read해서 엔트리로 전송
 int analogs[6]={0,0,0,0,0,0};
 int digitals[14]={0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 int servo_pins[8]={0,0,0,0,0,0,0,0};
@@ -85,37 +82,43 @@ uint8_t command_index = 0;
 
 boolean isStart = false;
 boolean isUltrasonic = false;
-boolean isDhtTemp = false;
-boolean isDhtHumi = false;
 
 void setup(){
   Serial.begin(115200);
-  initPorts();
+  Serial.flush();
   delay(200);
-}
 
-void initPorts() {
-  for (int pinNumber = 0; pinNumber < 14; pinNumber++) {
-    pinMode(pinNumber, OUTPUT);
-    digitalWrite(pinNumber, LOW);
+  // 아두이노는 기본적으로 전원인가 후 내장LED가 켜지므로 초기값은 끈 상태로 유지
+  pinMode(13, OUTPUT);
+  digitalWrite(13, LOW);
+
+  // 아날로그 포트 상시 모니터링 위해 포트 On
+  for (int pinNumber = 0; pinNumber < 6; pinNumber++) {
+    analogs[pinNumber] = 1;
   }
 }
 
 void loop(){
-  while (Serial.available()) {
+  while (Serial.available()) { // 수신 데이터 파싱
     if (Serial.available() > 0) {
       char serialRead = Serial.read();
-      setPinValue(serialRead&0xff);
+      setPinValue(serialRead&0xff); 
     }
   } 
   delay(15);
-  sendPinValues();
+  sendPinValues(); // 포트 상태값 포함한 요청값 회신
   delay(10);
 }
 
+/*
+ff 55 len idx action device port (slot) (data) (tailer) (dummy)
+0  1  2   3   4      5      6    a      7      a        10Bytes
+len은 idx~데이터 까지의 길이 
+tailer는 HW에서 송신시 Serial.println()에 의한 LF값(10)
+*/
 void setPinValue(unsigned char c) {
   if(c==0x55&&isStart==false){
-    if(prevc==0xff){
+    if(prevc==0xff){ // 0xFF 0x55 헤더 확인
       index=1;
       isStart = true;
     }    
@@ -134,7 +137,7 @@ void setPinValue(unsigned char c) {
     
   index++;
   
-  if(index>51) {
+  if(index>51) { // 50Bytes 까지 읽고 초기화?
     index=0; 
     isStart=false;
   }
@@ -160,63 +163,45 @@ void parseData() {
   switch(action){
     case GET:{
       if(device == ULTRASONIC) {
-        if(!isUltrasonic) {
-          setUltrasonicMode(true);
-          trigPin = readBuffer(6);
-          echoPin = readBuffer(7);
-          digitals[trigPin] = 1;
-          digitals[echoPin] = 1;
-          pinMode(trigPin, OUTPUT);
-          pinMode(echoPin, INPUT);
-          delay(50);
-        } else {
-          int trig = readBuffer(6);
-          int echo = readBuffer(7);
-          if(trig != trigPin || echo != echoPin) {
-            digitals[trigPin] = 0;
-            digitals[echoPin] = 0;
-            trigPin = trig;
-            echoPin = echo;
-            digitals[trigPin] = 1;
-            digitals[echoPin] = 1;
-            pinMode(trigPin, OUTPUT);            
-            pinMode(echoPin, INPUT);
-            delay(50);
-          }
-        }
-      } else if(port == trigPin || port == echoPin) {
-        setUltrasonicMode(false);
-        digitals[port] = 0;
+        setUltrasonicMode(true);
+        trigPin = readBuffer(6);
+        echoPin = readBuffer(7);
+        digitals[trigPin] = 0;  // Report Off
+        digitals[echoPin] = 0;  // Report Off
+        pinMode(trigPin, OUTPUT);
+        pinMode(echoPin, INPUT);
+        delay(50);
       } else if(device == DHTTEMP) {
-        setDhtTempMode(true);
-        digitals[port] = 1; // Disable port update to Entry
+        sendDhtTempValue(port);
         dhtPin = port;
       } else if(device == DHTHUMI) {
-        setDhtHumiMode(true);
-        digitals[port] = 1; // Disable port update to Entry
+        sendDhtHumiValue(port);
         dhtPin = port;
       } else {
-        setUltrasonicMode(false);
-        setDhtTempMode(false);
-        setDhtHumiMode(false);
-        digitals[port] = 0;
+        // 신규 요청이 기 사용중인 포트에 대한 요청이면 기존 것은 중지
+        if(port == trigPin || port == echoPin) { 
+          setUltrasonicMode(false);
+        } else if(port == dhtPin) {
+          initDhtTempVal();
+          initDhtHumiVal();
+        }
+        digitals[port] = 1; // 엔트리 요청에 의해 포트값을 보내야 할 때 On시킴 (digitalRead)
       }
     }
     break;
     case SET:{
       runModule(device);
-      callOK();
+      // callOK();
     }
     break;
     case RESET:{
-      callOK();
+      // callOK();
     }
     break;
   }
 }
 
 void runModule(int device) {
-  //0xff 0x55 0x6 0x0 0x1 0xa 0x9 0x0 0x0 0xa
   int port = readBuffer(6);
   int pin = port;
 
@@ -279,34 +264,25 @@ void runModule(int device) {
   }
 }
 
+// For port monitoring in Entry
 void sendPinValues() {  
   int pinNumber = 0;
   for (pinNumber = 0; pinNumber < 14; pinNumber++) {
-    if(digitals[pinNumber] == 0) {
+    if(digitals[pinNumber] == 1) {
       sendDigitalValue(pinNumber);
-      callOK();
+      // callOK();
     }
   }
   for (pinNumber = 0; pinNumber < 6; pinNumber++) {
-    if(analogs[pinNumber] == 0) {
+    if(analogs[pinNumber] == 1) {
       sendAnalogValue(pinNumber);
-      callOK();
+      // callOK();
     }
   }
   
   if(isUltrasonic) {
     sendUltrasonic();  
-    callOK();
-  }
-
-  if(isDhtTemp) {
-    sendDhtTempValue();  
-    callOK();
-  }
-
-  if(isDhtHumi) {
-    sendDhtHumiValue();
-    callOK();
+    // callOK();
   }
 }
 
@@ -317,18 +293,12 @@ void setUltrasonicMode(boolean mode) {
   }
 }
 
-void setDhtTempMode(boolean mode) {
-  isDhtTemp = mode;
-  if(!mode) {
-    lastDhtTemp = 0;
-  }
+void initDhtTempVal() {
+  lastDhtTemp = 0;
 }
 
-void setDhtHumiMode(boolean mode) {
-  isDhtHumi = mode;
-  if(!mode) {
-    lastDhtHumi = 0;
-  }
+void initDhtHumiVal() {
+  lastDhtHumi = 0;
 }
 
 void sendUltrasonic() {
@@ -337,9 +307,10 @@ void sendUltrasonic() {
   digitalWrite(trigPin, HIGH);
   delayMicroseconds(10);
   digitalWrite(trigPin, LOW);
+  
+  float value = pulseIn(echoPin, HIGH) / 29.0 / 2.0;
 
-  float value = pulseIn(echoPin, HIGH, 30000) / 29.0 / 2.0;
-
+  // 만약 측정값을 얻지 못하면 대신 이전에 측정된 값을 회신하기
   if(value == 0) {
     value = lastUltrasonic;
   } else {
@@ -353,8 +324,8 @@ void sendUltrasonic() {
   writeEnd();
 }
 
-void sendDhtTempValue() {
-  DHT dht(dhtPin, DHT11);
+void sendDhtTempValue(int pinNumber) {
+  DHT dht(pinNumber, DHT11);
   dht.begin();
   int value = dht.readTemperature();
 
@@ -365,13 +336,13 @@ void sendDhtTempValue() {
   }
   writeHead();
   sendShort(value);  
-  writeSerial(dhtPin);
+  writeSerial(pinNumber);
   writeSerial(DHTTEMP);
   writeEnd();
 }
 
-void sendDhtHumiValue() {
-  DHT dht(dhtPin, DHT11);
+void sendDhtHumiValue(int pinNumber) {
+  DHT dht(pinNumber, DHT11);
   dht.begin();
   int value = dht.readHumidity();
 
@@ -382,7 +353,7 @@ void sendDhtHumiValue() {
   }
   writeHead();
   sendShort(value);  
-  writeSerial(dhtPin);
+  writeSerial(pinNumber);
   writeSerial(DHTHUMI);
   writeEnd();
 }
@@ -390,9 +361,9 @@ void sendDhtHumiValue() {
 void sendDigitalValue(int pinNumber) {
   pinMode(pinNumber,INPUT);
   writeHead();
-  sendFloat(digitalRead(pinNumber));  
-  writeSerial(pinNumber);
-  writeSerial(DIGITAL);
+  sendFloat(digitalRead(pinNumber));
+  writeSerial(pinNumber); // port
+  writeSerial(DIGITAL);   // type
   writeEnd();
 }
 
@@ -482,10 +453,10 @@ int searchServoPin(int pin){
 }
 
 void setPortWritable(int pin) {
-  if(digitals[pin] == 0) {
-    digitals[pin] = 1;
-    pinMode(pin, OUTPUT);
+  if(digitals[pin] == 1) { // 이전에 digitalRead 였으면 Report Off
+    digitals[pin] = 0;    
   } 
+  pinMode(pin, OUTPUT);
 }
 
 void callOK(){
