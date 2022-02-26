@@ -26,7 +26,7 @@ function Module() {
         SHORT: 3,
     };
 
-    // Entry.js쪽에서 특정 port(예를들어 14번)를 사용한다고, 여기에 반영 필요!
+    // Entry.js쪽에서 특정 port(예를들어 stepper motor 14번)를 사용한다고, 여기에 반영 필요!
     this.digitalPortTimeList = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
     this.sensorData = {
@@ -113,76 +113,6 @@ Module.prototype.validateLocalData = function(data) {
     return true;
 };
 
-/*
-// 하드웨어에서 온 데이터 처리
-패킷구조: ff 55 value_size value port type tailer a
-value_size: Float면 2, Short면 3
-*/
-Module.prototype.handleLocalData = function(data) {
-    const self = this;
-    const datas = this.getDataByBuffer(data);
-
-    datas.forEach((data) => {
-        if (data.length <= 4 || data[0] !== 255 || data[1] !== 85) { // Skip callOK from HW
-            return;
-        }
-        const readData = data.subarray(2, data.length);
-        let value;
-        switch (readData[0]) {
-            case self.sensorValueSize.FLOAT: {
-                value = new Buffer(readData.subarray(1, 5)).readFloatLE();
-                value = Math.round(value * 100) / 100;
-                break;
-            }
-            case self.sensorValueSize.SHORT: {
-                value = new Buffer(readData.subarray(1, 3)).readInt16LE();
-                break;
-            }
-            default: {
-                value = 0;
-                break;
-            }
-        }
-
-        const type = readData[readData.length - 1];
-        const port = readData[readData.length - 2];
-
-        switch (type) {
-            case self.sensorTypes.DIGITAL: {
-                self.sensorData.DIGITAL[port] = value;
-                break;
-            }
-            case self.sensorTypes.DHTTEMP: {
-                self.sensorData.DHTTEMP = value;
-                break;
-            }
-            case self.sensorTypes.DHTHUMI: {
-                self.sensorData.DHTHUMI = value;
-                break;
-            }
-            case self.sensorTypes.ANALOG: {
-                self.sensorData.ANALOG[port] = value;
-                break;
-            }
-            case self.sensorTypes.PULSEIN: {
-                self.sensorData.PULSEIN[port] = value;
-                break;
-            }
-            case self.sensorTypes.ULTRASONIC: {
-                self.sensorData.ULTRASONIC = value;
-                break;
-            }
-            case self.sensorTypes.TIMER: {
-                self.sensorData.TIMER = value;
-                break;
-            }
-            default: {
-                break;
-            }
-        }
-    });
-};
-
 // 하드웨어로부터 와서 처리된 데이터 -> 엔트리로 전달
 // 밑단에서 먼저 handleLocalData() 호출 후 다음 순차적으로 이를 호출
 Module.prototype.requestRemoteData = function(handler) {
@@ -234,7 +164,8 @@ Module.prototype.handleRemoteData = function(handler) {
                     isSend = true;
                     self.digitalPortTimeList[dataObj.port] = dataObj.time;
                 }
-            } else if (Array.isArray(dataObj.port)) {
+                prevKey = key;
+            } else if (Array.isArray(dataObj.port)) { // For example, UltraSonic
                 isSend = dataObj.port.every((port) => {
                     const time = self.digitalPortTimeList[port];
                     return dataObj.time > time;
@@ -291,6 +222,7 @@ Module.prototype.handleRemoteData = function(handler) {
 
     if (buffer.length) {
         this.sendBuffers.push(buffer);
+        // console.log('sendBuf= ', this.sendBuffers);
     }
 };
 
@@ -299,7 +231,7 @@ Module.prototype.isRecentData = function(port, type, data) {
     const that = this;
     let isRecent = false;
 
-    if (type == this.sensorTypes.ULTRASONIC) {
+    if (type == this.sensorTypes.ULTRASONIC || type == this.sensorTypes.DHTTEMP || type == this.sensorTypes.DHTHUMI) {
         const portString = port.toString();
         let isGarbageClear = false;
         Object.keys(this.recentCheckData).forEach((key) => {
@@ -307,7 +239,8 @@ Module.prototype.isRecentData = function(port, type, data) {
             if (key === portString) {
                 
             }
-            if (key !== portString && recent.type == that.sensorTypes.ULTRASONIC) {
+            if (key !== portString && (recent.type == that.sensorTypes.ULTRASONIC
+                || recent.type == that.sensorTypes.DHTTEMP || recent.type == that.sensorTypes.DHTHUMI)) {
                 delete that.recentCheckData[key];
                 isGarbageClear = true;
             }
@@ -318,9 +251,7 @@ Module.prototype.isRecentData = function(port, type, data) {
         } else {
             isRecent = true;
         }
-    } else if (port in this.recentCheckData && type != this.sensorTypes.TONE // 중복전송 예외
-        && type != this.sensorTypes.STEPPER
-        && type != this.sensorTypes.DHTTEMP && type != this.sensorTypes.DHTHUMI) {
+    } else if (port in this.recentCheckData && type != this.sensorTypes.TONE) {
         if (
             this.recentCheckData[port].type === type &&
             this.recentCheckData[port].data === data
@@ -355,10 +286,81 @@ Module.prototype.requestLocalData = function() {
 };
 
 /*
+// 하드웨어에서 온 데이터 처리
+패킷구조: ff 55 value_size value port type tailer a
+value_size: Float면 2, Short면 3
+*/
+Module.prototype.handleLocalData = function(data) {
+    const self = this;
+    const datas = this.getDataByBuffer(data);
+
+    datas.forEach((data) => {
+        if (data.length <= 4 || data[0] !== 255 || data[1] !== 85) { // Skip callOK from HW
+            return;
+        }
+        const readData = data.subarray(2, data.length);
+        let value;
+        switch (readData[0]) {
+            case self.sensorValueSize.FLOAT: {
+                value = new Buffer(readData.subarray(1, 5)).readFloatLE();
+                value = Math.round(value * 100) / 100;
+                break;
+            }
+            case self.sensorValueSize.SHORT: {
+                value = new Buffer(readData.subarray(1, 3)).readInt16LE();
+                break;
+            }
+            default: {
+                value = 0;
+                break;
+            }
+        }
+
+        const type = readData[readData.length - 1];
+        const port = readData[readData.length - 2];
+
+        switch (type) {
+            case self.sensorTypes.DIGITAL: {
+                self.sensorData.DIGITAL[port] = value;
+                break;
+            }
+            case self.sensorTypes.ANALOG: {
+                self.sensorData.ANALOG[port] = value;
+                break;
+            }
+            case self.sensorTypes.PULSEIN: {
+                self.sensorData.PULSEIN[port] = value;
+                break;
+            }
+            case self.sensorTypes.ULTRASONIC: {
+                self.sensorData.ULTRASONIC = value;
+                break;
+            }
+            case self.sensorTypes.DHTTEMP: {
+                self.sensorData.DHTTEMP = value;
+                break;
+            }
+            case self.sensorTypes.DHTHUMI: {
+                self.sensorData.DHTHUMI = value;
+                break;
+            }
+            case self.sensorTypes.TIMER: {
+                self.sensorData.TIMER = value;
+                break;
+            }
+            default: {
+                break;
+            }
+        }
+    });
+};
+
+/*
 ff 55 len idx action device port (slot) (data) (tailer) (dummy)
 0  1  2   3   4      5      6    a      7      a        10Bytes
 len은 idx~데이터 까지의 길이 
 tailer는 HW에서 송신시 Serial.println()에 의한 LF값(10)
+idx은 아두이노 보드에서 실제 활용되지는 않음
 */
 // 포트값(INPUT) 또는 요청결과값 회신 요청 만들기
 Module.prototype.makeSensorReadBuffer = function(device, port, data) {
@@ -376,7 +378,29 @@ Module.prototype.makeSensorReadBuffer = function(device, port, data) {
             port[1],
             10, // tailer
         ]);
-    } else if (!data) { // DigitalRead, AnalogRead
+    } else if (device == this.sensorTypes.DHTTEMP) {
+        buffer = new Buffer([
+            255,
+            85,
+            5,
+            sensorIdx,
+            this.actionTypes.GET,
+            device,
+            port,
+            10,
+        ]);
+    } else if (device == this.sensorTypes.DHTHUMI) {
+        buffer = new Buffer([
+            255,
+            85,
+            6,
+            sensorIdx,
+            this.actionTypes.GET,
+            device,
+            port,
+            10,
+        ]);
+    } else if (!data) { // DigitalRead
         buffer = new Buffer([
             255,
             85,
