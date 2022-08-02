@@ -37,6 +37,10 @@ declare type IFirmwareInfo =
     | ICopyTypeFirmware
     | IESP32TypeFirmware
     | IUploadableFirmware; // Should be compliled from Arduino source file
+declare type ICustomButtonInfo =
+    | string
+    | { key: string; translate: string }
+    | [{ key: string; translate: string }];
 
 declare type IHardwareType = 'serial' | 'bluetooth' | 'hid' | 'ble';
 declare type IHardwareControlType = 'slave' | 'master';
@@ -104,6 +108,7 @@ declare interface IHardwareConfig {
     firmware?: IFirmwareInfo;
     firmwareBaudRate?: number;
     firmwareMCUType?: string;
+    customButton?: ICustomButtonInfo;
 
     url?: string;
     email?: string;
