@@ -9,14 +9,12 @@
  * Description : Firmware for Makeblock Electronic modules with Scratch.
  * Copyright (C) 2013 - 2016 Maker Works Technology Co., Ltd. All right reserved. 
  **********************************************************************************/
-// 서보 라이브러리
+
 #include <Servo.h>
-// 스텝퍼 라이브러리
 #include <Stepper.h>
-// 온습도계 라이브러리
 #include <DHT.h>
 
-// 동작 상수
+// 타입 상수
 #define ALIVE 0
 #define DIGITAL 1
 #define ANALOG 2
@@ -29,6 +27,7 @@
 #define STEPPER 9
 #define DHTTEMP 10
 #define DHTHUMI 11
+#define DHTINIT 12
 
 // 상태 상수
 #define GET 1
@@ -36,17 +35,17 @@
 #define RESET 3
 
 // val Union
-union{
+union {
   byte byteVal[4];
   float floatVal;
   long longVal;
-}val;
+} val;
 
 // valShort Union
-union{
+union {
   byte byteVal[2];
   short shortVal;
-}valShort;
+} valShort;
 
 // 전역변수 선언 시작
 Servo servos[8]; // 아두이노 최대 연결가능 서보모터 수
@@ -57,21 +56,19 @@ int echoPin = 12;
 boolean isUltrasonic = false;
 
 // 온습도
-DHT* dhtTempObj = NULL;
-DHT* dhtHumiObj = NULL;
-int dhtTempPin = -1;
-int dhtHumiPin = -1;
-boolean isDhtTemp = false;
+DHT* dhtObj = NULL;
+int dhtPin = -1;
+boolean isDhtTemp = false; // true이 되면 값을 read해서 엔트리로 전송
 boolean isDhtHumi = false;
 
 // 포트별 상태: 1이 되면 값을 read해서 엔트리로 전송
-int analogs[6]={0,0,0,0,0,0};
-int digitals[14]={0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-int servo_pins[8]={0,0,0,0,0,0,0,0};
+int analogs[6] = {0,0,0,0,0,0};
+int digitals[14] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+int servo_pins[8] = {0,0,0,0,0,0,0,0};
 
 // 버퍼
 char buffer[52];
-unsigned char prevc=0;
+unsigned char prevc = 0;
 
 byte index = 0;
 byte dataLen;
@@ -82,7 +79,7 @@ double currentTime = 0.0;
 uint8_t command_index = 0;
 boolean isStart = false;
 
-void setup(){
+void setup() {
   Serial.begin(115200);
   Serial.flush();
   delay(200);
@@ -97,11 +94,11 @@ void setup(){
   }
 }
 
-void loop(){
+void loop() {
   while (Serial.available()) { // 수신 데이터 파싱
     if (Serial.available() > 0) {
       char serialRead = Serial.read();
-      setPinValue(serialRead&0xff); 
+      setPinValue(serialRead & 0xff); 
     }
   } 
   delay(15);
@@ -116,39 +113,39 @@ len은 idx~데이터 까지의 길이
 tailer는 HW에서 송신시 Serial.println()에 의한 LF값(10)
 */
 void setPinValue(unsigned char c) {
-  if(c==0x55&&isStart==false){
-    if(prevc==0xff){ // 0xFF 0x55 헤더 확인
-      index=1;
+  if (c == 0x55 && isStart == false) {
+    if (prevc == 0xff) { // 0xFF 0x55 헤더 확인
+      index = 1;
       isStart = true;
     }    
   } else {    
     prevc = c;
     if(isStart) {
-      if(index==2){
+      if (index == 2) {
         dataLen = c; 
-      } else if(index>2) {
+      } else if (index > 2) {
         dataLen--;
       }
       
-      writeBuffer(index,c);
+      writeBuffer(index, c);
     }
   }
     
   index++;
   
-  if(index>51) { // 50Bytes 까지 읽고 초기화?
-    index=0; 
-    isStart=false;
+  if (index > 51) { // 50Bytes 크기 버퍼
+    index = 0; 
+    isStart = false;
   }
     
-  if(isStart&&dataLen==0&&index>3){  
+  if (isStart && dataLen == 0 && index > 3) {
     isStart = false;
     parseData(); 
-    index=0;
+    index = 0;
   }
 }
 
-unsigned char readBuffer(int index){
+unsigned char readBuffer(int index) {
   return buffer[index]; 
 }
 
@@ -160,10 +157,9 @@ void parseData() {
   int device = readBuffer(5);
   int port = readBuffer(6);
 
-  switch(action){
-    case GET:{ // 매번 엔트리에서 요청하는 방식이 아닌, 하드웨어가 값을 계속 보내올 것을 1회성 요청하는 방식
-      if(device == ULTRASONIC) {
-        isUltrasonic = true;
+  switch(action) {
+    case GET: { // 매번 엔트리에서 요청하는 방식이 아닌, 하드웨어가 값을 계속 보내올 것(구독)을 1회성 요청하는 방식
+      if (device == ULTRASONIC) {
         trigPin = readBuffer(6);
         echoPin = readBuffer(7);
         digitals[trigPin] = 0;  // Report Off
@@ -171,46 +167,35 @@ void parseData() {
         pinMode(trigPin, OUTPUT);
         pinMode(echoPin, INPUT);
         delay(50);
-
-      } else if(device == DHTTEMP) {
-        if (!dhtTempObj || (dhtTempPin != port)) { // 포트변경시 새 객체 생성
-          if (dhtTempObj) delete dhtTempObj;
-          dhtTempObj = new DHT(port, DHT11);
-          dhtTempObj->begin();
-        }
-        dhtTempPin = port;
-        digitals[port] = 0;  // Report Off
+        isUltrasonic = true;
+      } else if (device == DHTTEMP) { // DHTINIT에 의해 초기화를 별도로 수행
         isDhtTemp = true;
-        
-      } else if(device == DHTHUMI) {
-        if (!dhtHumiObj || (dhtHumiPin != port)) { // 포트변경시 새 객체 생성
-          if (dhtHumiObj) delete dhtHumiObj;
-          dhtHumiObj = new DHT(port, DHT11);
-          dhtHumiObj->begin();
-        }
-        dhtHumiPin = port;
-        digitals[port] = 0;  // Report Off
+      } else if (device == DHTHUMI) {
         isDhtHumi = true;
-        
       } else {
-        // 신규 요청이 기 사용중인 포트와 겹치면 기존 것은 중지
+        // 신규 요청이 기 사용중(구독중)인 포트와 겹치면 기존 것은 중지
         if(port == trigPin || port == echoPin) { 
           isUltrasonic = false;
-        } else if(port == dhtTempPin) {
+        } else if (port == dhtPin) {
           isDhtTemp = false;
-        } else if(port == dhtHumiPin) {
           isDhtHumi = false;
         }
-        digitals[port] = 1; // 엔트리 요청에 의해 포트값을 보내야 할 때 On시킴 (digitalRead)
+        digitals[port] = 1;
       }
     }
     break;
-    case SET:{ //매번 엔트리에서 값을 set하는 방식
+    case SET: { //매번 엔트리에서 값을 set하는 방식
       runModule(device);
       // callOK();
     }
     break;
-    case RESET:{
+    case RESET: { // 엔트리와 연결시 마다 초기화 수행
+      for (int pinNumber = 0; pinNumber < sizeof(digitals); pinNumber++) {
+        digitals[pinNumber] = 0;
+      }
+      isUltrasonic = false;
+      isDhtTemp = false;
+      isDhtHumi = false;
       // callOK();
     }
     break;
@@ -221,65 +206,66 @@ void runModule(int device) {
   int port = readBuffer(6);
   int pin = port;
 
-  // 신규 요청이 기 사용중인 포트와 겹치면 기존 것은 중지
-  if(pin == trigPin || pin == echoPin) {
-    isUltrasonic = false;
-  } else if(port == dhtTempPin) {
-    isDhtTemp = false;
-  } else if(port == dhtHumiPin) {
-    isDhtHumi = false;
-  } 
-  
-  switch(device){
-    case DIGITAL:{      
+  switch(device) {
+    case DIGITAL: {      
       setPortWritable(pin);
       int v = readBuffer(7);
       digitalWrite(pin,v);
     }
     break;
-    case PWM:{
+    case PWM: {
       setPortWritable(pin);
       int v = readBuffer(7);
       analogWrite(pin,v);
     }
     break;
-    case TONE:{
+    case TONE: {
       setPortWritable(pin);
       int hz = readShort(7);
       int ms = readShort(9);
-      if(ms>0) {
+      if (ms > 0) {
         tone(pin, hz, ms);
       } else {
         noTone(pin);
       }
     }
     break;
-    case SERVO_PIN:{
+    case SERVO_PIN: {
       setPortWritable(pin);
       int v = readBuffer(7);
-      if(v>=0&&v<=180){ // 서모모터 SG-90으로 가정해 180까지
+      if (v >= 0 && v <= 180) { // 서모모터 SG-90으로 가정해 180까지
         Servo sv = servos[searchServoPin(pin)];
         sv.attach(pin);
         sv.write(v);
       }
     }
     break;
-    case TIMER:{
-      lastTime = millis()/1000.0; 
+    case TIMER: {
+      lastTime = millis() / 1000.0; 
     }
     break;
-    case STEPPER:{
+    case STEPPER: {
       int p1 = readBuffer(7);
       int p2 = readBuffer(9);
       int p3 = readBuffer(11);
       int p4 = readBuffer(13);     
       int sp = readBuffer(15);
       int s = readShort(17); 
-      if(s>=-2048&&s<=2048) { // 값이 최대 2048이므
+      if (s >= -2048 && s <= 2048) { // 값이 최대 2048이므
         Stepper st(2048, p1, p2, p3, p4);
         st.setSpeed(sp);
         st.step(s);
       }
+    }
+    break;
+    case DHTINIT: {
+      if (!dhtObj || (dhtPin != pin)) { // 포트변경시 새 객체 생성
+        if (dhtObj) delete dhtObj;
+        dhtObj = new DHT(pin, DHT11);
+        dhtObj->begin();
+      }
+      dhtPin = pin;
+      digitals[pin] = 0;  // Report Off
     }
     break;
   }
@@ -289,29 +275,29 @@ void runModule(int device) {
 void sendPinValues() {  
   int pinNumber = 0;
   for (pinNumber = 0; pinNumber < sizeof(digitals); pinNumber++) {
-    if(digitals[pinNumber] == 1) {
+    if (digitals[pinNumber] == 1) {
       sendDigitalValue(pinNumber);
       // callOK();
     }
   }
   for (pinNumber = 0; pinNumber < sizeof(analogs); pinNumber++) {
-    if(analogs[pinNumber] == 1) {
+    if (analogs[pinNumber] == 1) {
       sendAnalogValue(pinNumber);
       // callOK();
     }
   }
   
-  if(isUltrasonic) {
+  if (isUltrasonic) {
     sendUltrasonic();  
     // callOK();
   }
 
-  if(isDhtTemp) {
+  if (isDhtTemp) {
     sendDhtTempValue();  
     // callOK();
   }
 
-  if(isDhtHumi) {
+  if (isDhtHumi) {
     sendDhtHumiValue();  
     // callOK();
   }
@@ -323,7 +309,7 @@ void sendUltrasonic() {
   digitalWrite(trigPin, HIGH);
   delayMicroseconds(10);
   digitalWrite(trigPin, LOW);
-  float value = pulseIn(echoPin, HIGH) / 29.0 / 2.0;
+  float value = pulseIn(echoPin, HIGH, 30000) / 29.0 / 2.0;
 
   writeHead();
   sendFloat(value);
@@ -334,21 +320,27 @@ void sendUltrasonic() {
 }
 
 void sendDhtTempValue() {
-  int value = dhtTempObj->readTemperature();
+  int value = 0;
+  if (dhtObj) {
+    value = dhtObj->readTemperature();
+  } 
 
   writeHead();
   sendShort(value);  
-  writeSerial(dhtTempPin);
+  writeSerial(dhtPin);
   writeSerial(DHTTEMP);
   writeEnd();
 }
 
 void sendDhtHumiValue() {
-  int value = dhtHumiObj->readHumidity();
+  int value = 0;
+  if (dhtObj) {
+    value = dhtObj->readHumidity();
+  }
 
   writeHead();
   sendShort(value);  
-  writeSerial(dhtHumiPin);
+  writeSerial(dhtPin);
   writeSerial(DHTHUMI);
   writeEnd();
 }
@@ -370,33 +362,33 @@ void sendAnalogValue(int pinNumber) {
   writeEnd();
 }
 
-void writeBuffer(int index,unsigned char c){
+void writeBuffer(int index,unsigned char c) {
   buffer[index]=c;
 }
 
-void writeHead(){
+void writeHead() {
   writeSerial(0xff);
   writeSerial(0x55);
 }
 
-void writeEnd(){
+void writeEnd() {
   Serial.println();
 }
 
-void writeSerial(unsigned char c){
+void writeSerial(unsigned char c) {
   Serial.write(c);
 }
 
-void sendString(String s){
+void sendString(String s) {
   int l = s.length();
   writeSerial(4);
   writeSerial(l);
-  for(int i=0;i<l;i++){
+  for (int i=0; i<l; i++) {
     writeSerial(s.charAt(i));
   }
 }
 
-void sendFloat(float value){ 
+void sendFloat(float value) { 
   writeSerial(2);
   val.floatVal = value;
   writeSerial(val.byteVal[0]);
@@ -405,20 +397,20 @@ void sendFloat(float value){
   writeSerial(val.byteVal[3]);
 }
 
-void sendShort(double value){
+void sendShort(double value) {
   writeSerial(3);
   valShort.shortVal = value;
   writeSerial(valShort.byteVal[0]);
   writeSerial(valShort.byteVal[1]);
 }
 
-short readShort(int idx){
+short readShort(int idx) {
   valShort.byteVal[0] = readBuffer(idx);
   valShort.byteVal[1] = readBuffer(idx+1);
   return valShort.shortVal; 
 }
 
-float readFloat(int idx){
+float readFloat(int idx) {
   val.byteVal[0] = readBuffer(idx);
   val.byteVal[1] = readBuffer(idx+1);
   val.byteVal[2] = readBuffer(idx+2);
@@ -426,7 +418,7 @@ float readFloat(int idx){
   return val.floatVal;
 }
 
-long readLong(int idx){
+long readLong(int idx) {
   val.byteVal[0] = readBuffer(idx);
   val.byteVal[1] = readBuffer(idx+1);
   val.byteVal[2] = readBuffer(idx+2);
@@ -434,12 +426,12 @@ long readLong(int idx){
   return val.longVal;
 }
 
-int searchServoPin(int pin){
-  for(int i=0;i<8;i++){
-    if(servo_pins[i] == pin){
+int searchServoPin(int pin) {
+  for (int i=0; i<8; i++) {
+    if (servo_pins[i] == pin) {
       return i;
     }
-    if(servo_pins[i]==0){
+    if (servo_pins[i] == 0) {
       servo_pins[i] = pin;
       return i;
     }
@@ -448,19 +440,19 @@ int searchServoPin(int pin){
 }
 
 void setPortWritable(int pin) {
-  if(digitals[pin] == 1) { // 이전에 digitalRead 였으면 Report Off
+  if (digitals[pin] == 1) { // 리포팅 중였으면 Report Off
     digitals[pin] = 0;    
   } 
   pinMode(pin, OUTPUT);
 }
 
-void callOK(){
+void callOK() {
   writeSerial(0xff);
   writeSerial(0x55);
   writeEnd();
 }
 
-void callDebug(char c){
+void callDebug(char c) {
   writeSerial(0xff);
   writeSerial(0x55);
   writeSerial(c);
