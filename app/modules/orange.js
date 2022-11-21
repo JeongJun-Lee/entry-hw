@@ -207,6 +207,7 @@ Module.prototype.handleRemoteData = function(handler) {
 
     if (buffer.length) {
         this.sendBuffers.push(buffer);
+        console.log('sendBuf= ', this.sendBuffers);
     }
 };
 
@@ -425,7 +426,7 @@ Module.prototype.makeSensorReadBuffer = function(device, port, data) {
     if (sensorIdx > 254) {
         sensorIdx = 0;
     }
-	//console.log(buffer);
+	console.log('GetCmdBuf=', buffer);
     return buffer;
 };
 
@@ -710,6 +711,7 @@ Module.prototype.makeOutputBuffer = function(device, port, data) {
         }
     }
 
+    console.log('SetCmdBuf=', buffer);
     return buffer;
 };
 
