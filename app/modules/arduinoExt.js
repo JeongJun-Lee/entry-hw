@@ -1,6 +1,7 @@
 function Module() {
     this.sp = null;
     this.sensorTypes = {
+        RESET: -1,
         ALIVE: 0,
         DIGITAL: 1,
         ANALOG: 2,
@@ -13,6 +14,7 @@ function Module() {
         STEPPER: 9,
         DHTTEMP: 10,
         DHTHUMI: 11,
+        DHTINIT: 12,
     };
 
     this.actionTypes = {
@@ -88,18 +90,13 @@ Module.prototype.setSerialPort = function(sp) {
     그러나, 현재는 하드웨어 선택 후 이 초기값 리턴되지 않으면, 펌웨어가 없는 것으로 간주해 신규 업로드를 시작하므로 보내야 함
 */
 Module.prototype.requestInitialData = function() {
+    this.makeOutputBuffer(this.sensorTypes.RESET, 0, 0); // 최초 연결시, 하드웨어 초기화 수행
     return this.makeSensorReadBuffer(this.sensorTypes.ANALOG, 0);
 };
 
 // 연결 후 초기에 수신받아서 정상연결인지를 확인해야하는 경우 사용합니다.
 Module.prototype.checkInitialData = function(data, config) {
     return true;
-    // 이후에 체크 로직 개선되면 처리
-    // var datas = this.getDataByBuffer(data);
-    // var isValidData = datas.some(function (data) {
-    //     return (data.length > 4 && data[0] === 255 && data[1] === 85);
-    // });
-    // return isValidData;
 };
 
 Module.prototype.afterConnect = function(that, cb) {
@@ -222,11 +219,11 @@ Module.prototype.handleRemoteData = function(handler) {
 
     if (buffer.length) {
         this.sendBuffers.push(buffer);
-        // console.log('sendBuf= ', this.sendBuffers);
+        console.log('sendBuf= ', this.sendBuffers);
     }
 };
 
-// 엔트리 블록 연속 중복전송 방지: 아두이노가 처리 감당 안될 정도로 버퍼에 쌓여 오동작 방지용
+// 엔트리 블록 중복전송 방지: 최초 1회 Get으로 요청하면, 계속 구독중 되므로 중복 재전송 불필요
 Module.prototype.isRecentData = function(port, type, data) {
     const that = this;
     let isRecent = false;
@@ -285,6 +282,13 @@ Module.prototype.requestLocalData = function() {
     return null;
 };
 
+Module.prototype.initProperties = function(obj) {
+    const allProperties = Object.getOwnPropertyNames(obj);
+    allProperties.forEach(property => {
+        obj[property] = 0
+    });
+}
+
 /*
 // 하드웨어에서 온 데이터 처리
 패킷구조: ff 55 value_size value port type tailer a
@@ -321,10 +325,12 @@ Module.prototype.handleLocalData = function(data) {
 
         switch (type) {
             case self.sensorTypes.DIGITAL: {
+                // this.initProperties(self.sensorData.DIGITAL)
                 self.sensorData.DIGITAL[port] = value;
                 break;
             }
             case self.sensorTypes.ANALOG: {
+                // this.initProperties(self.sensorData.ANALOG)
                 self.sensorData.ANALOG[port] = value;
                 break;
             }
@@ -338,10 +344,12 @@ Module.prototype.handleLocalData = function(data) {
             }
             case self.sensorTypes.DHTTEMP: {
                 self.sensorData.DHTTEMP = value;
+                console.log(value)
                 break;
             }
             case self.sensorTypes.DHTHUMI: {
                 self.sensorData.DHTHUMI = value;
+                console.log(value)
                 break;
             }
             case self.sensorTypes.TIMER: {
@@ -362,7 +370,7 @@ len은 idx~데이터 까지의 길이
 tailer는 HW에서 송신시 Serial.println()에 의한 LF값(10)
 idx은 아두이노 보드에서 실제 활용되지는 않음
 */
-// 포트값(INPUT) 또는 요청결과값 회신 요청 만들기
+// 포트값(INPUT) 또는 구독 요청 만들기
 Module.prototype.makeSensorReadBuffer = function(device, port, data) {
     let buffer;
     const dummy = new Buffer([10]); // 10Bytes
@@ -393,7 +401,7 @@ Module.prototype.makeSensorReadBuffer = function(device, port, data) {
         buffer = new Buffer([
             255,
             85,
-            6,
+            5,
             sensorIdx,
             this.actionTypes.GET,
             device,
@@ -431,7 +439,7 @@ Module.prototype.makeSensorReadBuffer = function(device, port, data) {
         sensorIdx = 0;
     }
 
-    // console.log('GetCmdBuf=', buffer);
+    console.log('GetCmdBuf=', buffer);
     return buffer;
 };
 
@@ -447,6 +455,19 @@ Module.prototype.makeOutputBuffer = function(device, port, data) {
     const value = new Buffer(2);
     const dummy = new Buffer([10]);
     switch (device) {
+        case this.sensorTypes.RESET:
+            value.writeInt16LE(data); // 2byptes
+            buffer = new Buffer([
+                255,
+                85,
+                6,
+                sensorIdx,
+                this.actionTypes.RESET,
+                device,
+                port,
+            ]);
+            buffer = Buffer.concat([buffer, value, dummy]);
+            break;
         case this.sensorTypes.SERVO_PIN:
         case this.sensorTypes.DIGITAL:
         case this.sensorTypes.PWM: {
@@ -482,6 +503,20 @@ Module.prototype.makeOutputBuffer = function(device, port, data) {
                 port,
             ]);
             buffer = Buffer.concat([buffer, value, time, dummy]);
+            break;
+        }
+        case this.sensorTypes.DHTINIT:  {
+            value.writeInt16LE(data);
+            buffer = new Buffer([
+                255,
+                85,
+                6,
+                sensorIdx,
+                this.actionTypes.SET,
+                device,
+                port,
+            ]);
+            buffer = Buffer.concat([buffer, value, dummy]);
             break;
         }
         case this.sensorTypes.STEPPER: {
@@ -520,7 +555,7 @@ Module.prototype.makeOutputBuffer = function(device, port, data) {
         }
     }
 
-    // console.log('SetCmdBuf=', buffer);
+    console.log('SetCmdBuf=', buffer);
     return buffer;
 };
 

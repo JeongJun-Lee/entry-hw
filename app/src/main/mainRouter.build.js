@@ -3759,7 +3759,7 @@ var MainRouter = /** @class */ (function () {
         }
         var driverFullPath = path_1.default.join(directoryPaths_1.default.driver(), driverPath);
         logger.info("execute driver requested. filePath : " + driverFullPath);
-        electron_1.shell.openPath(driverFullPath);
+        electron_1.shell.openItem(driverFullPath);
     };
     /**
      * 특정 ID 의 하드웨어를 직접 선택한다.
