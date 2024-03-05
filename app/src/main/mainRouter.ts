@@ -409,7 +409,9 @@ class MainRouter {
         const hwModule = this.hwModule;
         const handler = this.handler;
         handler.decode(data);
-        if (handler.read('name') == 'arduino' || handler.read('name') == 'ArduinoExt') {
+        if (handler.read('name') == 'arduino' ||
+            handler.read('name') == 'ArduinoExt' ||
+            handler.read('name') == 'ITPLE') {
             this.handleFlashFirmware(handler.read('frame'));
         } else if (hwModule.handleRemoteData) {
             hwModule.handleRemoteData(handler);
