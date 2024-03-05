@@ -74,6 +74,7 @@ function Module() {
     this.lastTime = 0;
     this.lastSendTime = 0;
     this.isDraing = false;
+    this.isNewConn = false; // 최초 연결시마다 포트구독을 재구독 하기 위해
 }
 
 var sensorIdx = 0;
@@ -86,6 +87,7 @@ Module.prototype.setSerialPort = function (sp) {
 };
 
 Module.prototype.requestInitialData = function () {
+    this.isNewConn = true;
     return this.makeSensorReadBuffer(this.sensorTypes.ANALOG, 0);
 };
 
@@ -224,8 +226,11 @@ Module.prototype.isRecentData = function (port, type, data) {
             }
         });
 
-        if ((port in this.recentCheckData && isGarbageClear) || !(port in this.recentCheckData)) {
+        if ((port in this.recentCheckData && isGarbageClear) || 
+            !(port in this.recentCheckData) ||
+            this.isNewConn) {
             isRecent = false;
+            this.isNewConn = false;
         } else {
             isRecent = true;
         }

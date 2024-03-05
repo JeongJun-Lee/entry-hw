@@ -72,6 +72,7 @@ function Module() {
     this.lastTime = 0;
     this.lastSendTime = 0;
     this.isDraing = false;
+    this.isNewConn = false; // 최초 연결시마다 포트구독을 재구독 하기 위해
 }
 
 let sensorIdx = 0;
@@ -90,6 +91,7 @@ Module.prototype.setSerialPort = function(sp) {
     그러나, 현재는 하드웨어 선택 후 이 초기값 리턴되지 않으면, 펌웨어가 없는 것으로 간주해 신규 업로드를 시작하므로 보내야 함
 */
 Module.prototype.requestInitialData = function() {
+    this.isNewConn = true;
     this.makeOutputBuffer(this.sensorTypes.RESET, 0, 0); // 최초 연결시, 하드웨어 초기화 수행
     return this.makeSensorReadBuffer(this.sensorTypes.ANALOG, 0);
 };
@@ -228,7 +230,9 @@ Module.prototype.isRecentData = function(port, type, data) {
     const that = this;
     let isRecent = false;
 
-    if (type == this.sensorTypes.ULTRASONIC || type == this.sensorTypes.DHTTEMP || type == this.sensorTypes.DHTHUMI) {
+    if (type == this.sensorTypes.ULTRASONIC || 
+        type == this.sensorTypes.DHTTEMP || 
+        type == this.sensorTypes.DHTHUMI) {
         const portString = port.toString();
         let isGarbageClear = false;
         Object.keys(this.recentCheckData).forEach((key) => {
@@ -236,15 +240,20 @@ Module.prototype.isRecentData = function(port, type, data) {
             if (key === portString) {
                 
             }
-            if (key !== portString && (recent.type == that.sensorTypes.ULTRASONIC
-                || recent.type == that.sensorTypes.DHTTEMP || recent.type == that.sensorTypes.DHTHUMI)) {
+            if (key !== portString && 
+                (recent.type == that.sensorTypes.ULTRASONIC ||
+                recent.type == that.sensorTypes.DHTTEMP || 
+                recent.type == that.sensorTypes.DHTHUMI)) {
                 delete that.recentCheckData[key];
                 isGarbageClear = true;
             }
         });
 
-        if ((port in this.recentCheckData && isGarbageClear) || !(port in this.recentCheckData)) {
+        if ((port in this.recentCheckData && isGarbageClear) || 
+            !(port in this.recentCheckData) ||
+            this.isNewConn) {
             isRecent = false;
+            this.isNewConn = false;
         } else {
             isRecent = true;
         }
