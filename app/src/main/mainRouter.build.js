@@ -3198,6 +3198,61 @@ exports.default = SerialScanner;
 
 /***/ }),
 
+/***/ "./app/src/main/electron/electronDirectoryPaths.ts":
+/*!*********************************************************!*\
+  !*** ./app/src/main/electron/electronDirectoryPaths.ts ***!
+  \*********************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+var electron_1 = __webpack_require__(/*! electron */ "electron");
+var path_1 = __importDefault(__webpack_require__(/*! path */ "path"));
+var os_1 = __importDefault(__webpack_require__(/*! os */ "os"));
+/**
+ * electron 디렉토리 이하는 외부 서브모듈로 사용되지 않는다. 그러므로 getAppPath 를 사용할 수 있다.
+ */
+var isAsarPacked = (function () { return electron_1.app.getAppPath().indexOf('app.asar') > -1; })();
+// project's app directory path
+// development: /Users/user/entry_projects/entry-hw/app
+// production: /Users/user/entry_projects/entry-hw/dist/mac/Entry_HW.app/Contents/Resources/app.asar
+var rootAppPath = (function () { return (isAsarPacked
+    ? path_1.default.join(electron_1.app.getAppPath(), 'app')
+    : path_1.default.join(electron_1.app.getAppPath(), '..')); })();
+var isMacOS = os_1.default.type().includes('Darwin');
+exports.default = {
+    views: path_1.default.join(rootAppPath, 'src', 'views'),
+    config: (function () { return (isAsarPacked
+        ? path_1.default.join(rootAppPath, '..', '..', 'config')
+        : path_1.default.join(rootAppPath, '..', 'config')); })(),
+    server: (function () {
+        var subDirPath = isMacOS ? 'mac' : 'win';
+        var fileName = isMacOS ? 'server.txt' : 'server.exe';
+        return isAsarPacked
+            ? path_1.default.join(rootAppPath, '..', '..', fileName)
+            : path_1.default.join(rootAppPath, 'server', subDirPath, fileName);
+    })(),
+    validator: (function () {
+        if (!isAsarPacked) {
+            return undefined;
+        }
+        else if (isMacOS) {
+            return path_1.default.join(rootAppPath, '..', '..', 'validator.txt');
+        }
+        else {
+            return path_1.default.join(rootAppPath, '..', '..', 'validator.exe');
+        }
+    })(),
+};
+
+
+/***/ }),
+
 /***/ "./app/src/main/electron/functions/createLogger.ts":
 /*!*********************************************************!*\
   !*** ./app/src/main/electron/functions/createLogger.ts ***!
@@ -3232,6 +3287,83 @@ var logger = winston_1.createLogger({
 if (false) {}
 exports.logPath = _logPath;
 exports.default = (function (labelName) { return logger.child({ label: labelName }); });
+
+
+/***/ }),
+
+/***/ "./app/src/main/electron/modifyValidator.ts":
+/*!**************************************************!*\
+  !*** ./app/src/main/electron/modifyValidator.ts ***!
+  \**************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ResultCode = void 0;
+var fs_1 = __importDefault(__webpack_require__(/*! fs */ "fs"));
+var cross_spawn_1 = __importDefault(__webpack_require__(/*! cross-spawn */ "./node_modules/cross-spawn/index.js"));
+var electronDirectoryPaths_1 = __importDefault(__webpack_require__(/*! ./electronDirectoryPaths */ "./app/src/main/electron/electronDirectoryPaths.ts"));
+var createLogger_1 = __importDefault(__webpack_require__(/*! ./functions/createLogger */ "./app/src/main/electron/functions/createLogger.ts"));
+var logger = createLogger_1.default('Validator');
+/**
+ * 파일 변조 여부를 검사하는 검사체
+ * 변조 로직의 변조를 막기위해 실제 로직은 바이너리화 되어있다.
+ * 코드는 공개되어있기 때문에 누구나 사용가능하지만, 정식 릴리즈된 바이너리의 변조를 감지하기 위해 로직이 작성되었다. (사내 보안관련 권고사항)
+ * 변조가 감지되면 변조가 의심된다는 알림을 표기한다. (오픈소스이기 때문에 프로그램 사용에 제재를 가하지는 않는다.)
+ */
+var ResultCode;
+(function (ResultCode) {
+    ResultCode[ResultCode["VALID"] = 100] = "VALID";
+    ResultCode[ResultCode["INVALID"] = 200] = "INVALID";
+    ResultCode[ResultCode["FILE_NOT_FOUND"] = 201] = "FILE_NOT_FOUND";
+    ResultCode[ResultCode["NETWORK_DISCONNECTED"] = 300] = "NETWORK_DISCONNECTED";
+    ResultCode[ResultCode["LOGIC_ERROR"] = 301] = "LOGIC_ERROR";
+    ResultCode[ResultCode["NETWORK_INVALID"] = 302] = "NETWORK_INVALID";
+})(ResultCode = exports.ResultCode || (exports.ResultCode = {}));
+function isValidAsarFile() {
+    var validatorPath = electronDirectoryPaths_1.default.validator;
+    // production asar build 환경에서만 정상동작한다.
+    if (true) {
+        return Promise.resolve(true);
+    }
+    if (!validatorPath) {
+        logger.info('not asar packed environment. pass validation');
+        return Promise.resolve(true);
+    }
+    if (!fs_1.default.existsSync(validatorPath)) {
+        // 파일이 없는 경우 변조됨 처리
+        return Promise.resolve(false);
+    }
+    return new Promise(function (resolve) {
+        var childProcess = cross_spawn_1.default(validatorPath, ['--type=hardware'], {
+            stdio: ['ignore', 'inherit', 'inherit', 'ipc'],
+            detached: true,
+        });
+        var timeout = setTimeout(function () {
+            logger.warn('validator spawn timeout. check validator logic');
+            childProcess.kill();
+            resolve(false);
+        }, 3000);
+        childProcess.on('message', (function (message) {
+            clearTimeout(timeout);
+            var result = message.result, reason = message.reason;
+            if (result === ResultCode.INVALID || result === ResultCode.FILE_NOT_FOUND) {
+                logger.warn("validation fail reason: " + reason);
+                resolve(false);
+            }
+            else {
+                resolve(true);
+            }
+            !childProcess.killed && childProcess.kill();
+        }));
+    });
+}
+exports.default = isValidAsarFile;
 
 
 /***/ }),
@@ -3306,6 +3438,7 @@ var downloadModule_1 = __importDefault(__webpack_require__(/*! ./core/functions/
 var constants_1 = __webpack_require__(/*! ../common/constants */ "./app/src/common/constants.ts");
 var createLogger_1 = __importDefault(__webpack_require__(/*! ./electron/functions/createLogger */ "./app/src/main/electron/functions/createLogger.ts"));
 var directoryPaths_1 = __importDefault(__webpack_require__(/*! ./core/directoryPaths */ "./app/src/main/core/directoryPaths.ts"));
+var modifyValidator_1 = __importDefault(__webpack_require__(/*! ./electron/modifyValidator */ "./app/src/main/electron/modifyValidator.ts"));
 var nativeNodeRequire = __webpack_require__(/*! ./nativeNodeRequire.js */ "./nativeNodeRequire.js");
 var logger = createLogger_1.default('core/mainRouter.ts');
 /**
@@ -3861,8 +3994,37 @@ var MainRouter = /** @class */ (function () {
                 }
             });
         }); });
+        electron_1.ipcMain.handle('isValidAsarFileHW', function (event) { return __awaiter(_this, void 0, void 0, function () {
+            var result, e_3;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        _a.trys.push([0, 2, , 3]);
+                        return [4 /*yield*/, modifyValidator_1.default()];
+                    case 1:
+                        result = _a.sent();
+                        return [2 /*return*/, result];
+                    case 2:
+                        e_3 = _a.sent();
+                        console.log(e_3);
+                        return [2 /*return*/, true];
+                    case 3: return [2 /*return*/];
+                }
+            });
+        }); });
         electron_1.ipcMain.on('getSharedObject', function (e) {
             e.returnValue = global.sharedObject;
+        });
+        electron_1.ipcMain.on('canShowCustomButton', function (e) {
+            if (_this.hwModule && _this.hwModule.canShowCustomButton) {
+                e.returnValue = _this.hwModule.canShowCustomButton();
+            }
+            else {
+                e.returnValue = false;
+            }
+        });
+        electron_1.ipcMain.on('customButtonClicked', function (e, key) {
+            _this.hwModule && _this.hwModule.customButtonClicked && _this.hwModule.customButtonClicked(key);
         });
         logger.verbose('EntryHW ipc event registered');
     };
@@ -3893,6 +4055,7 @@ var MainRouter = /** @class */ (function () {
         electron_1.ipcMain.removeAllListeners('getCurrentServerModeSync');
         electron_1.ipcMain.removeAllListeners('getCurrentCloudModeSync');
         electron_1.ipcMain.removeAllListeners('requestHardwareListSync');
+        electron_1.ipcMain.removeHandler('isValidAsarFileHW');
         electron_1.ipcMain.removeHandler('requestDownloadModule');
         electron_1.ipcMain.removeHandler('requestFlash');
         logger.verbose('EntryHW ipc event all cleared');
@@ -11183,6 +11346,550 @@ function objectToString(o) {
 
 /***/ }),
 
+/***/ "./node_modules/cross-spawn/index.js":
+/*!*******************************************!*\
+  !*** ./node_modules/cross-spawn/index.js ***!
+  \*******************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+const cp = __webpack_require__(/*! child_process */ "child_process");
+const parse = __webpack_require__(/*! ./lib/parse */ "./node_modules/cross-spawn/lib/parse.js");
+const enoent = __webpack_require__(/*! ./lib/enoent */ "./node_modules/cross-spawn/lib/enoent.js");
+
+function spawn(command, args, options) {
+    // Parse the arguments
+    const parsed = parse(command, args, options);
+
+    // Spawn the child process
+    const spawned = cp.spawn(parsed.command, parsed.args, parsed.options);
+
+    // Hook into child process "exit" event to emit an error if the command
+    // does not exists, see: https://github.com/IndigoUnited/node-cross-spawn/issues/16
+    enoent.hookChildProcess(spawned, parsed);
+
+    return spawned;
+}
+
+function spawnSync(command, args, options) {
+    // Parse the arguments
+    const parsed = parse(command, args, options);
+
+    // Spawn the child process
+    const result = cp.spawnSync(parsed.command, parsed.args, parsed.options);
+
+    // Analyze if the command does not exist, see: https://github.com/IndigoUnited/node-cross-spawn/issues/16
+    result.error = result.error || enoent.verifyENOENTSync(result.status, parsed);
+
+    return result;
+}
+
+module.exports = spawn;
+module.exports.spawn = spawn;
+module.exports.sync = spawnSync;
+
+module.exports._parse = parse;
+module.exports._enoent = enoent;
+
+
+/***/ }),
+
+/***/ "./node_modules/cross-spawn/lib/enoent.js":
+/*!************************************************!*\
+  !*** ./node_modules/cross-spawn/lib/enoent.js ***!
+  \************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+const isWin = process.platform === 'win32';
+
+function notFoundError(original, syscall) {
+    return Object.assign(new Error(`${syscall} ${original.command} ENOENT`), {
+        code: 'ENOENT',
+        errno: 'ENOENT',
+        syscall: `${syscall} ${original.command}`,
+        path: original.command,
+        spawnargs: original.args,
+    });
+}
+
+function hookChildProcess(cp, parsed) {
+    if (!isWin) {
+        return;
+    }
+
+    const originalEmit = cp.emit;
+
+    cp.emit = function (name, arg1) {
+        // If emitting "exit" event and exit code is 1, we need to check if
+        // the command exists and emit an "error" instead
+        // See https://github.com/IndigoUnited/node-cross-spawn/issues/16
+        if (name === 'exit') {
+            const err = verifyENOENT(arg1, parsed, 'spawn');
+
+            if (err) {
+                return originalEmit.call(cp, 'error', err);
+            }
+        }
+
+        return originalEmit.apply(cp, arguments); // eslint-disable-line prefer-rest-params
+    };
+}
+
+function verifyENOENT(status, parsed) {
+    if (isWin && status === 1 && !parsed.file) {
+        return notFoundError(parsed.original, 'spawn');
+    }
+
+    return null;
+}
+
+function verifyENOENTSync(status, parsed) {
+    if (isWin && status === 1 && !parsed.file) {
+        return notFoundError(parsed.original, 'spawnSync');
+    }
+
+    return null;
+}
+
+module.exports = {
+    hookChildProcess,
+    verifyENOENT,
+    verifyENOENTSync,
+    notFoundError,
+};
+
+
+/***/ }),
+
+/***/ "./node_modules/cross-spawn/lib/parse.js":
+/*!***********************************************!*\
+  !*** ./node_modules/cross-spawn/lib/parse.js ***!
+  \***********************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+const path = __webpack_require__(/*! path */ "path");
+const resolveCommand = __webpack_require__(/*! ./util/resolveCommand */ "./node_modules/cross-spawn/lib/util/resolveCommand.js");
+const escape = __webpack_require__(/*! ./util/escape */ "./node_modules/cross-spawn/lib/util/escape.js");
+const readShebang = __webpack_require__(/*! ./util/readShebang */ "./node_modules/cross-spawn/lib/util/readShebang.js");
+
+const isWin = process.platform === 'win32';
+const isExecutableRegExp = /\.(?:com|exe)$/i;
+const isCmdShimRegExp = /node_modules[\\/].bin[\\/][^\\/]+\.cmd$/i;
+
+function detectShebang(parsed) {
+    parsed.file = resolveCommand(parsed);
+
+    const shebang = parsed.file && readShebang(parsed.file);
+
+    if (shebang) {
+        parsed.args.unshift(parsed.file);
+        parsed.command = shebang;
+
+        return resolveCommand(parsed);
+    }
+
+    return parsed.file;
+}
+
+function parseNonShell(parsed) {
+    if (!isWin) {
+        return parsed;
+    }
+
+    // Detect & add support for shebangs
+    const commandFile = detectShebang(parsed);
+
+    // We don't need a shell if the command filename is an executable
+    const needsShell = !isExecutableRegExp.test(commandFile);
+
+    // If a shell is required, use cmd.exe and take care of escaping everything correctly
+    // Note that `forceShell` is an hidden option used only in tests
+    if (parsed.options.forceShell || needsShell) {
+        // Need to double escape meta chars if the command is a cmd-shim located in `node_modules/.bin/`
+        // The cmd-shim simply calls execute the package bin file with NodeJS, proxying any argument
+        // Because the escape of metachars with ^ gets interpreted when the cmd.exe is first called,
+        // we need to double escape them
+        const needsDoubleEscapeMetaChars = isCmdShimRegExp.test(commandFile);
+
+        // Normalize posix paths into OS compatible paths (e.g.: foo/bar -> foo\bar)
+        // This is necessary otherwise it will always fail with ENOENT in those cases
+        parsed.command = path.normalize(parsed.command);
+
+        // Escape command & arguments
+        parsed.command = escape.command(parsed.command);
+        parsed.args = parsed.args.map((arg) => escape.argument(arg, needsDoubleEscapeMetaChars));
+
+        const shellCommand = [parsed.command].concat(parsed.args).join(' ');
+
+        parsed.args = ['/d', '/s', '/c', `"${shellCommand}"`];
+        parsed.command = process.env.comspec || 'cmd.exe';
+        parsed.options.windowsVerbatimArguments = true; // Tell node's spawn that the arguments are already escaped
+    }
+
+    return parsed;
+}
+
+function parse(command, args, options) {
+    // Normalize arguments, similar to nodejs
+    if (args && !Array.isArray(args)) {
+        options = args;
+        args = null;
+    }
+
+    args = args ? args.slice(0) : []; // Clone array to avoid changing the original
+    options = Object.assign({}, options); // Clone object to avoid changing the original
+
+    // Build our parsed object
+    const parsed = {
+        command,
+        args,
+        options,
+        file: undefined,
+        original: {
+            command,
+            args,
+        },
+    };
+
+    // Delegate further parsing to shell or non-shell
+    return options.shell ? parsed : parseNonShell(parsed);
+}
+
+module.exports = parse;
+
+
+/***/ }),
+
+/***/ "./node_modules/cross-spawn/lib/util/escape.js":
+/*!*****************************************************!*\
+  !*** ./node_modules/cross-spawn/lib/util/escape.js ***!
+  \*****************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+// See http://www.robvanderwoude.com/escapechars.php
+const metaCharsRegExp = /([()\][%!^"`<>&|;, *?])/g;
+
+function escapeCommand(arg) {
+    // Escape meta chars
+    arg = arg.replace(metaCharsRegExp, '^$1');
+
+    return arg;
+}
+
+function escapeArgument(arg, doubleEscapeMetaChars) {
+    // Convert to string
+    arg = `${arg}`;
+
+    // Algorithm below is based on https://qntm.org/cmd
+
+    // Sequence of backslashes followed by a double quote:
+    // double up all the backslashes and escape the double quote
+    arg = arg.replace(/(\\*)"/g, '$1$1\\"');
+
+    // Sequence of backslashes followed by the end of the string
+    // (which will become a double quote later):
+    // double up all the backslashes
+    arg = arg.replace(/(\\*)$/, '$1$1');
+
+    // All other backslashes occur literally
+
+    // Quote the whole thing:
+    arg = `"${arg}"`;
+
+    // Escape meta chars
+    arg = arg.replace(metaCharsRegExp, '^$1');
+
+    // Double escape meta chars if necessary
+    if (doubleEscapeMetaChars) {
+        arg = arg.replace(metaCharsRegExp, '^$1');
+    }
+
+    return arg;
+}
+
+module.exports.command = escapeCommand;
+module.exports.argument = escapeArgument;
+
+
+/***/ }),
+
+/***/ "./node_modules/cross-spawn/lib/util/readShebang.js":
+/*!**********************************************************!*\
+  !*** ./node_modules/cross-spawn/lib/util/readShebang.js ***!
+  \**********************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+const fs = __webpack_require__(/*! fs */ "fs");
+const shebangCommand = __webpack_require__(/*! shebang-command */ "./node_modules/shebang-command/index.js");
+
+function readShebang(command) {
+    // Read the first 150 bytes from the file
+    const size = 150;
+    const buffer = Buffer.alloc(size);
+
+    let fd;
+
+    try {
+        fd = fs.openSync(command, 'r');
+        fs.readSync(fd, buffer, 0, size, 0);
+        fs.closeSync(fd);
+    } catch (e) { /* Empty */ }
+
+    // Attempt to extract shebang (null is returned if not a shebang)
+    return shebangCommand(buffer.toString());
+}
+
+module.exports = readShebang;
+
+
+/***/ }),
+
+/***/ "./node_modules/cross-spawn/lib/util/resolveCommand.js":
+/*!*************************************************************!*\
+  !*** ./node_modules/cross-spawn/lib/util/resolveCommand.js ***!
+  \*************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+const path = __webpack_require__(/*! path */ "path");
+const which = __webpack_require__(/*! which */ "./node_modules/cross-spawn/node_modules/which/which.js");
+const pathKey = __webpack_require__(/*! path-key */ "./node_modules/cross-spawn/node_modules/path-key/index.js")();
+
+function resolveCommandAttempt(parsed, withoutPathExt) {
+    const cwd = process.cwd();
+    const hasCustomCwd = parsed.options.cwd != null;
+    // Worker threads do not have process.chdir()
+    const shouldSwitchCwd = hasCustomCwd && process.chdir !== undefined;
+
+    // If a custom `cwd` was specified, we need to change the process cwd
+    // because `which` will do stat calls but does not support a custom cwd
+    if (shouldSwitchCwd) {
+        try {
+            process.chdir(parsed.options.cwd);
+        } catch (err) {
+            /* Empty */
+        }
+    }
+
+    let resolved;
+
+    try {
+        resolved = which.sync(parsed.command, {
+            path: (parsed.options.env || process.env)[pathKey],
+            pathExt: withoutPathExt ? path.delimiter : undefined,
+        });
+    } catch (e) {
+        /* Empty */
+    } finally {
+        if (shouldSwitchCwd) {
+            process.chdir(cwd);
+        }
+    }
+
+    // If we successfully resolved, ensure that an absolute path is returned
+    // Note that when a custom `cwd` was used, we need to resolve to an absolute path based on it
+    if (resolved) {
+        resolved = path.resolve(hasCustomCwd ? parsed.options.cwd : '', resolved);
+    }
+
+    return resolved;
+}
+
+function resolveCommand(parsed) {
+    return resolveCommandAttempt(parsed) || resolveCommandAttempt(parsed, true);
+}
+
+module.exports = resolveCommand;
+
+
+/***/ }),
+
+/***/ "./node_modules/cross-spawn/node_modules/path-key/index.js":
+/*!*****************************************************************!*\
+  !*** ./node_modules/cross-spawn/node_modules/path-key/index.js ***!
+  \*****************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+const pathKey = (options = {}) => {
+	const environment = options.env || process.env;
+	const platform = options.platform || process.platform;
+
+	if (platform !== 'win32') {
+		return 'PATH';
+	}
+
+	return Object.keys(environment).reverse().find(key => key.toUpperCase() === 'PATH') || 'Path';
+};
+
+module.exports = pathKey;
+// TODO: Remove this for the next major release
+module.exports.default = pathKey;
+
+
+/***/ }),
+
+/***/ "./node_modules/cross-spawn/node_modules/which/which.js":
+/*!**************************************************************!*\
+  !*** ./node_modules/cross-spawn/node_modules/which/which.js ***!
+  \**************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+const isWindows = process.platform === 'win32' ||
+    process.env.OSTYPE === 'cygwin' ||
+    process.env.OSTYPE === 'msys'
+
+const path = __webpack_require__(/*! path */ "path")
+const COLON = isWindows ? ';' : ':'
+const isexe = __webpack_require__(/*! isexe */ "./node_modules/isexe/index.js")
+
+const getNotFoundError = (cmd) =>
+  Object.assign(new Error(`not found: ${cmd}`), { code: 'ENOENT' })
+
+const getPathInfo = (cmd, opt) => {
+  const colon = opt.colon || COLON
+
+  // If it has a slash, then we don't bother searching the pathenv.
+  // just check the file itself, and that's it.
+  const pathEnv = cmd.match(/\//) || isWindows && cmd.match(/\\/) ? ['']
+    : (
+      [
+        // windows always checks the cwd first
+        ...(isWindows ? [process.cwd()] : []),
+        ...(opt.path || process.env.PATH ||
+          /* istanbul ignore next: very unusual */ '').split(colon),
+      ]
+    )
+  const pathExtExe = isWindows
+    ? opt.pathExt || process.env.PATHEXT || '.EXE;.CMD;.BAT;.COM'
+    : ''
+  const pathExt = isWindows ? pathExtExe.split(colon) : ['']
+
+  if (isWindows) {
+    if (cmd.indexOf('.') !== -1 && pathExt[0] !== '')
+      pathExt.unshift('')
+  }
+
+  return {
+    pathEnv,
+    pathExt,
+    pathExtExe,
+  }
+}
+
+const which = (cmd, opt, cb) => {
+  if (typeof opt === 'function') {
+    cb = opt
+    opt = {}
+  }
+  if (!opt)
+    opt = {}
+
+  const { pathEnv, pathExt, pathExtExe } = getPathInfo(cmd, opt)
+  const found = []
+
+  const step = i => new Promise((resolve, reject) => {
+    if (i === pathEnv.length)
+      return opt.all && found.length ? resolve(found)
+        : reject(getNotFoundError(cmd))
+
+    const ppRaw = pathEnv[i]
+    const pathPart = /^".*"$/.test(ppRaw) ? ppRaw.slice(1, -1) : ppRaw
+
+    const pCmd = path.join(pathPart, cmd)
+    const p = !pathPart && /^\.[\\\/]/.test(cmd) ? cmd.slice(0, 2) + pCmd
+      : pCmd
+
+    resolve(subStep(p, i, 0))
+  })
+
+  const subStep = (p, i, ii) => new Promise((resolve, reject) => {
+    if (ii === pathExt.length)
+      return resolve(step(i + 1))
+    const ext = pathExt[ii]
+    isexe(p + ext, { pathExt: pathExtExe }, (er, is) => {
+      if (!er && is) {
+        if (opt.all)
+          found.push(p + ext)
+        else
+          return resolve(p + ext)
+      }
+      return resolve(subStep(p, i, ii + 1))
+    })
+  })
+
+  return cb ? step(0).then(res => cb(null, res), cb) : step(0)
+}
+
+const whichSync = (cmd, opt) => {
+  opt = opt || {}
+
+  const { pathEnv, pathExt, pathExtExe } = getPathInfo(cmd, opt)
+  const found = []
+
+  for (let i = 0; i < pathEnv.length; i ++) {
+    const ppRaw = pathEnv[i]
+    const pathPart = /^".*"$/.test(ppRaw) ? ppRaw.slice(1, -1) : ppRaw
+
+    const pCmd = path.join(pathPart, cmd)
+    const p = !pathPart && /^\.[\\\/]/.test(cmd) ? cmd.slice(0, 2) + pCmd
+      : pCmd
+
+    for (let j = 0; j < pathExt.length; j ++) {
+      const cur = p + pathExt[j]
+      try {
+        const is = isexe.sync(cur, { pathExt: pathExtExe })
+        if (is) {
+          if (opt.all)
+            found.push(cur)
+          else
+            return cur
+        }
+      } catch (ex) {}
+    }
+  }
+
+  if (opt.all && found.length)
+    return found
+
+  if (opt.nothrow)
+    return null
+
+  throw getNotFoundError(cmd)
+}
+
+module.exports = which
+which.sync = whichSync
+
+
+/***/ }),
+
 /***/ "./node_modules/diagnostics/index.js":
 /*!*******************************************!*\
   !*** ./node_modules/diagnostics/index.js ***!
@@ -18422,6 +19129,179 @@ var toString = {}.toString;
 module.exports = Array.isArray || function (arr) {
   return toString.call(arr) == '[object Array]';
 };
+
+
+/***/ }),
+
+/***/ "./node_modules/isexe/index.js":
+/*!*************************************!*\
+  !*** ./node_modules/isexe/index.js ***!
+  \*************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var fs = __webpack_require__(/*! fs */ "fs")
+var core
+if (process.platform === 'win32' || global.TESTING_WINDOWS) {
+  core = __webpack_require__(/*! ./windows.js */ "./node_modules/isexe/windows.js")
+} else {
+  core = __webpack_require__(/*! ./mode.js */ "./node_modules/isexe/mode.js")
+}
+
+module.exports = isexe
+isexe.sync = sync
+
+function isexe (path, options, cb) {
+  if (typeof options === 'function') {
+    cb = options
+    options = {}
+  }
+
+  if (!cb) {
+    if (typeof Promise !== 'function') {
+      throw new TypeError('callback not provided')
+    }
+
+    return new Promise(function (resolve, reject) {
+      isexe(path, options || {}, function (er, is) {
+        if (er) {
+          reject(er)
+        } else {
+          resolve(is)
+        }
+      })
+    })
+  }
+
+  core(path, options || {}, function (er, is) {
+    // ignore EACCES because that just means we aren't allowed to run it
+    if (er) {
+      if (er.code === 'EACCES' || options && options.ignoreErrors) {
+        er = null
+        is = false
+      }
+    }
+    cb(er, is)
+  })
+}
+
+function sync (path, options) {
+  // my kingdom for a filtered catch
+  try {
+    return core.sync(path, options || {})
+  } catch (er) {
+    if (options && options.ignoreErrors || er.code === 'EACCES') {
+      return false
+    } else {
+      throw er
+    }
+  }
+}
+
+
+/***/ }),
+
+/***/ "./node_modules/isexe/mode.js":
+/*!************************************!*\
+  !*** ./node_modules/isexe/mode.js ***!
+  \************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = isexe
+isexe.sync = sync
+
+var fs = __webpack_require__(/*! fs */ "fs")
+
+function isexe (path, options, cb) {
+  fs.stat(path, function (er, stat) {
+    cb(er, er ? false : checkStat(stat, options))
+  })
+}
+
+function sync (path, options) {
+  return checkStat(fs.statSync(path), options)
+}
+
+function checkStat (stat, options) {
+  return stat.isFile() && checkMode(stat, options)
+}
+
+function checkMode (stat, options) {
+  var mod = stat.mode
+  var uid = stat.uid
+  var gid = stat.gid
+
+  var myUid = options.uid !== undefined ?
+    options.uid : process.getuid && process.getuid()
+  var myGid = options.gid !== undefined ?
+    options.gid : process.getgid && process.getgid()
+
+  var u = parseInt('100', 8)
+  var g = parseInt('010', 8)
+  var o = parseInt('001', 8)
+  var ug = u | g
+
+  var ret = (mod & o) ||
+    (mod & g) && gid === myGid ||
+    (mod & u) && uid === myUid ||
+    (mod & ug) && myUid === 0
+
+  return ret
+}
+
+
+/***/ }),
+
+/***/ "./node_modules/isexe/windows.js":
+/*!***************************************!*\
+  !*** ./node_modules/isexe/windows.js ***!
+  \***************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = isexe
+isexe.sync = sync
+
+var fs = __webpack_require__(/*! fs */ "fs")
+
+function checkPathExt (path, options) {
+  var pathext = options.pathExt !== undefined ?
+    options.pathExt : process.env.PATHEXT
+
+  if (!pathext) {
+    return true
+  }
+
+  pathext = pathext.split(';')
+  if (pathext.indexOf('') !== -1) {
+    return true
+  }
+  for (var i = 0; i < pathext.length; i++) {
+    var p = pathext[i].toLowerCase()
+    if (p && path.substr(-p.length).toLowerCase() === p) {
+      return true
+    }
+  }
+  return false
+}
+
+function checkStat (stat, path, options) {
+  if (!stat.isSymbolicLink() && !stat.isFile()) {
+    return false
+  }
+  return checkPathExt(path, options)
+}
+
+function isexe (path, options, cb) {
+  fs.stat(path, function (er, stat) {
+    cb(er, er ? false : checkStat(stat, path, options))
+  })
+}
+
+function sync (path, options) {
+  return checkStat(fs.statSync(path), path, options)
+}
 
 
 /***/ }),
@@ -63916,6 +64796,51 @@ module.exports = {
   Ready: __webpack_require__(/*! @serialport/parser-ready */ "@serialport/parser-ready"),
   Regex: __webpack_require__(/*! @serialport/parser-regex */ "@serialport/parser-regex"),
 }
+
+
+/***/ }),
+
+/***/ "./node_modules/shebang-command/index.js":
+/*!***********************************************!*\
+  !*** ./node_modules/shebang-command/index.js ***!
+  \***********************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+const shebangRegex = __webpack_require__(/*! shebang-regex */ "./node_modules/shebang-regex/index.js");
+
+module.exports = (string = '') => {
+	const match = string.match(shebangRegex);
+
+	if (!match) {
+		return null;
+	}
+
+	const [path, argument] = match[0].replace(/#! ?/, '').split(' ');
+	const binary = path.split('/').pop();
+
+	if (binary === 'env') {
+		return argument;
+	}
+
+	return argument ? `${binary} ${argument}` : binary;
+};
+
+
+/***/ }),
+
+/***/ "./node_modules/shebang-regex/index.js":
+/*!*********************************************!*\
+  !*** ./node_modules/shebang-regex/index.js ***!
+  \*********************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+module.exports = /^#!(.*)/;
 
 
 /***/ }),

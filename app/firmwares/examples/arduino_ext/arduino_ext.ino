@@ -13,6 +13,7 @@
 #include <Servo.h>
 #include <Stepper.h>
 #include <DHT.h>
+#include <IRremote.h>
 
 // 타입 상수
 #define ALIVE 0
@@ -25,9 +26,12 @@
 #define ULTRASONIC 7
 #define TIMER 8
 #define STEPPER 9
-#define DHTTEMP 10
-#define DHTHUMI 11
-#define DHTINIT 12
+#define DHTINIT 10
+#define DHTTEMP 11
+#define DHTHUMI 12
+#define IRRINIT 13
+#define IRREMOTE 14
+decode_results results;  // decoded result for IRRmote
 
 // 상태 상수
 #define GET 1
@@ -60,6 +64,11 @@ DHT* dhtObj = NULL;
 int dhtPin = -1;
 boolean isDhtTemp = false; // true이 되면 값을 read해서 엔트리로 전송
 boolean isDhtHumi = false;
+
+// IRremote
+IRrecv* irrObj = NULL;
+int irrPin = -1;
+boolean isIrremote = false;
 
 // 포트별 상태: 1이 되면 값을 read해서 엔트리로 전송
 int analogs[6] = {0,0,0,0,0,0};
@@ -172,6 +181,8 @@ void parseData() {
         isDhtTemp = true;
       } else if (device == DHTHUMI) {
         isDhtHumi = true;
+      } else if (device == IRREMOTE) {
+        isIrremote = true;
       } else {
         // 신규 요청이 기 사용중(구독중)인 포트와 겹치면 기존 것은 중지
         if(port == trigPin || port == echoPin) { 
@@ -179,6 +190,8 @@ void parseData() {
         } else if (port == dhtPin) {
           isDhtTemp = false;
           isDhtHumi = false;
+        } else if (port == irrPin) {
+          isIrremote = false;
         }
         digitals[port] = 1;
       }
@@ -196,6 +209,7 @@ void parseData() {
       isUltrasonic = false;
       isDhtTemp = false;
       isDhtHumi = false;
+      isIrremote = false;
       // callOK();
     }
     break;
@@ -268,6 +282,15 @@ void runModule(int device) {
       digitals[pin] = 0;  // Report Off
     }
     break;
+    case IRRINIT: {
+      if (!irrObj || (irrPin != pin)) { // 포트변경시 새 객체 생성
+        if (irrObj) delete irrObj;
+        irrObj = new IRrecv(pin);
+        irrObj->enableIRIn();
+      }
+      irrPin = pin;
+      digitals[pin] = 0;  // Report Off
+    }
   }
 }
 
@@ -280,12 +303,13 @@ void sendPinValues() {
       // callOK();
     }
   }
-  for (pinNumber = 0; pinNumber < sizeof(analogs); pinNumber++) {
-    if (analogs[pinNumber] == 1) {
-      sendAnalogValue(pinNumber);
-      // callOK();
-    }
-  }
+  // 아날로그 포트 상시 모니터링 위해 이미 포트 On 이므로 별도 필요지 않음
+  // for (pinNumber = 0; pinNumber < sizeof(analogs); pinNumber++) {
+  //   if (analogs[pinNumber] == 1) {
+  //     sendAnalogValue(pinNumber);
+  //     // callOK();
+  //   }
+  // }
   
   if (isUltrasonic) {
     sendUltrasonic();  
@@ -299,6 +323,11 @@ void sendPinValues() {
 
   if (isDhtHumi) {
     sendDhtHumiValue();  
+    // callOK();
+  }
+
+  if (isIrremote) {
+    sendIrrecvValue();  
     // callOK();
   }
 }
@@ -342,6 +371,34 @@ void sendDhtHumiValue() {
   sendShort(value);  
   writeSerial(dhtPin);
   writeSerial(DHTHUMI);
+  writeEnd();
+}
+
+void sendIrrecvValue() {
+  int value = -1;
+  if (irrObj) {
+    if (irrObj->decode(&results)) {
+      switch (results.value) {
+        case 0xFF6897: value = 0; break;
+        case 0xFF30CF: value = 1; break;
+        case 0xFF18E7: value = 2; break;
+        case 0xFF7A85: value = 3; break;
+        case 0xFF10EF: value = 4; break;
+        case 0xFF38C7: value = 5; break;
+        case 0xFF5AA5: value = 6; break;
+        case 0xFF42BD: value = 7; break;
+        case 0xFF4AB5: value = 8; break;
+        case 0xFF52AD: value = 9; break;
+        default: value = 10; break;
+      }
+      irrObj->resume();
+    }
+  }
+
+  writeHead();
+  sendShort(value);  
+  writeSerial(irrPin);
+  writeSerial(IRREMOTE);
   writeEnd();
 }
 

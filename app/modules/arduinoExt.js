@@ -12,9 +12,11 @@ function Module() {
         ULTRASONIC: 7,
         TIMER: 8,
         STEPPER: 9,
-        DHTTEMP: 10,
-        DHTHUMI: 11,
-        DHTINIT: 12,
+        DHTINIT: 10,
+        DHTTEMP: 11,
+        DHTHUMI: 12,
+        IRRINIT: 13,
+        IRREMOTE: 14,
     };
 
     this.actionTypes = {
@@ -35,6 +37,7 @@ function Module() {
         ULTRASONIC: 0,
         DHTTEMP: 0,
         DHTHUMI: 0,
+        IRREMOTE:0,
         DIGITAL: {
             '0': 0,
             '1': 0,
@@ -351,18 +354,23 @@ Module.prototype.handleLocalData = function(data) {
                 self.sensorData.ULTRASONIC = value;
                 break;
             }
+            case self.sensorTypes.TIMER: {
+                self.sensorData.TIMER = value;
+                break;
+            }
             case self.sensorTypes.DHTTEMP: {
                 self.sensorData.DHTTEMP = value;
-                console.log(value)
+                console.log(value);
                 break;
             }
             case self.sensorTypes.DHTHUMI: {
                 self.sensorData.DHTHUMI = value;
-                console.log(value)
+                console.log(value);
                 break;
             }
-            case self.sensorTypes.TIMER: {
-                self.sensorData.TIMER = value;
+            case self.sensorTypes.IRREMOTE: {
+                self.sensorData.IRREMOTE = value;
+                console.log(value);
                 break;
             }
             default: {
@@ -395,18 +403,10 @@ Module.prototype.makeSensorReadBuffer = function(device, port, data) {
             port[1],
             10, // tailer
         ]);
-    } else if (device == this.sensorTypes.DHTTEMP) {
-        buffer = new Buffer([
-            255,
-            85,
-            5,
-            sensorIdx,
-            this.actionTypes.GET,
-            device,
-            port,
-            10,
-        ]);
-    } else if (device == this.sensorTypes.DHTHUMI) {
+    } else if (device == this.sensorTypes.DHTTEMP 
+        || device == this.sensorTypes.DHTHUMI
+        || device == this.sensorTypes.IRREMOTE
+    ) {
         buffer = new Buffer([
             255,
             85,
@@ -514,6 +514,7 @@ Module.prototype.makeOutputBuffer = function(device, port, data) {
             buffer = Buffer.concat([buffer, value, time, dummy]);
             break;
         }
+        case this.sensorTypes.IRRINIT:
         case this.sensorTypes.DHTINIT:  {
             value.writeInt16LE(data);
             buffer = new Buffer([

@@ -506,8 +506,10 @@ var IpcRendererWatchComponent = /** @class */ (function (_super) {
         ipcRenderer.removeAllListeners('cloudMode');
         ipcRenderer.removeAllListeners('socketConnected');
         ipcRenderer.removeAllListeners('invalidAsarFile');
-        ipcRenderer.on('invalidAsarFile', function () {
-            props.invalidateBuild();
+        ipcRenderer.invoke('isValidAsarFileHW').then(function (result) {
+            if (!result) {
+                props.invalidateBuild();
+            }
         });
         ipcRenderer.on('console', function (event) {
             var args = [];
@@ -1015,6 +1017,82 @@ var templateObject_1;
 
 /***/ }),
 
+/***/ "./app/src/renderer/react/main/components/hardwareConnection/CustomButtonSetElement.tsx":
+/*!**********************************************************************************************!*\
+  !*** ./app/src/renderer/react/main/components/hardwareConnection/CustomButtonSetElement.tsx ***!
+  \**********************************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+var react_1 = __importStar(__webpack_require__(/*! react */ "./node_modules/react/index.js"));
+var react_redux_1 = __webpack_require__(/*! react-redux */ "./node_modules/react-redux/es/index.js");
+var constants_1 = __webpack_require__(/*! ../../../../../common/constants */ "./app/src/common/constants.ts");
+var HardwarePanelButton_1 = __importDefault(__webpack_require__(/*! ../common/HardwarePanelButton */ "./app/src/renderer/react/main/components/common/HardwarePanelButton.tsx"));
+var usePreload_1 = __importDefault(__webpack_require__(/*! ../../hooks/usePreload */ "./app/src/renderer/react/main/hooks/usePreload.ts"));
+var CustomButtonSetElement = function (props) {
+    var _a = react_1.useState(false), isElementShow = _a[0], showElement = _a[1];
+    var buttonSet = props.buttonSet;
+    var moduleState = react_redux_1.useSelector(function (state) { return state.common.moduleState; });
+    var _b = usePreload_1.default(), translator = _b.translator, rendererRouter = _b.rendererRouter;
+    var onButtonClicked = react_1.useCallback(function (key) {
+        rendererRouter.customButtonClicked(key);
+    }, []);
+    react_1.useEffect(function () {
+        if (!isElementShow && moduleState === constants_1.HardwareStatement.connected) {
+            if (rendererRouter.canShowCustomButton()) {
+                showElement(true);
+            }
+        }
+    }, [moduleState]);
+    if (!isElementShow) {
+        return react_1.default.createElement(react_1.default.Fragment, null);
+    }
+    if (buttonSet instanceof Array) {
+        return (react_1.default.createElement(react_1.default.Fragment, null, buttonSet.map(function (button) { return (react_1.default.createElement(HardwarePanelButton_1.default, { key: button.key, onClick: function () {
+                onButtonClicked(button.key);
+            } }, translator.translate(button.translate))); })));
+    }
+    else if (typeof buttonSet == 'string') {
+        return (react_1.default.createElement(HardwarePanelButton_1.default, { key: buttonSet, onClick: function () {
+                onButtonClicked(buttonSet);
+            } }, translator.translate(buttonSet)));
+    }
+    else {
+        return (react_1.default.createElement(HardwarePanelButton_1.default, { key: buttonSet.key, onClick: function () {
+                onButtonClicked(buttonSet.key);
+            } }, translator.translate(buttonSet.translate)));
+    }
+};
+exports.default = CustomButtonSetElement;
+
+
+/***/ }),
+
 /***/ "./app/src/renderer/react/main/components/hardwareConnection/DevicePanel.tsx":
 /*!***********************************************************************************!*\
   !*** ./app/src/renderer/react/main/components/hardwareConnection/DevicePanel.tsx ***!
@@ -1033,6 +1111,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var FirmwareButtonSetElement_1 = __importDefault(__webpack_require__(/*! ./FirmwareButtonSetElement */ "./app/src/renderer/react/main/components/hardwareConnection/FirmwareButtonSetElement.tsx"));
+var CustomButtonSetElement_1 = __importDefault(__webpack_require__(/*! ./CustomButtonSetElement */ "./app/src/renderer/react/main/components/hardwareConnection/CustomButtonSetElement.tsx"));
 var react_1 = __importDefault(__webpack_require__(/*! react */ "./node_modules/react/index.js"));
 var styled_components_1 = __importDefault(__webpack_require__(/*! styled-components */ "./node_modules/styled-components/dist/styled-components.browser.esm.js"));
 var usePreload_1 = __importDefault(__webpack_require__(/*! ../../hooks/usePreload */ "./app/src/renderer/react/main/hooks/usePreload.ts"));
@@ -1045,12 +1124,13 @@ var DevicePanel = function () {
     if (!selectedHardware) {
         return react_1.default.createElement(react_1.default.Fragment, null);
     }
-    var icon = selectedHardware.icon, firmware = selectedHardware.firmware;
+    var icon = selectedHardware.icon, firmware = selectedHardware.firmware, customButton = selectedHardware.customButton;
     return (react_1.default.createElement(HardwareElement, null,
         react_1.default.createElement(SelectedHardwareThumb, { alt: '', src: rendererRouter.baseModulePath + "/" + icon }),
-        firmware &&
-            react_1.default.createElement("div", { id: "firmwareButtonSet" },
-                react_1.default.createElement(FirmwareButtonSetElement_1.default, { buttonSet: firmware }))));
+        firmware && (react_1.default.createElement("div", { id: "firmwareButtonSet" },
+            react_1.default.createElement(FirmwareButtonSetElement_1.default, { buttonSet: firmware }))),
+        customButton && (react_1.default.createElement("div", { id: "customButtonSet" },
+            react_1.default.createElement(CustomButtonSetElement_1.default, { buttonSet: customButton })))));
 };
 exports.default = DevicePanel;
 var templateObject_1, templateObject_2;
