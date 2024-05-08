@@ -15,25 +15,26 @@
 #include <DHT.h>
 #include <IRremote.h>
 
-// 타입 상수
-#define ALIVE 0
-#define DIGITAL 1
-#define ANALOG 2
-#define PWM 3
-#define SERVO_PIN 4
-#define TONE 5
-#define PULSEIN 6
+// sensorTypes
+#define S_RESET  255
+#define ALIVE      0
+#define DIGITAL    1
+#define ANALOG     2
+#define PWM        3
+#define SERVO_PIN  4
+#define TONE       5
+#define PULSEIN    6
 #define ULTRASONIC 7
-#define TIMER 8
-#define STEPPER 9
-#define DHTINIT 10
-#define DHTTEMP 11
-#define DHTHUMI 12
-#define IRRINIT 13
-#define IRREMOTE 14
+#define TIMER      8
+#define STEPPER    9
+#define DHTINIT   10  //a
+#define DHTTEMP   11  //b
+#define DHTHUMI   12  //c
+#define IRRINIT   13  //d
+#define IRREMOTE  14  //e
 decode_results results;  // decoded result for IRRmote
 
-// 상태 상수
+// actionsTypes
 #define GET 1
 #define SET 2
 #define RESET 3
@@ -98,9 +99,9 @@ void setup() {
   digitalWrite(13, LOW);
 
   // 아날로그 포트 상시 모니터링 위해 포트 On
-  for (int pinNumber = 0; pinNumber < sizeof(analogs); pinNumber++) {
-    analogs[pinNumber] = 1;
-  }
+  // for (int pinNumber = 0; pinNumber < (sizeof(analogs)/sizeof(int)); pinNumber++) {
+  //   analogs[pinNumber] = 1;
+  // }
 }
 
 void loop() {
@@ -116,8 +117,8 @@ void loop() {
 }
 
 /*
-ff 55 len idx action device port (slot) (data) (tailer) (dummy)
-0  1  2   3   4      5      6    a      7      a        10Bytes
+ff 55 len idx action device port (tailer) (value) (dummy)
+0  1  2   3   4      5      6    a        7       10Bytes
 len은 idx~데이터 까지의 길이 
 tailer는 HW에서 송신시 Serial.println()에 의한 LF값(10)
 */
@@ -183,7 +184,7 @@ void parseData() {
         isDhtHumi = true;
       } else if (device == IRREMOTE) {
         isIrremote = true;
-      } else {
+      } else if (device == DIGITAL) {
         // 신규 요청이 기 사용중(구독중)인 포트와 겹치면 기존 것은 중지
         if(port == trigPin || port == echoPin) { 
           isUltrasonic = false;
@@ -194,6 +195,8 @@ void parseData() {
           isIrremote = false;
         }
         digitals[port] = 1;
+      } else if (device == ANALOG) {
+        analogs[port] = 1;
       }
     }
     break;
@@ -203,14 +206,17 @@ void parseData() {
     }
     break;
     case RESET: { // 엔트리와 연결시 마다 초기화 수행
-      for (int pinNumber = 0; pinNumber < sizeof(digitals); pinNumber++) {
+      for (int pinNumber = 0; pinNumber < (sizeof(digitals)/sizeof(int)); pinNumber++) {
         digitals[pinNumber] = 0;
+      }
+      for (int pinNumber = 0; pinNumber < (sizeof(analogs)/sizeof(int)); pinNumber++) {
+        analogs[pinNumber] = 0;
       }
       isUltrasonic = false;
       isDhtTemp = false;
       isDhtHumi = false;
       isIrremote = false;
-      // callOK();
+      callResetOK();
     }
     break;
   }
@@ -224,13 +230,13 @@ void runModule(int device) {
     case DIGITAL: {      
       setPortWritable(pin);
       int v = readBuffer(7);
-      digitalWrite(pin,v);
+      digitalWrite(pin, v);
     }
     break;
     case PWM: {
       setPortWritable(pin);
       int v = readBuffer(7);
-      analogWrite(pin,v);
+      analogWrite(pin, v);
     }
     break;
     case TONE: {
@@ -296,20 +302,19 @@ void runModule(int device) {
 
 // For port monitoring in Entry
 void sendPinValues() {  
-  int pinNumber = 0;
-  for (pinNumber = 0; pinNumber < sizeof(digitals); pinNumber++) {
+  for (int pinNumber = 0; pinNumber < (sizeof(digitals)/sizeof(int)); pinNumber++) {
     if (digitals[pinNumber] == 1) {
       sendDigitalValue(pinNumber);
       // callOK();
     }
   }
-  // 아날로그 포트 상시 모니터링 위해 이미 포트 On 이므로 별도 필요지 않음
-  // for (pinNumber = 0; pinNumber < sizeof(analogs); pinNumber++) {
-  //   if (analogs[pinNumber] == 1) {
-  //     sendAnalogValue(pinNumber);
-  //     // callOK();
-  //   }
-  // }
+  
+  for (int pinNumber = 0; pinNumber < (sizeof(analogs)/sizeof(int)); pinNumber++) {
+    if (analogs[pinNumber] == 1) {
+      sendAnalogValue(pinNumber);
+      // callOK();
+    }
+  }
   
   if (isUltrasonic) {
     sendUltrasonic();  
@@ -327,7 +332,7 @@ void sendPinValues() {
   }
 
   if (isIrremote) {
-    sendIrrecvValue();  
+    sendIrrecvValue();
     // callOK();
   }
 }
@@ -403,7 +408,7 @@ void sendIrrecvValue() {
 }
 
 void sendDigitalValue(int pinNumber) {
-  pinMode(pinNumber,INPUT);
+  pinMode(pinNumber, INPUT);
   writeHead();
   sendFloat(digitalRead(pinNumber));
   writeSerial(pinNumber);
@@ -419,7 +424,7 @@ void sendAnalogValue(int pinNumber) {
   writeEnd();
 }
 
-void writeBuffer(int index,unsigned char c) {
+void writeBuffer(int index, unsigned char c) {
   buffer[index]=c;
 }
 
@@ -429,7 +434,7 @@ void writeHead() {
 }
 
 void writeEnd() {
-  Serial.println();
+  Serial.println(); // CR(0x0D 0x0A) is added at the end of the packet by println()
 }
 
 void writeSerial(unsigned char c) {
@@ -484,7 +489,7 @@ long readLong(int idx) {
 }
 
 int searchServoPin(int pin) {
-  for (int i=0; i<8; i++) {
+  for (int i=0; i < (sizeof(servo_pins)/sizeof(int)); i++) {
     if (servo_pins[i] == pin) {
       return i;
     }
@@ -503,15 +508,21 @@ void setPortWritable(int pin) {
   pinMode(pin, OUTPUT);
 }
 
+void callResetOK() {
+  writeHead();
+  sendShort(0);  
+  writeSerial(0);
+  writeSerial(S_RESET); // sensorType
+  writeEnd();
+}
+
 void callOK() {
-  writeSerial(0xff);
-  writeSerial(0x55);
+  writeHead();
   writeEnd();
 }
 
 void callDebug(char c) {
-  writeSerial(0xff);
-  writeSerial(0x55);
+  writeHead();
   writeSerial(c);
   writeEnd();
 }
