@@ -372,7 +372,7 @@ Module.prototype.handleLocalData = function(data) {
                 break;
             }
             case self.sensorTypes.IRREMOTE: {
-                self.sensorData.IRREMOTE[port] = value;
+                self.sensorData.IRREMOTE = value;
                 break;
             }
             default: {
@@ -395,6 +395,10 @@ Module.prototype.makeSensorReadBuffer = function(device, port, data) {
     let buffer;
     const value = new Buffer(2);
     const dummy = new Buffer([10]); // 10Bytes
+
+    if (typeof(device) == 'string') {
+        device = parseInt(device); // String to Number for switch-case
+    }
     switch (device) {
         case this.sensorTypes.ULTRASONIC:
             buffer = new Buffer([
@@ -425,6 +429,7 @@ Module.prototype.makeSensorReadBuffer = function(device, port, data) {
             ]);
             break;
         default:
+            console.log('Subsription request by default sensorType!!');
             value.writeInt16LE(data); // 2Bytes
             buffer = new Buffer([
                 255,
