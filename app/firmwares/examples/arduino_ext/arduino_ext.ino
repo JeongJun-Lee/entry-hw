@@ -5,34 +5,39 @@
  * CC-BY-SA 3.0 (https://creativecommons.org/licenses/by-sa/3.0/)
  * Author : Ander, Mark Yan
  * Updated : Ander, Mark Yan, JJ Lee
- * Date : 12/19/2021
+ * Updated : 12/19/2021
  * Description : Firmware for Makeblock Electronic modules with Scratch.
- * Copyright (C) 2013 - 2016 Maker Works Technology Co., Ltd. All right reserved. 
+ * Copyright (C) 2013 - 2016 Maker Works Technology Co., Ltd. All right reserved.
+ * Copyright (C) 2021 - Roboticsware Co., Ltd. All right reserved about the updated parts.
  **********************************************************************************/
 
 #include <Servo.h>
 #include <Stepper.h>
 #include <DHT.h>
 #include <IRremote.h>
+#include <LCDI2C_Multilingual.h>
+#include <Wire.h>
 
 // sensorTypes
-#define S_RESET  255
-#define ALIVE      0
-#define DIGITAL    1
-#define ANALOG     2
-#define PWM        3
-#define SERVO_PIN  4
-#define TONE       5
-#define PULSEIN    6
-#define ULTRASONIC 7
-#define TIMER      8
-#define STEPPER    9
-#define DHTINIT   10  //a
-#define DHTTEMP   11  //b
-#define DHTHUMI   12  //c
-#define IRRINIT   13  //d
-#define IRREMOTE  14  //e
-decode_results results;  // decoded result for IRRmote
+#define S_RESET   255
+#define ALIVE       0
+#define DIGITAL     1
+#define ANALOG      2
+#define PWM         3
+#define SERVO_PIN   4
+#define TONE        5
+#define PULSEIN     6
+#define ULTRASONIC  7
+#define TIMER       8
+#define STEPPER     9
+#define DHTINIT    10  //a
+#define DHTTEMP    11  //b
+#define DHTHUMI    12  //c
+#define IRRINIT    13  //d
+#define IRREMOTE   14  //e
+#define LCD_INIT   15  //f
+#define LCD_PRINT  16  //10
+#define LCD_CLEAR  17  //11
 
 // actionsTypes
 #define GET 1
@@ -67,6 +72,7 @@ boolean isDhtTemp = false; // true이 되면 값을 read해서 엔트리로 전�
 boolean isDhtHumi = false;
 
 // IRremote
+decode_results results;  // decoded result for IRRmote
 IRrecv* irrObj = NULL;
 int irrPin = -1;
 boolean isIrremote = false;
@@ -89,7 +95,25 @@ double currentTime = 0.0;
 uint8_t command_index = 0;
 boolean isStart = false;
 
+// LCD
+LCDI2C_RussianLatin *lcdObj = NULL;
+
+byte findI2CAddress() {
+  byte error, address = 0, foundAddress;
+
+  for (address = 1; address < 127; address++ ) {
+    Wire.beginTransmission(address);
+    error = Wire.endTransmission();
+
+    if (error == 0) {
+      foundAddress =  address;
+    } 
+  }
+  return foundAddress;
+}
+
 void setup() {
+  Wire.begin();  // For finding I2C addr for LCD
   Serial.begin(115200);
   Serial.flush();
   delay(200);
@@ -297,6 +321,35 @@ void runModule(int device) {
       irrPin = pin;
       digitals[pin] = 0;  // Report Off
     }
+    break;
+    case LCD_INIT: {
+      if (lcdObj) delete lcdObj;
+      // set the I2C address(0x27) with a 16 chars and 2 line of 1602* LCD display
+      lcdObj = new LCDI2C_RussianLatin(findI2CAddress(), 16, 2);
+      lcdObj->init();
+      lcdObj->backlight();
+      lcdObj->clear();
+    }
+    break;
+    case LCD_PRINT: {
+      int row = readBuffer(7);
+      int col = readBuffer(8);
+      int len = readBuffer(9);
+      if (lcdObj) {
+        if (len == 0) {
+          lcdObj->clear();
+        } else {
+          String txt = readString(len, 10);
+          lcdObj->setCursor(col, row);
+          lcdObj->print(txt);
+        }
+      }
+    }
+    break;
+    case LCD_CLEAR: {
+      if (lcdObj) lcdObj->clear();
+    }
+    break;
   }
 }
 
@@ -486,6 +539,16 @@ long readLong(int idx) {
   val.byteVal[2] = readBuffer(idx+2);
   val.byteVal[3] = readBuffer(idx+3);
   return val.longVal;
+}
+
+String readString(int len, int startIdx) {
+  String str = "";
+
+  for (int i = startIdx; i < (startIdx + len); i++) {
+    str += (char) readBuffer(i);
+  }
+
+  return str;
 }
 
 int searchServoPin(int pin) {

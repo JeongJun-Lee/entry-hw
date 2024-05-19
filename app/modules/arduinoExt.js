@@ -17,6 +17,9 @@ function Module() {
         DHTHUMI:   12,  //c
         IRRINIT:   13,  //d
         IRREMOTE:  14,  //e
+        LCD_INIT:  15,  //f
+        LCD_PRINT: 16,  //10
+        LCD_CLEAR: 17,  //11
     };
 
     this.actionTypes = {
@@ -31,7 +34,8 @@ function Module() {
     };
 
     // Entry.js쪽에서 특정 port(예를들어 stepper motor 14번)를 사용한다고, 여기에 반영 필요!
-    this.digitalPortTimeList = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    // 맨 처음 0번째는 세지 않음(배열1~13번째 값이 포트1~13과 맵핑), Stepper 14, LCD 15
+    this.digitalPortTimeList = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; 
 
     this.sensorData = {
         DIGITAL: {
@@ -81,7 +85,6 @@ let sensorIdx = 0;
 Module.prototype.init = function(handler, config) {};
 
 Module.prototype.setSerialPort = function(sp) {
-    const self = this;
     this.sp = sp;
 };
 
@@ -205,6 +208,7 @@ Module.prototype.handleRemoteData = function(handler) {
             const data = setDatas[port];
             // To chceck if Entry sent the block really
             // console.log(`setDatas: key=${data.type} port=${port} data=${data.data}`); 
+            // console.log(`digitalPortTimeList[${port}]=${self.digitalPortTimeList[port]} data.time=${data.time}`); 
             if (data) {
                 if (self.digitalPortTimeList[port] < data.time) {
                     self.digitalPortTimeList[port] = data.time;
@@ -230,7 +234,7 @@ Module.prototype.handleRemoteData = function(handler) {
     }
 };
 
-// 엔트리 블록 중복전송 방지: 최초 1회 Get으로 요청하면, 계속 구독중 되므로 중복 재전송 불필요
+// 엔트리 블록 중복전송 방지: 예를들어 최초 Get요청블록의 경우, 1회 요청 후 계속 구독중 되므로 중복 재전송 불필요
 Module.prototype.isRecentData = function(port, type, data) {
     const that = this;
     let isRecent = false;
@@ -261,8 +265,9 @@ Module.prototype.isRecentData = function(port, type, data) {
     } else if (port in this.recentCheckData && type != this.sensorTypes.TONE) {
         if (
             this.recentCheckData[port].type === type &&
-            this.recentCheckData[port].data === data
+            this.recentCheckData[port].data === data    // 데이터까지 동일해야 동일 데이터로 간주
         ) {
+            // console.log('recetnCheckData= ' + this.recentCheckData);
             isRecent = true;
         }
     }
@@ -478,6 +483,8 @@ Module.prototype.makeOutputBuffer = function(device, port, data) {
             ]);
             buffer = Buffer.concat([buffer, value, dummy]);
             break;
+        case this.sensorTypes.LCD_INIT:
+        case this.sensorTypes.LCD_CLEAR:
         case this.sensorTypes.IRRINIT:
         case this.sensorTypes.DHTINIT:
         case this.sensorTypes.SERVO_PIN:
@@ -549,6 +556,42 @@ Module.prototype.makeOutputBuffer = function(device, port, data) {
                 port,
             ]);
             buffer = Buffer.concat([buffer, port1, port2, port3, port4, speed, steps, dummy]);
+            break;
+        }
+        case this.sensorTypes.LCD_PRINT: {
+            let text = null;
+            const row = Buffer(1);
+            const column = Buffer(1);
+            let textLen = 0;
+            const bufLen = Buffer(1);
+      
+            if ($.isPlainObject(data)) {
+                // numeric 데이터로 들어오는 경우가 있으므로, 문자열로 변경하기
+                textLen = ('' + data.text).length;
+                text = Buffer.from("" + data.text);
+                row.writeInt8(data.row);
+                bufLen.writeInt8(textLen);
+                column.writeInt8(data.column);
+            } else {
+                textLen = 0;
+                text = Buffer.from('');
+                row.writeInt8(0);
+                bufLen.writeInt8(textLen);
+                column.writeInt8(0);
+            }
+      
+            buffer = new Buffer([
+                255,
+                85,
+                4 + 3 + textLen,
+                sensorIdx,
+                this.actionTypes.SET,
+                device,
+                port,
+            ]);
+      
+            buffer = Buffer.concat([buffer, row, column, bufLen, text, dummy]);
+            console.log('write lcd');
             break;
         }
     }
