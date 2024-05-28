@@ -410,6 +410,7 @@ class MainRouter {
         const hwModule = this.hwModule;
         const handler = this.handler;
         handler.decode(data);
+        // console.log(data); // To chceck if Entry sent the block really in the low level
         if (handler.read('name') == 'arduino' ||
             handler.read('name') == 'ArduinoExt' ||
             handler.read('name') == 'ITPLE') {
