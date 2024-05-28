@@ -123,9 +123,9 @@ void setup() {
   digitalWrite(13, LOW);
 
   // 아날로그 포트 상시 모니터링 위해 포트 On
-  // for (int pinNumber = 0; pinNumber < (sizeof(analogs)/sizeof(int)); pinNumber++) {
-  //   analogs[pinNumber] = 1;
-  // }
+  for (int pinNumber = 0; pinNumber < (sizeof(analogs)/sizeof(int)); pinNumber++) {
+    analogs[pinNumber] = 1;
+  }
 }
 
 void loop() {
@@ -233,9 +233,9 @@ void parseData() {
       for (int pinNumber = 0; pinNumber < (sizeof(digitals)/sizeof(int)); pinNumber++) {
         digitals[pinNumber] = 0;
       }
-      for (int pinNumber = 0; pinNumber < (sizeof(analogs)/sizeof(int)); pinNumber++) {
-        analogs[pinNumber] = 0;
-      }
+      // for (int pinNumber = 0; pinNumber < (sizeof(analogs)/sizeof(int)); pinNumber++) {
+      //   analogs[pinNumber] = 0;
+      // }
       isUltrasonic = false;
       isDhtTemp = false;
       isDhtHumi = false;
