@@ -146,7 +146,7 @@ Module.prototype.requestRemoteData = function(handler) {
     });
 };
 
-// 엔트리에서 받은 데이터에 대한 처리
+// 이 중계자가 엔트리로부터 받은 데이터에 대한 처리
 Module.prototype.handleRemoteData = function(handler) {
     const self = this;
     const getDatas = handler.read('GET');
@@ -154,6 +154,7 @@ Module.prototype.handleRemoteData = function(handler) {
     const time = handler.read('TIME');
     let buffer = new Buffer([]);
 
+    // HW에서 값을 읽어오기 요청
     if (getDatas) {
         const keys = Object.keys(getDatas);
         keys.forEach((key) => {
@@ -202,12 +203,13 @@ Module.prototype.handleRemoteData = function(handler) {
         });
     }
 
+    // HW에 값을 설정하기 요청
     if (setDatas) {
         const setKeys = Object.keys(setDatas);
         setKeys.forEach((port) => {
             const data = setDatas[port];
             // To chceck if Entry sent the block really
-            // console.log(`setDatas: key=${data.type} port=${port} data=${data.data}`); 
+            // console.log(`setDatas: key=${data.type} port=${port} data=${JSON.stringify(data.data)}`); 
             // console.log(`digitalPortTimeList[${port}]=${self.digitalPortTimeList[port]} data.time=${data.time}`); 
             if (data) {
                 if (self.digitalPortTimeList[port] < data.time) {
@@ -236,8 +238,8 @@ Module.prototype.handleRemoteData = function(handler) {
 
 /**
  * 기존에 수신했던 데이터인가
- * 기존에 수신했던 데이터인지 확인합니다. 예를들어 LED ON/OFF의 경우 무한루프에서 상태가 변하지 않을 경우 추가로 신호를 하드웨어에 보내서 불필요한 오버헤드를
- * 발생시킬 필요가 없으므로, 같은 신호에 대해서는 중복으로 보내지 않도록 만듭니다.
+ * 기존에 수신했던 데이터인지 확인합니다. 예를들어 무한루프에서 상태가 변하지 않을 경우 추가로 신호를 하드웨어에 보내거나, 
+ * 또는 포트 구독의 경우 등 불필요한 오버헤드를 발생시킬 필요가 없으므로, 같은 신호에 대해서는 중복으로 보내지 않도록 만듭니다.
  * 하지만, Tone과 같이 같은 신호라도 출력데이터를 보내야하므로 별도의 예외처리가 필요합니다.
 **/
 Module.prototype.isRecentData = function(port, type, data) {
@@ -269,9 +271,9 @@ Module.prototype.isRecentData = function(port, type, data) {
     } else if (port in this.recentCheckData && type != this.sensorTypes.TONE) { // 예외로 계속 데이터 보내야 하는 경우에 추가!
         if (
             this.recentCheckData[port].type === type &&
-            this.recentCheckData[port].data === data    // 데이터까지 동일해야 동일 데이터로 간주
+            JSON.stringify(this.recentCheckData[port].data) === JSON.stringify(data) // 데이터까지 동일해야 동일 데이터로 간주
         ) {
-            // console.log('recetnCheckData= ' + this.recentCheckData);
+            console.log(`isRecent is True, type= ${type}, data= ` + JSON.stringify(this.recentCheckData[port].data));
             isRecent = true;
         }
     }
@@ -421,6 +423,7 @@ Module.prototype.makeSensorReadBuffer = function(device, port, data) {
                 port[1],
                 10, // tailer
             ]);
+            console.log('x1b[31mread ultrasonic\x1b[0m');
             break;
         case this.sensorTypes.DHTTEMP:
         case this.sensorTypes.DHTHUMI:
@@ -436,6 +439,7 @@ Module.prototype.makeSensorReadBuffer = function(device, port, data) {
                 port,
                 10,
             ]);
+            console.log(`\x1b[31mread port (${device})\x1b[0m`);
             break;
         default:
             console.log('Subsription request by default sensorType!!');
@@ -505,6 +509,7 @@ Module.prototype.makeOutputBuffer = function(device, port, data) {
                 port,
             ]);
             buffer = Buffer.concat([buffer, value, dummy]);
+            console.log(`\x1b[31mwrite init (${device})\x1b[0m`);
             break;
         }
         case this.sensorTypes.TONE: {
@@ -526,6 +531,7 @@ Module.prototype.makeOutputBuffer = function(device, port, data) {
                 port,
             ]);
             buffer = Buffer.concat([buffer, value, time, dummy]);
+            console.log('\x1b[31mwrite tone\x1b[0m');
             break;
         }
         case this.sensorTypes.STEPPER: {
@@ -560,6 +566,7 @@ Module.prototype.makeOutputBuffer = function(device, port, data) {
                 port,
             ]);
             buffer = Buffer.concat([buffer, port1, port2, port3, port4, speed, steps, dummy]);
+            console.log('\x1b[31mwrite stepper\x1b[0m');
             break;
         }
         case this.sensorTypes.LCD_PRINT: {
@@ -595,7 +602,7 @@ Module.prototype.makeOutputBuffer = function(device, port, data) {
             ]);
       
             buffer = Buffer.concat([buffer, row, column, bufLen, text, dummy]);
-            console.log('write lcd');
+            console.log('\x1b[31mwrite lcd\x1b[0m');
             break;
         }
     }
