@@ -146,7 +146,7 @@ Module.prototype.requestRemoteData = function(handler) {
     });
 };
 
-// 이 중계자가 엔트리로부터 받은 데이터에 대한 처리
+// 엔트리로부터 받은 데이터에 대한 처리
 Module.prototype.handleRemoteData = function(handler) {
     const self = this;
     const getDatas = handler.read('GET');
@@ -172,7 +172,7 @@ Module.prototype.handleRemoteData = function(handler) {
                     self.digitalPortTimeList[dataObj.port] = dataObj.time;
                 }
                 prevKey = key;
-            } else if (Array.isArray(dataObj.port)) { // For example, UltraSonic
+            } else if (Array.isArray(dataObj.port)) { // For example, port of UltraSonic are array
                 isSend = dataObj.port.every((port) => {
                     const time = self.digitalPortTimeList[port];
                     return dataObj.time > time;
@@ -423,12 +423,13 @@ Module.prototype.makeSensorReadBuffer = function(device, port, data) {
                 port[1],
                 10, // tailer
             ]);
-            console.log('x1b[31mread ultrasonic\x1b[0m');
+            console.log('\x1b[31mread ultrasonic\x1b[0m');
             break;
         case this.sensorTypes.DHTTEMP:
         case this.sensorTypes.DHTHUMI:
         case this.sensorTypes.IRREMOTE:
         case this.sensorTypes.ANALOG: // AnalogRead
+        case this.sensorTypes.DIGITAL: // DigitalRead
             buffer = new Buffer([
                 255,
                 85,
@@ -439,21 +440,21 @@ Module.prototype.makeSensorReadBuffer = function(device, port, data) {
                 port,
                 10,
             ]);
-            console.log(`\x1b[31mread port (${device})\x1b[0m`);
+            console.log(`\x1b[31mread port (device: ${device}, port: ${port})\x1b[0m`);
             break;
         default:
             console.log('Subsription request by default sensorType!!');
-            value.writeInt16LE(data); // 2Bytes
             buffer = new Buffer([
                 255,
                 85,
-                7,
+                7,  // buffer 이후 덧붙혀지는 value 크기를 포함
                 sensorIdx,
                 this.actionTypes.GET,
                 device,
                 port,
                 10, 
             ]);
+            value.writeInt16LE(data); // 2Bytes
             buffer = Buffer.concat([buffer, value, dummy]);
             break;
     }
