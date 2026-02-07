@@ -1,0 +1,31 @@
+{
+    "id": "220202",
+    "name": {
+        "en": "Raspberry Pi Pico",
+        "ko": "라즈베리파이 피코"
+    },
+    "category": "board",
+    "platform": [
+        "win32",
+        "darwin"
+    ],
+    "icon": "pico.png",
+    "module": "pico.js",
+    "driver": {},
+    "reconnect": true,
+    "firmware": {
+        "type": "copy",
+        "name": "pico",
+        "extension": "uf2",
+        "afterDelay": 2000,
+        "translate": "Raspberry Pi Pico (UF2)"
+    },
+    "hardware": {
+        "type": "serial",
+        "control": "slave",
+        "duration": 32,
+        "vendor": "Raspberry Pi",
+        "baudRate": 115200,
+        "firmwarecheck": false
+    }
+}

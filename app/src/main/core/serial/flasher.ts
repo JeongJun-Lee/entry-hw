@@ -116,8 +116,9 @@ class Flasher {
                 return reject(['경로 미선택']);
             }
 
-            const targetFirmwarePath = path.join(firmwareDirectory, `${firmware.name}.hex`);
-            const destFirmwarePath = path.join(destPath[0], `${firmware.name}.hex`);
+            const extension = firmware.extension || 'hex';
+            const targetFirmwarePath = path.join(firmwareDirectory, `${firmware.name}.${extension}`);
+            const destFirmwarePath = path.join(destPath[0], `${firmware.name}.${extension}`);
             // TODO 파일 없을 시 에러 처리
             logger.info('copy style firmware upload requested');
             logger.info(`${firmwareDirectory} to ${destFirmwarePath}`);

@@ -22,6 +22,7 @@ declare type ICopyTypeFirmware = {
     name: string;
     afterDelay?: number;
     translate?: string;
+    extension?: string;
 };
 declare type IESP32TypeFirmware = {
     type: string;
