@@ -126,11 +126,6 @@ void setup() {
   for (int pinNumber = 0; pinNumber < (sizeof(analogs)/sizeof(int)); pinNumber++) {
     analogs[pinNumber] = 1;
   }
-
-  // 디지털 포트 상시 모니터링 위해 포트 On (0, 1번 포트 엔트리와의 통신용)
-  for (int pinNumber = 2; pinNumber < (sizeof(digitals)/sizeof(int)); pinNumber++) {
-    digitals[pinNumber] = 1;
-  }
 }
 
 void loop() {
@@ -236,11 +231,11 @@ void parseData() {
     break;
     case RESET: { // 엔트리와 연결시 마다 초기화 수행
       for (int pinNumber = 0; pinNumber < (sizeof(digitals)/sizeof(int)); pinNumber++) {
-        digitals[pinNumber] = 1;
+        digitals[pinNumber] = 0;
       }
-      for (int pinNumber = 0; pinNumber < (sizeof(analogs)/sizeof(int)); pinNumber++) {
-        analogs[pinNumber] = 1;
-      }
+      // for (int pinNumber = 0; pinNumber < (sizeof(analogs)/sizeof(int)); pinNumber++) {
+      //   analogs[pinNumber] = 0;
+      // }
       isUltrasonic = false;
       isDhtTemp = false;
       isDhtHumi = false;
