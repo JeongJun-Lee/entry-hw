@@ -25,7 +25,7 @@ The easiest way is to use a Docker container that has the toolchain pre-installe
       apt-get update && apt-get install -y git make python3 gcc-arm-none-eabi build-essential cmake
       git clone https://github.com/micropython/micropython.git
       cd micropython
-      git submodule update --init --lib/pico-sdk lib/tinyusb
+      git submodule update --init --recursivelib/pico-sdk lib/tinyusb lib/cyw43-driver lib/lwip lib/btstack
       cd mpy-cross && make && cd ..
       
       # Copy your main.py to the frozen modules directory
@@ -33,11 +33,12 @@ The easiest way is to use a Docker container that has the toolchain pre-installe
       
       # Build for Standard Pico
       cd ports/rp2
-      make BOARD=PICO
+      make clean
+      make -j$(nproc) BOARD=RPI_PICO
       cp build-PICO/firmware.uf2 /workspace/pico.uf2
       
       # Build for Pico W
-      make BOARD=PICO_W
+      make -j$(nproc) BOARD=RPI_PICO_W
       cp build-PICO_W/firmware.uf2 /workspace/pico_ble.uf2
     "
     ```
@@ -50,7 +51,7 @@ If you have the ARM Toolchain installed (`arm-none-eabi-gcc`):
     ```bash
     git clone https://github.com/micropython/micropython.git
     cd micropython
-    git submodule update --init -- recursivelib/pico-sdk lib/tinyusb
+    git submodule update --init --recursivelib/pico-sdk lib/tinyusb lib/cyw43-driver lib/lwip lib/btstack
     ```
 
 2.  **Build mpy-cross**:
@@ -73,12 +74,13 @@ If you have the ARM Toolchain installed (`arm-none-eabi-gcc`):
     *   **Standard Pico**:
         ```bash
         cd ports/rp2
-        make BOARD=PICO
+        make clean
+        make -j$(nproc) BOARD=RPI_PICO
         mv build-PICO/firmware.uf2 build-PICO/pico.uf2
         ```
     *   **Pico W**:
         ```bash
-        make BOARD=PICO_W
+        make -j$(nproc) BOARD=RPI_PICO_W
         mv build-PICO_W/firmware.uf2 build-PICO_W/pico_ble.uf2
         ```
     * 5.  **Output**:
@@ -99,14 +101,14 @@ If you have the ARM Toolchain installed (`arm-none-eabi-gcc`):
 2.  **Install Dependencies (in Ubuntu terminal)**:
     ```bash
     sudo apt update
-    sudo apt install -y git make python3 gcc-arm-none-eabi build-essential cmake
+    sudo apt install -y git make python3 gcc-arm-none-eabi libnewlib-arm-none-eabi build-essential libusb-1.0-0-dev cmake
     ```
 
 3.  **Clone MicroPython**:
     ```bash
     git clone https://github.com/micropython/micropython.git
     cd micropython
-    git submodule update --init --lib/pico-sdk lib/tinyusb
+    git submodule update --init --recursivelib/pico-sdk lib/tinyusb lib/cyw43-driver lib/lwip lib/btstack
     ```
 
 4.  **Build mpy-cross**:
@@ -133,7 +135,8 @@ If you have the ARM Toolchain installed (`arm-none-eabi-gcc`):
     *   **For Standard Pico (USB Only)**:
         ```bash
         cd ports/rp2
-        make BOARD=PICO
+        make clean
+        make -j$(nproc) BOARD=RPI_PICO
         # Rename output
         mv build-PICO/firmware.uf2 build-PICO/pico.uf2
         ```
@@ -141,7 +144,7 @@ If you have the ARM Toolchain installed (`arm-none-eabi-gcc`):
     *   **For Pico W (BLE + USB)**:
         ```bash
         cd ports/rp2
-        make BOARD=PICO_W
+        make -j$(nproc) BOARD=RPI_PICO_W
         # Rename output
         mv build-PICO_W/firmware.uf2 build-PICO_W/pico_ble.uf2
         ```
