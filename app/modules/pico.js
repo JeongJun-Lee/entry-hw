@@ -15,7 +15,25 @@ function Module() {
 }
 
 Module.prototype.init = function (handler, config) {
-    // console.log("Pico Init");
+    this.config = config;
+};
+
+Module.prototype.getProfiles = function () {
+    return [
+        {
+            service: '6E400001-B5A3-F393-E0A9-E50E24DCCA9E',
+            characteristics: [
+                {
+                    uuid: '6E400002-B5A3-F393-E0A9-E50E24DCCA9E', // RX (Write)
+                    type: 'write',
+                },
+                {
+                    uuid: '6E400003-B5A3-F393-E0A9-E50E24DCCA9E', // TX (Notify)
+                    type: 'notify',
+                },
+            ],
+        },
+    ];
 };
 
 Module.prototype.requestInitialData = function () {
@@ -84,11 +102,31 @@ Module.prototype.requestLocalData = function () {
         }
     }
 
+    if (this.config && this.config.hardware.type === 'bluetooth') {
+        const commandQueue = arguments[0];
+        if (commandQueue && queryString.length > 0) {
+            commandQueue.push({
+                key: '6E400002-B5A3-F393-E0A9-E50E24DCCA9E', // RX Characteristic
+                value: queryString
+            });
+        }
+        return [];
+    }
+
     return queryString;
 };
 
 // Hardware -> Entry (Receive Data)
 Module.prototype.handleLocalData = function (data) {
+    // Handle BLE Data
+    if (this.config && this.config.hardware.type === 'bluetooth') {
+        if (data.key === '6E400003-B5A3-F393-E0A9-E50E24DCCA9E') { // TX Characteristic
+            data = data.value;
+        } else {
+            return;
+        }
+    }
+
     // Append new data to buffer
     for (let i = 0; i < data.length; i++) {
         this.buffer.push(data[i]);

@@ -1,0 +1,31 @@
+{
+    "id": "220203",
+    "name": {
+        "en": "Raspberry Pi Pico (BLE)",
+        "ko": "라즈베리파이 피코 (BLE)"
+    },
+    "category": "board",
+    "platform": [
+        "win32",
+        "darwin"
+    ],
+    "icon": "pico.png",
+    "module": "pico.js",
+    "driver": {},
+    "reconnect": true,
+    "firmware": {
+        "type": "copy",
+        "name": "pico_ble",
+        "extension": "uf2",
+        "afterDelay": 2000,
+        "translate": "Raspberry Pi Pico W (UF2)"
+    },
+    "hardware": {
+        "type": "bluetooth",
+        "control": "slave",
+        "vendor": "Raspberry Pi",
+        "duration": 32,
+        "baudRate": 115200,
+        "firmwarecheck": false
+    }
+}
