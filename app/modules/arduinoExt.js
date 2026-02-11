@@ -1,23 +1,23 @@
 function Module() {
     this.sp = null;
     this.sensorTypes = {
-        RESET:    255,
-        ALIVE:      0,
-        DIGITAL:    1,
-        ANALOG:     2,
-        PWM:        3,
-        SERVO_PIN:  4,
-        TONE:       5,
-        PULSEIN:    6,
+        RESET: 255,
+        ALIVE: 0,
+        DIGITAL: 1,
+        ANALOG: 2,
+        PWM: 3,
+        SERVO_PIN: 4,
+        TONE: 5,
+        PULSEIN: 6,
         ULTRASONIC: 7,
-        TIMER:      8,
-        STEPPER:    9,
-        DHTINIT:   10,  //a
-        DHTTEMP:   11,  //b
-        DHTHUMI:   12,  //c
-        IRRINIT:   13,  //d
-        IRREMOTE:  14,  //e
-        LCD_INIT:  15,  //f
+        TIMER: 8,
+        STEPPER: 9,
+        DHTINIT: 10,  //a
+        DHTTEMP: 11,  //b
+        DHTHUMI: 12,  //c
+        IRRINIT: 13,  //d
+        IRREMOTE: 14,  //e
+        LCD_INIT: 15,  //f
         LCD_PRINT: 16,  //10
         LCD_CLEAR: 17,  //11
     };
@@ -35,7 +35,7 @@ function Module() {
 
     // Entry.js쪽에서 특정 port(예를들어 stepper motor 14번)를 사용한다고, 여기에 반영 필요!
     // 맨 처음 0번째는 세지 않음(배열1~13번째 값이 포트1~13과 맵핑), Stepper 14, LCD 15
-    this.digitalPortTimeList = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; 
+    this.digitalPortTimeList = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
     this.sensorData = {
         DIGITAL: {
@@ -63,11 +63,11 @@ function Module() {
             '5': 0,
         },
         PULSEIN: {},
-        TIMER:      0,
+        TIMER: 0,
         ULTRASONIC: 0,
-        DHTTEMP:    0,
-        DHTHUMI:    0,
-        IRREMOTE:   0,
+        DHTTEMP: 0,
+        DHTHUMI: 0,
+        IRREMOTE: 0,
     };
 
     this.defaultOutput = {};
@@ -82,9 +82,25 @@ function Module() {
 
 let sensorIdx = 0;
 
-Module.prototype.init = function(handler, config) {};
+Module.prototype.init = function (handler, config) {
+    this.config = config;
+};
 
-Module.prototype.setSerialPort = function(sp) {
+Module.prototype.getProfiles = function () {
+    return [
+        {
+            service: '0000ffe0-0000-1000-8000-00805f9b34fb',
+            characteristics: [
+                {
+                    uuid: '0000ffe1-0000-1000-8000-00805f9b34fb',
+                    type: ['read', 'write', 'notify'],
+                },
+            ],
+        },
+    ];
+};
+
+Module.prototype.setSerialPort = function (sp) {
     this.sp = sp;
 };
 
@@ -94,32 +110,33 @@ Module.prototype.setSerialPort = function(sp) {
     이 두 함수가 정의되어있어야 로직이 동작합니다. 필요없으면 작성하지 않아도 됩니다.
     그러나, 현재는 하드웨어 선택 후 이 초기값 리턴되지 않으면, 펌웨어가 없는 것으로 간주해 신규 업로드를 시작하므로 보내야 함
 */
-Module.prototype.requestInitialData = function() {
+Module.prototype.requestInitialData = function () {
     this.isNewConn = true;
+    sensorIdx = 0;
     // slave mode라서 hw에서 신호를 받아야 연결성립
     return this.makeOutputBuffer(this.sensorTypes.RESET, 0, 0); // 최초 연결시, 하드웨어 초기화 수행
 };
 
 // 연결 후 초기에 수신받아서 정상연결인지를 확인해야하는 경우 사용합니다.
-Module.prototype.checkInitialData = function(data, config) {
+Module.prototype.checkInitialData = function (data, config) {
     console.log("Initial Data arrived!!!, But we don't use it now");
     return true;
 };
 
-Module.prototype.afterConnect = function(that, cb) {
+Module.prototype.afterConnect = function (that, cb) {
     that.connected = true;
     if (cb) {
         cb('connected');
     }
 };
 
-Module.prototype.validateLocalData = function(data) {
+Module.prototype.validateLocalData = function (data) {
     return true;
 };
 
 // 하드웨어로부터 와서 처리된 데이터 -> 엔트리로 전달
 // 밑단에서 먼저 handleLocalData() 호출 후 다음 순차적으로 이를 호출
-Module.prototype.requestRemoteData = function(handler) {
+Module.prototype.requestRemoteData = function (handler) {
     const self = this;
     if (!self.sensorData) {
         return;
@@ -140,14 +157,14 @@ Module.prototype.requestRemoteData = function(handler) {
                     handler.write('a' + i, value);
                 }
             } else {
-                handler.write(key, self.sensorData[key]); 
+                handler.write(key, self.sensorData[key]);
             }
         }
     });
 };
 
 // 엔트리로부터 받은 데이터에 대한 처리
-Module.prototype.handleRemoteData = function(handler) {
+Module.prototype.handleRemoteData = function (handler) {
     const self = this;
     const getDatas = handler.read('GET');
     const setDatas = handler.read('SET') || this.defaultOutput;
@@ -242,7 +259,7 @@ Module.prototype.handleRemoteData = function(handler) {
  * 또는 포트 구독의 경우 등 불필요한 오버헤드를 발생시킬 필요가 없으므로, 같은 신호에 대해서는 중복으로 보내지 않도록 만듭니다.
  * 하지만, Tone과 같이 같은 신호라도 출력데이터를 보내야하므로 별도의 예외처리가 필요합니다.
 **/
-Module.prototype.isRecentData = function(port, type, data) {
+Module.prototype.isRecentData = function (port, type, data) {
     const that = this;
     let isRecent = false;
 
@@ -250,11 +267,11 @@ Module.prototype.isRecentData = function(port, type, data) {
         const portString = port.toString();
         let isGarbageClear = false;
         Object.keys(this.recentCheckData).forEach((key) => {
-            const  recent = that.recentCheckData[key];
+            const recent = that.recentCheckData[key];
             if (key === portString) {
-                
+
             }
-            if (key !== portString && 
+            if (key !== portString &&
                 (recent.type == that.sensorTypes.ULTRASONIC)) {
                 delete that.recentCheckData[key];
                 isGarbageClear = true;
@@ -277,7 +294,7 @@ Module.prototype.isRecentData = function(port, type, data) {
             isRecent = true;
         }
     }
-    
+
     return isRecent;
 };
 
@@ -286,8 +303,20 @@ Module.prototype.isRecentData = function(port, type, data) {
     slave 모드인 경우 duration 속성 간격으로 지속적으로 기기에 요청을 보냅니다.
     master 모드인 경우 하드웨어로부터 데이터 받자마자 바로 송신한다.
 */
-Module.prototype.requestLocalData = function() {
+Module.prototype.requestLocalData = function () {
     const self = this;
+
+    if (this.config && this.config.hardware.type === 'ble') {
+        const commandQueue = arguments[0];
+        if (commandQueue && this.sendBuffers.length > 0) {
+            const bleBuffer = this.sendBuffers.shift();
+            commandQueue.push({
+                key: '0000ffe1-0000-1000-8000-00805f9b34fb',
+                value: bleBuffer
+            });
+        }
+        return null;
+    }
 
     if (!this.isDraing && this.sendBuffers.length > 0) {
         this.isDraing = true;
@@ -303,7 +332,7 @@ Module.prototype.requestLocalData = function() {
     return null;
 };
 
-Module.prototype.initProperties = function(obj) {
+Module.prototype.initProperties = function (obj) {
     const allProperties = Object.getOwnPropertyNames(obj);
     allProperties.forEach(property => {
         obj[property] = 0;
@@ -315,8 +344,16 @@ Module.prototype.initProperties = function(obj) {
 패킷구조: ff 55 value_size value port type tailer(a)
 value_size: Float면 2, Short면 3
 */
-Module.prototype.handleLocalData = function(data) {
+Module.prototype.handleLocalData = function (data) {
     const self = this;
+
+    if (this.config && this.config.hardware.type === 'ble') {
+        if (data.key === '0000ffe1-0000-1000-8000-00805f9b34fb') {
+            data = data.value;
+        } else {
+            return;
+        }
+    }
     const datas = this.getDataByBuffer(data);
     // console.log(JSON.stringify(data, null, 2)); // Obj should be stringfied
     datas.forEach((data) => {
@@ -402,12 +439,12 @@ tailer는 HW에서 송신시 Serial.println()에 의한 LF값(10)
 idx은 아두이노 보드에서 실제 활용되지는 않음
 */
 // 포트값(INPUT) 또는 구독 요청 만들기
-Module.prototype.makeSensorReadBuffer = function(device, port, data) {
+Module.prototype.makeSensorReadBuffer = function (device, port, data) {
     let buffer;
     const value = new Buffer(2);
     const dummy = new Buffer([10]); // 10Bytes
 
-    if (typeof(device) == 'string') {
+    if (typeof (device) == 'string') {
         device = parseInt(device); // String to Number for switch-case
     }
     switch (device) {
@@ -452,7 +489,7 @@ Module.prototype.makeSensorReadBuffer = function(device, port, data) {
                 this.actionTypes.GET,
                 device,
                 port,
-                10, 
+                10,
             ]);
             value.writeInt16LE(data); // 2Bytes
             buffer = Buffer.concat([buffer, value, dummy]);
@@ -474,7 +511,7 @@ ff   55   len idx action device port value  (etc) dummy
 len은 idx~데이터 까지의 길이 
 */
 // 실행요청(OUTPUT) 만들기 
-Module.prototype.makeOutputBuffer = function(device, port, data) {
+Module.prototype.makeOutputBuffer = function (device, port, data) {
     let buffer;
     const value = new Buffer(2);
     const dummy = new Buffer([10]);
@@ -576,7 +613,7 @@ Module.prototype.makeOutputBuffer = function(device, port, data) {
             const column = Buffer(1);
             let textLen = 0;
             const bufLen = Buffer(1);
-      
+
             if ($.isPlainObject(data)) {
                 // numeric 데이터로 들어오는 경우가 있으므로, 문자열로 변경하기
                 textLen = ('' + data.text).length;
@@ -591,7 +628,7 @@ Module.prototype.makeOutputBuffer = function(device, port, data) {
                 bufLen.writeInt8(textLen);
                 column.writeInt8(0);
             }
-      
+
             buffer = new Buffer([
                 255,
                 85,
@@ -601,7 +638,7 @@ Module.prototype.makeOutputBuffer = function(device, port, data) {
                 device,
                 port,
             ]);
-      
+
             buffer = Buffer.concat([buffer, row, column, bufLen, text, dummy]);
             console.log('\x1b[31mwrite lcd\x1b[0m');
             break;
@@ -612,7 +649,7 @@ Module.prototype.makeOutputBuffer = function(device, port, data) {
     return buffer;
 };
 
-Module.prototype.getDataByBuffer = function(buffer) {
+Module.prototype.getDataByBuffer = function (buffer) {
     const datas = [];
     let lastIndex = 0;
     buffer.forEach((value, idx) => {
@@ -625,7 +662,7 @@ Module.prototype.getDataByBuffer = function(buffer) {
     return datas;
 };
 
-Module.prototype.disconnect = function(connect) {
+Module.prototype.disconnect = function (connect) {
     const self = this;
     connect.close();
     if (self.sp) {
@@ -633,14 +670,15 @@ Module.prototype.disconnect = function(connect) {
     }
 };
 
-Module.prototype.reset = function() {
+Module.prototype.reset = function () {
     this.lastTime = 0;
     this.lastSendTime = 0;
+    sensorIdx = 0;
 
     this.sensorData.PULSEIN = {};
 };
 
-Module.prototype.lostController = function(connector, stateCallback) {
+Module.prototype.lostController = function (connector, stateCallback) {
     // 아무일도 안하지만, 해당 함수가 선언되면 하드웨어에서 시간 내 응답없으면 연결 종료시키는 lostTimer가 선언되지 않음
 };
 

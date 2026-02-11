@@ -34,9 +34,13 @@ const DevicePanel: React.FC = () => {
     return (
         <HardwareElement>
             <SelectedHardwareThumb alt={''} src={`${rendererRouter.baseModulePath}/${icon}`} />
-            {firmware && (
+            {firmware ? (
                 <div id="firmwareButtonSet">
                     <FirmwareButtonSetElement buttonSet={firmware} />
+                </div>
+            ) : (selectedHardware.id === "010904" || selectedHardware.id === "010905") && (
+                <div style={{ marginTop: '10px', fontSize: '12px', color: '#666', wordBreak: 'keep-all' }}>
+                    {usePreload().translator.translate('Firmware Install Guide')}
                 </div>
             )}
             {customButton && (
