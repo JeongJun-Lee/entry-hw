@@ -74,7 +74,13 @@ class SerialConnector extends BaseConnector {
                 if (error) {
                     reject(error);
                 } else {
-                    resolve(this.serialPort);
+                    if (this.options.type === 'bluetooth') {
+                        setTimeout(() => {
+                            resolve(this.serialPort);
+                        }, 1500);
+                    } else {
+                        resolve(this.serialPort);
+                    }
                 }
             });
         });
@@ -101,13 +107,21 @@ class SerialConnector extends BaseConnector {
 
             let timeoutId: any;
 
+            let errorHandler: (error: Error) => void;
+
             const safeResolve = (value?: unknown) => {
                 if (timeoutId) clearTimeout(timeoutId);
+                if (this.serialPort) {
+                    this.serialPort.removeListener('error', errorHandler);
+                }
                 resolve(value);
             };
 
             const safeReject = (reason?: any) => {
                 if (timeoutId) clearTimeout(timeoutId);
+                if (this.serialPort) {
+                    this.serialPort.removeListener('error', errorHandler);
+                }
                 this.slaveInitRequestInterval && clearInterval(this.slaveInitRequestInterval);
                 this.flashFirmware && clearTimeout(this.flashFirmware);
                 if (this.serialPortParser) {
@@ -117,6 +131,12 @@ class SerialConnector extends BaseConnector {
                 }
                 reject(reason);
             };
+
+            errorHandler = (error: Error) => {
+                logger.error(`SerialConnector initialize error: ${error.message}`);
+                safeReject(error);
+            };
+            this.serialPort.on('error', errorHandler);
 
             // 4.5초 타임아웃
             timeoutId = setTimeout(() => {
