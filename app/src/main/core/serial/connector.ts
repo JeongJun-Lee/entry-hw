@@ -52,6 +52,10 @@ class SerialConnector extends BaseConnector {
                 hardwareOptions.lostTimer || SerialConnector.DEFAULT_CONNECT_LOST_MILLS;
 
             const serialPort = new SerialPort(port, this._makeSerialPortOptions(hardwareOptions));
+            // Prevent uncaught 'error' event which causes process crash
+            serialPort.on('error', (error) => {
+                logger.info(`SerialPort Error: ${error.message}`);
+            });
             this.serialPort = serialPort;
 
             const { delimiter, byteDelimiter } = hardwareOptions;
@@ -422,27 +426,39 @@ class SerialConnector extends BaseConnector {
      * @param callback
      */
     send(data: any, callback?: () => void) {
-        if (typeof data === 'boolean') {
-            data = Buffer.from([1]);
-        }
-        if (this.serialPort && this.serialPort.isOpen && data && !this.isSending) {
-            this.isSending = true;
-            let resultData = data;
-            if (this.options.commType !== 'ascii') {
-                if (this.options.stream === 'string') {
-                    resultData = Buffer.from(data, 'utf8');
-                }
+        try {
+            if (typeof data === 'boolean') {
+                data = Buffer.from([1]);
             }
-
-            this.serialPort.write(resultData, this.options.commType, () => {
-                if (this.serialPort) {
-                    this.serialPort.drain(() => {
-                        this.received = true;
-                        this.isSending = false;
-                        callback && callback();
-                    });
+            if (this.serialPort && this.serialPort.isOpen && data && !this.isSending) {
+                this.isSending = true;
+                let resultData = data;
+                if (this.options.commType !== 'ascii') {
+                    if (this.options.stream === 'string') {
+                        resultData = Buffer.from(data, 'utf8');
+                    }
                 }
-            });
+
+                this.serialPort.write(resultData, this.options.commType, (error) => {
+                    if (error) {
+                        logger.error(`SerialPort write error: ${error.message}`);
+                        this.isSending = false;
+                        return;
+                    }
+                    if (this.serialPort) {
+                        this.serialPort.drain((drainError) => {
+                            if (drainError) {
+                                logger.error(`SerialPort drain error: ${drainError.message}`);
+                            }
+                            this.received = true;
+                            this.isSending = false;
+                            callback && callback();
+                        });
+                    }
+                });
+            }
+        } catch (e) {
+            logger.error(`SerialPort send sync error: ${e.message}`);
         }
     }
 

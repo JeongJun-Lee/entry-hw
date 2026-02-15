@@ -43,7 +43,8 @@ const electPort = async (
     } catch (e) {
         // 에러 발생(타임아웃 등) 시 열려있는 모든 포트 닫기
         _finalize(connectors);
-        throw e;
+        // throw e; // 에러를 던지면 Uncaught Exception 팝업이 뜨므로 제거
+        return undefined;
     }
 };
 
