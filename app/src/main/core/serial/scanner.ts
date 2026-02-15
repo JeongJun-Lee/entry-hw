@@ -2,7 +2,7 @@ import _ from 'lodash';
 import rendererConsole from '../rendererConsole';
 import SerialPort from 'serialport';
 import electPort from './electPortFunction';
-import {CloudModeTypes} from '../../../common/constants';
+import { CloudModeTypes } from '../../../common/constants';
 import BaseScanner from '../baseScanner';
 import SerialConnector from './connector';
 import createLogger from '../../electron/functions/createLogger';
@@ -115,6 +115,18 @@ class SerialScanner extends BaseScanner<SerialConnector> {
             },
             () => this.router.selectedPayload,
         );
+
+        if (!this.config) {
+            if (electedConnector) {
+                logger.info('scan cancelled by user. closing elected connector');
+                if (this.hwModule && this.hwModule.disconnect) {
+                    this.hwModule.disconnect(electedConnector.connector);
+                } else {
+                    electedConnector.connector.close();
+                }
+            }
+            return;
+        }
 
         if (electedConnector) {
             logger.info(`${electedConnector.port} is finally connected`);

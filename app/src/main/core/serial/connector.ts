@@ -52,6 +52,10 @@ class SerialConnector extends BaseConnector {
                 hardwareOptions.lostTimer || SerialConnector.DEFAULT_CONNECT_LOST_MILLS;
 
             const serialPort = new SerialPort(port, this._makeSerialPortOptions(hardwareOptions));
+            // Prevent uncaught 'error' event which causes process crash
+            serialPort.on('error', (error) => {
+                logger.info(`SerialPort Error: ${error.message}`);
+            });
             this.serialPort = serialPort;
 
             const { delimiter, byteDelimiter } = hardwareOptions;
@@ -74,7 +78,13 @@ class SerialConnector extends BaseConnector {
                 if (error) {
                     reject(error);
                 } else {
-                    resolve(this.serialPort);
+                    if (this.options.type === 'bluetooth') {
+                        setTimeout(() => {
+                            resolve(this.serialPort);
+                        }, 1500);
+                    } else {
+                        resolve(this.serialPort);
+                    }
                 }
             });
         });
@@ -90,10 +100,53 @@ class SerialConnector extends BaseConnector {
      */
     initialize(handshakePayload?: () => string | undefined) {
         return new Promise((resolve, reject) => {
+            if (this.hwModule && this.hwModule.reset) {
+                this.hwModule.reset();
+            }
+
             if (!this.serialPort) {
                 logger.error('serailport is not found but initialize() opened');
                 return reject(new Error('serialport is not found'));
             }
+
+            let timeoutId: any;
+
+            let errorHandler: (error: Error) => void;
+
+            const safeResolve = (value?: unknown) => {
+                if (timeoutId) clearTimeout(timeoutId);
+                if (this.serialPort) {
+                    this.serialPort.removeListener('error', errorHandler);
+                }
+                resolve(value);
+            };
+
+            const safeReject = (reason?: any) => {
+                if (timeoutId) clearTimeout(timeoutId);
+                if (this.serialPort) {
+                    this.serialPort.removeListener('error', errorHandler);
+                }
+                this.slaveInitRequestInterval && clearInterval(this.slaveInitRequestInterval);
+                this.flashFirmware && clearTimeout(this.flashFirmware);
+                if (this.serialPortParser) {
+                    this.serialPortParser.removeAllListeners('data');
+                } else if (this.serialPort) {
+                    this.serialPort.removeAllListeners('data');
+                }
+                reject(reason);
+            };
+
+            errorHandler = (error: Error) => {
+                logger.error(`SerialConnector initialize error: ${error.message}`);
+                safeReject(error);
+            };
+            this.serialPort.on('error', errorHandler);
+
+            // 4.5초 타임아웃
+            timeoutId = setTimeout(() => {
+                logger.error('initialize connection timeout');
+                safeReject(new Error('Connection timeout'));
+            }, 4500);
 
             const {
                 control,
@@ -105,7 +158,7 @@ class SerialConnector extends BaseConnector {
                 ? this.serialPortParser
                 : this.serialPort;
 
-            const runAsMaster = (resolve: any) => {
+            const runAsMaster = (resolve: any, reject: any) => {
                 logger.verbose('hardware handShake as Master mode');
                 serialPortReadStream.on('data', (data) => {
                     logger.verbose(`handShake data ${data.toString()}`);
@@ -133,7 +186,7 @@ class SerialConnector extends BaseConnector {
                 });
             };
 
-            const runAsSlave = (resolve: any) => {
+            const runAsSlave = (resolve: any, reject: any) => {
                 logger.verbose('hardware handShake as Slave mode');
 
                 // 최소 한번은 requestInitialData 전송을 강제
@@ -194,9 +247,9 @@ class SerialConnector extends BaseConnector {
             }
 
             if (control === 'master') {
-                runAsMaster(resolve);
+                runAsMaster(safeResolve, safeReject);
             } else {
-                runAsSlave(resolve);
+                runAsSlave(safeResolve, safeReject);
             }
         });
     }
@@ -356,6 +409,9 @@ class SerialConnector extends BaseConnector {
 
     close() {
         this._clear();
+        if (this.hwModule && this.hwModule.disconnect) {
+            this.hwModule.disconnect(this.serialPort);
+        }
         if (this.serialPort && this.serialPort.isOpen) {
             this.serialPort.close((e) => {
                 logger.info(`serialport closed, ${e?.name}`);
@@ -370,27 +426,39 @@ class SerialConnector extends BaseConnector {
      * @param callback
      */
     send(data: any, callback?: () => void) {
-        if (typeof data === 'boolean') {
-            data = new Buffer([1]);
-        }
-        if (this.serialPort && this.serialPort.isOpen && data && !this.isSending) {
-            this.isSending = true;
-            let resultData = data;
-            if (this.options.commType !== 'ascii') {
-                if (this.options.stream === 'string') {
-                    resultData = Buffer.from(data, 'utf8');
-                }
+        try {
+            if (typeof data === 'boolean') {
+                data = Buffer.from([1]);
             }
-
-            this.serialPort.write(resultData, this.options.commType, () => {
-                if (this.serialPort) {
-                    this.serialPort.drain(() => {
-                        this.received = true;
-                        this.isSending = false;
-                        callback && callback();
-                    });
+            if (this.serialPort && this.serialPort.isOpen && data && !this.isSending) {
+                this.isSending = true;
+                let resultData = data;
+                if (this.options.commType !== 'ascii') {
+                    if (this.options.stream === 'string') {
+                        resultData = Buffer.from(data, 'utf8');
+                    }
                 }
-            });
+
+                this.serialPort.write(resultData, this.options.commType, (error) => {
+                    if (error) {
+                        logger.error(`SerialPort write error: ${error.message}`);
+                        this.isSending = false;
+                        return;
+                    }
+                    if (this.serialPort) {
+                        this.serialPort.drain((drainError) => {
+                            if (drainError) {
+                                logger.error(`SerialPort drain error: ${drainError.message}`);
+                            }
+                            this.received = true;
+                            this.isSending = false;
+                            callback && callback();
+                        });
+                    }
+                });
+            }
+        } catch (e) {
+            logger.error(`SerialPort send sync error: ${e.message}`);
         }
     }
 

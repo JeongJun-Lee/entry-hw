@@ -72,6 +72,23 @@ class MainRouter {
             directoryPaths.setRootAppPath(options.rootAppPath);
         }
 
+        // Global Error Handling for Windows SerialPort
+        process.on('uncaughtException', (err) => {
+            if (err.message && err.message.includes('Operation aborted')) {
+                logger.warn('Ignored critical Windows SerialPort error:', err);
+                return;
+            }
+            logger.error('Uncaught Exception:', err);
+        });
+
+        process.on('unhandledRejection', (reason, promise) => {
+            if (reason instanceof Error && reason.message.includes('Operation aborted')) {
+                logger.warn('Ignored critical Windows SerialPort rejection:', reason);
+                return;
+            }
+            logger.error('Unhandled Rejection at:', promise, 'reason:', reason);
+        });
+
         rendererConsole.initialize(mainWindow);
         this.ipcManager = new IpcManager(mainWindow.webContents);
         this.browser = mainWindow;
@@ -119,15 +136,15 @@ class MainRouter {
             const lastSerialPortCOMPort = connectorSerialPort && connectorSerialPort.path;
             this.firmwareTryCount = 0;
 
-            if ((firmwareName as IUploadableFirmware).name == 'Arduino') { 
-              logger.info('source compile requested');
-              try {
-                  await this.compiler.compile((firmwareName as IUploadableFirmware).name);
-                  logger.info('source compile finished');
-                  firmware = path.join(directoryPaths.firmwares(), 'firmwares.ino'); // Set the name of hex file
-              } catch (error) {
-                  return Promise.reject(error);
-              }              
+            if ((firmwareName as IUploadableFirmware).name == 'Arduino') {
+                logger.info('source compile requested');
+                try {
+                    await this.compiler.compile((firmwareName as IUploadableFirmware).name);
+                    logger.info('source compile finished');
+                    firmware = path.join(directoryPaths.firmwares(), 'firmwares.ino'); // Set the name of hex file
+                } catch (error) {
+                    return Promise.reject(error);
+                }
             }
 
             this.stopScan({ saveSelectedPort: true }); // 서버 통신 중지, 시리얼포트 연결 해제
@@ -254,8 +271,7 @@ class MainRouter {
                 const connector = await this.scanner.startScan(this.hwModule, this.config);
                 if (connector) {
                     logger.info(
-                        `[Device Info] ${config.id} | ${
-                        config?.name?.ko || config?.name?.en || 'noname'
+                        `[Device Info] ${config.id} | ${config?.name?.ko || config?.name?.en || 'noname'
                         }`
                     );
                     this.connector = connector;
@@ -417,14 +433,14 @@ class MainRouter {
             this.handleFlashFirmware(handler.read('frame'));
         } else if (hwModule.handleRemoteData) {
             hwModule.handleRemoteData(handler);
-        } 
+        }
     }
 
     async handleFlashFirmware(source: string) {
         // Save the source to firmwares.ino      
         try {
             if (!fs.existsSync(directoryPaths.firmwares())) { // Check the directry is exist
-                fs.mkdirSync(directoryPaths.firmwares(), {recursive: true});
+                fs.mkdirSync(directoryPaths.firmwares(), { recursive: true });
             }
             fs.writeFileSync(path.join(directoryPaths.firmwares(), 'firmwares.ino'), source);
 

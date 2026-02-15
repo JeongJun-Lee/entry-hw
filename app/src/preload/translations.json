@@ -123,13 +123,13 @@
 	"hardware > disconnected": {
 		"ko": "하드웨어 > 연결 끊김",
 		"jp": "ハードウェア > 接続解除",
-    	"uz": "Qurilma > Ulash uzilgan",
+		"uz": "Qurilma > Ulash uzilgan",
 		"ru": "аппаратное обеспечение > отключено"
 	},
 	"hardware > connection failed": {
 		"ko": "하드웨어 > 연결 실패",
 		"jp": "ハードウェア > 接続失敗",
-    	"uz": "Qurilma > Ulash bo'lmagan",
+		"uz": "Qurilma > Ulash bo'lmagan",
 		"ru": "аппаратное обеспечение > ошибка подключения"
 	},
 	"Connecting to hardware device.": {
@@ -141,7 +141,7 @@
 	"Connected to hardware device.": {
 		"ko": "하드웨어와 연결되었습니다.",
 		"jp": "ハードウェア接続完了",
-    	"uz": "Qurilmaga ulangan",
+		"uz": "Qurilmaga ulangan",
 		"ru": "Подключено к аппаратному устройству."
 	},
 	"Connection failed. please restart application or reconnect manually.": {
@@ -262,18 +262,24 @@
 	"Connected to the Entry server": {
 		"ko": "엔트리 서버 연결됨",
 		"jp": "エントリーサーバー接続",
-    	"uz": "Entry serverga ulangan",
+		"uz": "Entry serverga ulangan",
 		"ru": "Подключен к серверу Entry"
 	},
 	"Disconnected from the Entry server": {
 		"ko": "엔트리 서버 연결 안 됨",
 		"jp": "エントリーサーバー未接続",
-    	"uz": "Entry serverga ulanmagan",
+		"uz": "Entry serverga ulanmagan",
 		"ru": "Отключился от сервера Entry"
 	},
 	"Compile failed. please check your source code and Entry console": {
 		"ko": "컴파일 중 에러가 발생했습니다. 소스코드와 엔트리 콘솔창을 확인하세요.",
-    	"uz": "Kompilyatsiya qilishda error bor. Manba kodlari va Entry konsolni teshiring.",
+		"uz": "Kompilyatsiya qilishda error bor. Manba kodlari va Entry konsolni teshiring.",
 		"ru": "Компиляция не удалась. пожалуйста, проверьте исходный код и консоль ввода"
+	},
+	"Firmware Install Guide": {
+		"en": "For firmware installation, please connect via USB cable and select 'ArduinoExt Uno'. Wireless firmware installation is not supported.",
+		"ko": "펌웨어 설치가 필요한 경우, USB 케이블로 연결 후 '아두이노(확장모드)'를 선택해주세요. 무선 펌웨어 설치는 지원하지 않습니다.",
+		"uz": "Agar qurilma kichik dasturi yuklab qo'yish kerak bo'lsa, USB kabelni bog'lab <<ArduinoExt Uno>>ni tanlab o'rnating. Simsiz tarmog'ida qurilma kichik dasturi yuklab qo'yishni qo'llab-quvvatlanmaydi.",
+		"ru": "Для установки прошивки подключитесь через USB-кабель и выберите «ArduinoExt». Беспроводная установка прошивки не поддерживается."
 	}
 }
