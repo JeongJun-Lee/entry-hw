@@ -22,11 +22,11 @@
         "duration": 32,
         "vendor": "Arduino",
         "baudRate": 115200,
-        "firmwarecheck": false,
-        "softwareReset": true,
         "byteDelimiter": [
             13,
             10
-        ]
+        ],
+        "firmwarecheck": false,
+        "softwareReset": false
     }
 }

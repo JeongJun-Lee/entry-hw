@@ -27,18 +27,24 @@ const electPort = async (
     }
 
     // 전부 checkInitialData 로직 수행
-    const electedConnector = await Promise.race(
-        connectors.map(async (connectorObject) => {
-            const { connector } = connectorObject;
-            await connector.initialize(handshakePayload);
-            return connectorObject;
-        }),
-    );
+    try {
+        const electedConnector = await Promise.race(
+            connectors.map(async (connectorObject) => {
+                const { connector } = connectorObject;
+                await connector.initialize(handshakePayload);
+                return connectorObject;
+            }),
+        );
 
-    // 선출되지 못한 포트들 전부 다시 닫기
-    _finalize(connectors.filter(({ port }) => port !== electedConnector.port));
+        // 선출되지 못한 포트들 전부 다시 닫기
+        _finalize(connectors.filter(({ port }) => port !== electedConnector.port));
 
-    return electedConnector;
+        return electedConnector;
+    } catch (e) {
+        // 에러 발생(타임아웃 등) 시 열려있는 모든 포트 닫기
+        _finalize(connectors);
+        throw e;
+    }
 };
 
 /**
@@ -51,19 +57,19 @@ const _initialize: (
 ) => Promise<IElectedResult[]> = async (
     ports, hwConfig, hwModule,
 ) => {
-    const portList = await Promise.all(ports.map(async (port) => {
-        try {
-            const connector = new SerialConnector(hwModule, hwConfig);
-            await connector.open(port);
-            return { port, connector };
-        } catch (e) {
-            console.log(`port ${port} elect initilize error`, e);
-            return undefined;
-        }
-    }));
+        const portList = await Promise.all(ports.map(async (port) => {
+            try {
+                const connector = new SerialConnector(hwModule, hwConfig);
+                await connector.open(port);
+                return { port, connector };
+            } catch (e) {
+                console.log(`port ${port} elect initilize error`, e);
+                return undefined;
+            }
+        }));
 
-    return compact(portList);
-};
+        return compact(portList);
+    };
 
 const _finalize = (connectors: IElectedResult[]) => {
     connectors.forEach(({ connector }) => {

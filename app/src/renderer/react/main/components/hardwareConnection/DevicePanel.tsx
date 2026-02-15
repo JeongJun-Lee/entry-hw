@@ -20,7 +20,7 @@ const SelectedHardwareThumb = styled.img`
 `;
 
 const DevicePanel: React.FC = () => {
-    const { rendererRouter } = usePreload();
+    const { rendererRouter, translator } = usePreload();
     const selectedHardware = useSelector<IStoreState, IHardwareConfig | undefined>(
         (state) => state.connection.selectedHardware
     );
@@ -40,7 +40,7 @@ const DevicePanel: React.FC = () => {
                 </div>
             ) : (selectedHardware.id === "010904" || selectedHardware.id === "010905") && (
                 <div style={{ marginTop: '10px', fontSize: '12px', color: '#666', wordBreak: 'keep-all' }}>
-                    {usePreload().translator.translate('Firmware Install Guide')}
+                    {translator.translate('Firmware Install Guide')}
                 </div>
             )}
             {customButton && (

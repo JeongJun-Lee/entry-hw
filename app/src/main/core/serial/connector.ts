@@ -90,10 +90,39 @@ class SerialConnector extends BaseConnector {
      */
     initialize(handshakePayload?: () => string | undefined) {
         return new Promise((resolve, reject) => {
+            if (this.hwModule && this.hwModule.reset) {
+                this.hwModule.reset();
+            }
+
             if (!this.serialPort) {
                 logger.error('serailport is not found but initialize() opened');
                 return reject(new Error('serialport is not found'));
             }
+
+            let timeoutId: any;
+
+            const safeResolve = (value?: unknown) => {
+                if (timeoutId) clearTimeout(timeoutId);
+                resolve(value);
+            };
+
+            const safeReject = (reason?: any) => {
+                if (timeoutId) clearTimeout(timeoutId);
+                this.slaveInitRequestInterval && clearInterval(this.slaveInitRequestInterval);
+                this.flashFirmware && clearTimeout(this.flashFirmware);
+                if (this.serialPortParser) {
+                    this.serialPortParser.removeAllListeners('data');
+                } else if (this.serialPort) {
+                    this.serialPort.removeAllListeners('data');
+                }
+                reject(reason);
+            };
+
+            // 4.5초 타임아웃
+            timeoutId = setTimeout(() => {
+                logger.error('initialize connection timeout');
+                safeReject(new Error('Connection timeout'));
+            }, 4500);
 
             const {
                 control,
@@ -105,7 +134,7 @@ class SerialConnector extends BaseConnector {
                 ? this.serialPortParser
                 : this.serialPort;
 
-            const runAsMaster = (resolve: any) => {
+            const runAsMaster = (resolve: any, reject: any) => {
                 logger.verbose('hardware handShake as Master mode');
                 serialPortReadStream.on('data', (data) => {
                     logger.verbose(`handShake data ${data.toString()}`);
@@ -133,7 +162,7 @@ class SerialConnector extends BaseConnector {
                 });
             };
 
-            const runAsSlave = (resolve: any) => {
+            const runAsSlave = (resolve: any, reject: any) => {
                 logger.verbose('hardware handShake as Slave mode');
 
                 // 최소 한번은 requestInitialData 전송을 강제
@@ -194,9 +223,9 @@ class SerialConnector extends BaseConnector {
             }
 
             if (control === 'master') {
-                runAsMaster(resolve);
+                runAsMaster(safeResolve, safeReject);
             } else {
-                runAsSlave(resolve);
+                runAsSlave(safeResolve, safeReject);
             }
         });
     }
@@ -356,6 +385,9 @@ class SerialConnector extends BaseConnector {
 
     close() {
         this._clear();
+        if (this.hwModule && this.hwModule.disconnect) {
+            this.hwModule.disconnect(this.serialPort);
+        }
         if (this.serialPort && this.serialPort.isOpen) {
             this.serialPort.close((e) => {
                 logger.info(`serialport closed, ${e?.name}`);
@@ -371,7 +403,7 @@ class SerialConnector extends BaseConnector {
      */
     send(data: any, callback?: () => void) {
         if (typeof data === 'boolean') {
-            data = new Buffer([1]);
+            data = Buffer.from([1]);
         }
         if (this.serialPort && this.serialPort.isOpen && data && !this.isSending) {
             this.isSending = true;
