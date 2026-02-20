@@ -39,6 +39,8 @@
 #define LCD_INIT 15  // f
 #define LCD_PRINT 16 // 10
 #define LCD_CLEAR 17 // 11
+#define MPU 18
+#define MOTOR 19
 
 // actionsTypes
 #define GET 1
@@ -77,6 +79,8 @@ decode_results results; // decoded result for IRRmote
 IRrecv *irrObj = NULL;
 int irrPin = -1;
 boolean isIrremote = false;
+boolean isMpu = false;
+#define MPU_ADDR 0x68
 
 // 포트별 상태: 1이 되면 값을 read해서 엔트리로 전송
 int analogs[8] = {0, 0, 0, 0, 0, 0, 0, 0};
@@ -210,6 +214,14 @@ void parseData() {
       isDhtHumi = true;
     } else if (device == IRREMOTE) {
       isIrremote = true;
+    } else if (device == MPU) {
+      if (!isMpu) {
+        Wire.beginTransmission(MPU_ADDR);
+        Wire.write(0x6B);
+        Wire.write(0);
+        Wire.endTransmission(true);
+        isMpu = true;
+      }
     } else if (device == DIGITAL) {
       // 신규 요청이 기 사용중(구독중)인 포트와 겹치면 기존 것은 중지
       if (port == trigPin || port == echoPin) {
@@ -242,6 +254,7 @@ void parseData() {
     isDhtTemp = false;
     isDhtHumi = false;
     isIrremote = false;
+    isMpu = false;
     callResetOK();
   } break;
   }
@@ -326,6 +339,31 @@ void runModule(int device) {
     lcdObj->backlight();
     lcdObj->clear();
   } break;
+  case MOTOR: {
+    int v = readShort(7); // low: speed, high: dir
+    int speed = v & 0xff;
+    int dir = (v >> 8) & 0x01; // 0: fw, 1: bw
+
+    int p1, p2;
+    if (port == 1) {
+      p1 = 5;
+      p2 = 9;
+    } else {
+      p1 = 6;
+      p2 = 10;
+    }
+
+    pinMode(p1, OUTPUT);
+    pinMode(p2, OUTPUT);
+
+    if (dir == 0) { // Forward
+      analogWrite(p1, speed);
+      analogWrite(p2, 0);
+    } else { // Backward
+      analogWrite(p1, 0);
+      analogWrite(p2, speed);
+    }
+  } break;
   case LCD_PRINT: {
     int row = readBuffer(7);
     int col = readBuffer(8);
@@ -383,6 +421,36 @@ void sendPinValues() {
   if (isIrremote) {
     sendIrrecvValue();
     // callOK();
+  }
+
+  if (isMpu) {
+    sendMpuValue();
+  }
+}
+
+void sendMpuValue() {
+  Wire.beginTransmission(MPU_ADDR);
+  Wire.write(0x3B);
+  Wire.endTransmission(false);
+  Wire.requestFrom(MPU_ADDR, 14, true);
+
+  if (Wire.available() >= 14) {
+    int16_t ax = Wire.read() << 8 | Wire.read();
+    int16_t ay = Wire.read() << 8 | Wire.read();
+    int16_t az = Wire.read() << 8 | Wire.read();
+    int16_t tmp = Wire.read() << 8 | Wire.read();
+    int16_t gx = Wire.read() << 8 | Wire.read();
+    int16_t gy = Wire.read() << 8 | Wire.read();
+    int16_t gz = Wire.read() << 8 | Wire.read();
+
+    int16_t values[] = {ax, ay, az, gx, gy, gz};
+    for (int i = 0; i < 6; i++) {
+      writeHead();
+      sendShort(values[i]);
+      writeSerial(i);
+      writeSerial(MPU);
+      writeEnd();
+    }
   }
 }
 

@@ -20,6 +20,8 @@ function Module() {
         LCD_INIT: 15,  //f
         LCD_PRINT: 16,  //10
         LCD_CLEAR: 17,  //11
+        MPU: 18,
+        MOTOR: 19,
     };
 
     this.actionTypes = {
@@ -70,6 +72,12 @@ function Module() {
         DHTTEMP: 0,
         DHTHUMI: 0,
         IRREMOTE: 0,
+        accelX: 0,
+        accelY: 0,
+        accelZ: 0,
+        gyroX: 0,
+        gyroY: 0,
+        gyroZ: 0,
     };
 
     this.defaultOutput = {};
@@ -388,6 +396,13 @@ Module.prototype.handleLocalData = function (data) {
                 self.sensorData.IRREMOTE = value;
                 break;
             }
+            case self.sensorTypes.MPU: {
+                const keys = ['accelX', 'accelY', 'accelZ', 'gyroX', 'gyroY', 'gyroZ'];
+                if (port >= 0 && port < keys.length) {
+                    self.sensorData[keys[port]] = value;
+                }
+                break;
+            }
             default: {
                 console.log('No sensorTypes!!!');
                 break;
@@ -500,6 +515,7 @@ Module.prototype.makeOutputBuffer = function (device, port, data) {
         case this.sensorTypes.DHTINIT:
         case this.sensorTypes.SERVO_PIN:
         case this.sensorTypes.DIGITAL:
+        case this.sensorTypes.MOTOR:
         case this.sensorTypes.PWM: {
             value.writeInt16LE(data); // 2byptes
             buffer = new Buffer([
