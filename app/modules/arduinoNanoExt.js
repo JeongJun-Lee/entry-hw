@@ -22,6 +22,7 @@ function Module() {
         LCD_CLEAR: 17,  //11
         MPU: 18,
         MOTOR: 19,
+        SOUND: 20,
     };
 
     this.actionTypes = {
@@ -72,12 +73,18 @@ function Module() {
         DHTTEMP: 0,
         DHTHUMI: 0,
         IRREMOTE: 0,
+        SOUND: 0,
         accelX: 0,
         accelY: 0,
         accelZ: 0,
         gyroX: 0,
         gyroY: 0,
         gyroZ: 0,
+        roll: 0,
+        pitch: 0,
+        yaw: 0,
+        M1: 0,
+        M2: 0,
     };
 
     this.defaultOutput = {};
@@ -96,6 +103,12 @@ Module.prototype.init = function (handler, config) { };
 
 Module.prototype.setSerialPort = function (sp) {
     this.sp = sp;
+    if (this.sp && typeof this.sp.on === 'function') {
+        this.sp.on('error', (err) => {
+            console.error('SerialPort Error Handled:', err);
+        });
+    }
+    this.reset();
 };
 
 /*
@@ -105,6 +118,15 @@ Module.prototype.setSerialPort = function (sp) {
     그러나, 현재는 하드웨어 선택 후 이 초기값 리턴되지 않으면, 펌웨어가 없는 것으로 간주해 신규 업로드를 시작하므로 보내야 함
 */
 Module.prototype.requestInitialData = function () {
+    if (!this.handshakeTryCount) {
+        this.handshakeTryCount = 0;
+    }
+
+    if (this.handshakeTryCount > 1000) { // Limit retry count to avoid infinite loop
+        return null;
+    }
+
+    this.handshakeTryCount++;
     this.isNewConn = true;
     // slave mode라서 hw에서 신호를 받아야 연결성립
     return this.makeOutputBuffer(this.sensorTypes.RESET, 0, 0); // 최초 연결시, 하드웨어 초기화 수행
@@ -134,102 +156,100 @@ Module.prototype.requestRemoteData = function (handler) {
     if (!self.sensorData) {
         return;
     }
-    // console.log("SensorData:\n" + self.sensorData);
 
-    // For port monitoring in Entry
-    Object.keys(this.sensorData).forEach(key => {
-        if (self.sensorData[key] != undefined) {
-            if (key === 'DIGITAL') { // For legacy port reading
-                for (let i = 0; i < Object.keys(self.sensorData[key]).length; i++) {
+    // 포트별 데이터를 모니터링 키에 매핑
+    Object.keys(this.sensorData).forEach((key) => {
+        if (self.sensorData[key] !== undefined) {
+            if (key === 'DIGITAL') {
+                for (let i = 0; i < 14; i++) {
                     const value = self.sensorData[key][i];
-                    handler.write(i, value);
+                    if (value !== undefined) {
+                        handler.write(i.toString(), value);
+                    }
                 }
-            } else if (key === 'ANALOG') { // For legacy port reading
-                for (let i = 0; i < Object.keys(self.sensorData[key]).length; i++) {
+            } else if (key === 'ANALOG') {
+                for (let i = 0; i < 8; i++) {
                     const value = self.sensorData[key][i];
-                    handler.write('a' + i, value);
+                    if (i !== 4 && i !== 5) {
+                        handler.write('a' + i, value);
+                    }
                 }
             } else {
-                handler.write(key, self.sensorData[key]);
+                if (key !== 'M1' && key !== 'M2') {
+                    handler.write(key, self.sensorData[key]);
+                } else {
+                    const port = (key === 'M1' ? '9' : '10');
+                    handler.write(port, self.sensorData[key]);
+                }
             }
         }
     });
 };
 
-// 엔트리로부터 받은 데이터에 대한 처리
 Module.prototype.handleRemoteData = function (handler) {
     const self = this;
     const getDatas = handler.read('GET');
     const setDatas = handler.read('SET') || this.defaultOutput;
-    const time = handler.read('TIME');
     let buffer = new Buffer([]);
 
-    // HW에서 값을 읽어오기 요청
     if (getDatas) {
-        const keys = Object.keys(getDatas);
-        keys.forEach((key) => {
+        // MPU 데이터 강제 요청 (블록 사용 안해도 상시 모니터링)
+        if (!getDatas[self.sensorTypes.MPU]) {
+            getDatas[self.sensorTypes.MPU] = {
+                port: 0,
+                time: new Date().getTime(),
+            };
+        }
+
+        Object.keys(getDatas).forEach((key) => {
             let isSend = false;
             const dataObj = getDatas[key];
-            // To chceck if Entry sent the block really
-            // console.log(`getDatas: key=${key} port=${dataObj.port} data=${dataObj.data}`); 
-            if (
-                typeof dataObj.port === 'string' ||
-                typeof dataObj.port === 'number'
-            ) {
-                const time = self.digitalPortTimeList[dataObj.port];
-                if (dataObj.time > time) {
+            if (typeof dataObj.port === 'string' || typeof dataObj.port === 'number') {
+                if (dataObj.time > self.digitalPortTimeList[dataObj.port]) {
                     isSend = true;
                     self.digitalPortTimeList[dataObj.port] = dataObj.time;
                 }
-                prevKey = key;
-            } else if (Array.isArray(dataObj.port)) { // For example, port of UltraSonic are array
-                isSend = dataObj.port.every((port) => {
-                    const time = self.digitalPortTimeList[port];
-                    return dataObj.time > time;
-                });
-
-                if (isSend) {
-                    dataObj.port.forEach((port) => {
-                        self.digitalPortTimeList[port] = dataObj.time;
-                    });
-                }
+            } else if (Array.isArray(dataObj.port)) {
+                isSend = dataObj.port.every(p => dataObj.time > self.digitalPortTimeList[p]);
+                if (isSend) dataObj.port.forEach(p => self.digitalPortTimeList[p] = dataObj.time);
             }
-            if (isSend) {
-                if (!self.isRecentData(dataObj.port, key, dataObj.data)) {
-                    self.recentCheckData[dataObj.port] = {
-                        type: key,
-                        data: dataObj.data,
-                    };
-                    buffer = Buffer.concat([
-                        buffer,
-                        self.makeSensorReadBuffer(
-                            key,
-                            dataObj.port,
-                            dataObj.data,
-                        ),
-                    ]);
-                }
+            if (isSend && !self.isRecentData(dataObj.port, key, dataObj.data)) {
+                self.recentCheckData[dataObj.port] = { type: key, data: dataObj.data };
+                buffer = Buffer.concat([buffer, self.makeSensorReadBuffer(key, dataObj.port, dataObj.data)]);
             }
         });
     }
 
-    // HW에 값을 설정하기 요청
     if (setDatas) {
-        const setKeys = Object.keys(setDatas);
-        setKeys.forEach((port) => {
+        Object.keys(setDatas).forEach((port) => {
             const data = setDatas[port];
-            // To chceck if Entry sent the block really
-            // console.log(`setDatas: key=${data.type} port=${port} data=${JSON.stringify(data.data)}`); 
-            // console.log(`digitalPortTimeList[${port}]=${self.digitalPortTimeList[port]} data.time=${data.time}`); 
             if (data) {
+                // 화면 모니터링을 위한 루프백 업데이트 (펌웨어 응답이 없어도 대시보드에 값 반영)
+                if (data.type === self.sensorTypes.DIGITAL) {
+                    self.sensorData.DIGITAL[port] = data.data;
+                } else if (data.type === self.sensorTypes.PWM) {
+                    self.sensorData.ANALOG[port] = data.data;
+                    self.sensorData.DIGITAL[port] = data.data; // PWM은 디지털 핀 모니터링에서도 보여야 함
+                } else if (data.type === self.sensorTypes.ANALOG) {
+                    self.sensorData.ANALOG[port] = data.data;
+                } else if (data.type === self.sensorTypes.MOTOR) {
+                    const dir = (data.data >> 8) & 0xFF;
+                    const speed = data.data & 0xFF;
+                    const val = dir == 0 ? speed : -speed;
+                    // 블록은 '1','2'를 사용하고, 모니터링 내부 변수는 M1/M2(물리9,10)를 사용
+                    if (port == '1' || port == '9') {
+                        self.sensorData.M1 = val;
+                        self.sensorData.DIGITAL['9'] = val;
+                    } else if (port == '2' || port == '10') {
+                        self.sensorData.M2 = val;
+                        self.sensorData.DIGITAL['10'] = val;
+                    }
+                }
+
                 if (self.digitalPortTimeList[port] < data.time) {
                     self.digitalPortTimeList[port] = data.time;
-
                     if (!self.isRecentData(port, data.type, data.data)) {
-                        self.recentCheckData[port] = {
-                            type: data.type,
-                            data: data.data,
-                        };
+                        self.recentCheckData[port] = { type: data.type, data: data.data };
                         buffer = Buffer.concat([
                             buffer,
                             self.makeOutputBuffer(data.type, port, data.data),
@@ -242,7 +262,6 @@ Module.prototype.handleRemoteData = function (handler) {
 
     if (buffer.length) {
         this.sendBuffers.push(buffer);
-        console.log('sendBuf= ', this.sendBuffers);
     }
 };
 
@@ -288,6 +307,10 @@ Module.prototype.isRecentData = function (port, type, data) {
         }
     }
 
+    if (type == this.sensorTypes.MPU) {
+        isRecent = false;
+    }
+
     return isRecent;
 };
 
@@ -297,14 +320,14 @@ Module.prototype.isRecentData = function (port, type, data) {
     master 모드인 경우 하드웨어로부터 데이터 받자마자 바로 송신한다.
 */
 Module.prototype.requestLocalData = function () {
-    const self = this;
+    if (!this.sp) { return null; }
 
     if (!this.isDraing && this.sendBuffers.length > 0) {
         this.isDraing = true;
         this.sp.write(this.sendBuffers.shift(), () => {
-            if (self.sp) {
-                self.sp.drain(() => {
-                    self.isDraing = false;
+            if (this.sp) {
+                this.sp.drain(() => {
+                    this.isDraing = false;
                 });
             }
         });
@@ -396,8 +419,29 @@ Module.prototype.handleLocalData = function (data) {
                 self.sensorData.IRREMOTE = value;
                 break;
             }
+            case self.sensorTypes.SOUND: {
+                self.sensorData.SOUND = value;
+                break;
+            }
             case self.sensorTypes.MPU: {
-                const keys = ['accelX', 'accelY', 'accelZ', 'gyroX', 'gyroY', 'gyroZ'];
+                const keys = [
+                    'accelX',
+                    'accelY',
+                    'accelZ',
+                    'gyroX',
+                    'gyroY',
+                    'gyroZ',
+                    'roll',
+                    'pitch',
+                    'yaw',
+                ];
+                if (port >= 0 && port < keys.length) {
+                    self.sensorData[keys[port]] = value;
+                }
+                break;
+            }
+            case self.sensorTypes.MOTOR: {
+                const keys = ['M1', 'M2'];
                 if (port >= 0 && port < keys.length) {
                     self.sensorData[keys[port]] = value;
                 }
@@ -644,18 +688,43 @@ Module.prototype.getDataByBuffer = function (buffer) {
 };
 
 Module.prototype.disconnect = function (connect) {
-    const self = this;
-    connect.close();
-    if (self.sp) {
-        delete self.sp;
+    if (connect) {
+        if (typeof connect.close === 'function') {
+            if (connect.hwModule || typeof connect.send === 'function') {
+                connect.close();
+            }
+        }
     }
+
+    if (this.sp) {
+        delete this.sp;
+    }
+    // Clean up internal state
+    this.sendBuffers = [];
+    this.isDraing = false;
+    this.isNewConn = false;
+    this.handshakeTryCount = 1001;
 };
 
 Module.prototype.reset = function () {
+    this.sendBuffers = [];
     this.lastTime = 0;
     this.lastSendTime = 0;
+    this.isDraing = false;
+    this.isNewConn = false;
+    this.handshakeTryCount = 0;
+    sensorIdx = 0;
 
+    // 센서 데이터 초기화 (이전 출력 값이 입력으로 오해받지 않도록)
+    this.sensorData.DIGITAL = {
+        '0': 0, '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0,
+        '7': 0, '8': 0, '9': 0, '10': 0, '11': 0, '12': 0, '13': 0,
+    };
+    this.sensorData.ANALOG = {
+        '0': 0, '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0,
+    };
     this.sensorData.PULSEIN = {};
+    this.sensorData.SOUND = 0;
 };
 
 Module.prototype.lostController = function (connector, stateCallback) {

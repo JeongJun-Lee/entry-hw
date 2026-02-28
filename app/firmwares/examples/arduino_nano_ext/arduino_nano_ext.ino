@@ -41,6 +41,7 @@
 #define LCD_CLEAR 17 // 11
 #define MPU 18
 #define MOTOR 19
+#define SOUND 20
 
 // actionsTypes
 #define GET 1
@@ -62,6 +63,7 @@ union {
 
 // 전역변수 선언 시작
 Servo servos[8]; // 아두이노 최대 연결가능 서보모터 수
+// int motorSpeeds[2] = {0, 0};
 
 // 울트라 소닉
 int trigPin = 13;
@@ -84,6 +86,7 @@ boolean isMpu = false;
 
 // 포트별 상태: 1이 되면 값을 read해서 엔트리로 전송
 int analogs[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+int sounds[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 int digitals[14] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 int servo_pins[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 
@@ -132,6 +135,22 @@ void setup() {
   for (int pinNumber = 0; pinNumber < (sizeof(analogs) / sizeof(int));
        pinNumber++) {
     analogs[pinNumber] = 1;
+  }
+
+  // 디지털 포트 모니터링 On JoyBtn
+  digitals[8] = 1;
+
+  // MPU6050 초기화 (상시 모니터링 위해)
+  Wire.begin();
+  Wire.beginTransmission(MPU_ADDR);
+  Wire.write(0x6B); // PWR_MGMT_1 register
+  Wire.write(0);    // Wake up
+  if (Wire.endTransmission(true) == 0) {
+    Wire.beginTransmission(MPU_ADDR);
+    Wire.write(0x1A); // CONFIG register
+    Wire.write(0x03); // DLPF 44Hz
+    Wire.endTransmission(true);
+    isMpu = true;
   }
 }
 
@@ -216,11 +235,18 @@ void parseData() {
       isIrremote = true;
     } else if (device == MPU) {
       if (!isMpu) {
+        Wire.begin(); // Ensure Wire is started
         Wire.beginTransmission(MPU_ADDR);
-        Wire.write(0x6B);
-        Wire.write(0);
-        Wire.endTransmission(true);
-        isMpu = true;
+        Wire.write(0x6B); // PWR_MGMT_1 register
+        Wire.write(0);    // Wake up
+        if (Wire.endTransmission(true) == 0) {
+          // Set DLPF (Digital Low Pass Filter) to 44Hz (3) or 21Hz (4)
+          Wire.beginTransmission(MPU_ADDR);
+          Wire.write(0x1A); // CONFIG register
+          Wire.write(0x03); // 44Hz
+          Wire.endTransmission(true);
+          isMpu = true;
+        }
       }
     } else if (device == DIGITAL) {
       // 신규 요청이 기 사용중(구독중)인 포트와 겹치면 기존 것은 중지
@@ -235,6 +261,8 @@ void parseData() {
       digitals[port] = 1;
     } else if (device == ANALOG) {
       analogs[port] = 1;
+    } else if (device == SOUND) {
+      sounds[port] = 1;
     }
   } break;
   case SET: { // 매번 엔트리에서 값을 set하는 방식
@@ -246,15 +274,18 @@ void parseData() {
          pinNumber++) {
       digitals[pinNumber] = 0;
     }
-    // for (int pinNumber = 0; pinNumber < (sizeof(analogs)/sizeof(int));
-    // pinNumber++) {
-    //   analogs[pinNumber] = 0;
-    // }
+    // 상시 모니터링 포트 재설정
+    digitals[8] = 1; // JoyBtn 상시 모니터링 유지
+    for (int i = 0; i < 8; i++) {
+        analogs[i] = 1; // 아날로그 포트 상시 모니터링 유지
+        sounds[i] = 0;
+    }
+
     isUltrasonic = false;
     isDhtTemp = false;
     isDhtHumi = false;
     isIrremote = false;
-    isMpu = false;
+    isMpu = true; // MPU 상시 모니터링 유지
     callResetOK();
   } break;
   }
@@ -290,7 +321,7 @@ void runModule(int device) {
     int v = readBuffer(7);
     if (v >= 0 && v <= 180) { // 서모모터 SG-90으로 가정해 180까지
       Servo sv = servos[searchServoPin(pin)];
-      sv.attach(pin);
+      sv.attach(pin, 500, 2500);
       sv.write(v);
     }
   } break;
@@ -363,6 +394,7 @@ void runModule(int device) {
       analogWrite(p1, 0);
       analogWrite(p2, speed);
     }
+    // motorSpeeds[port - 1] = (dir == 0) ? speed : -speed;
   } break;
   case LCD_PRINT: {
     int row = readBuffer(7);
@@ -403,6 +435,13 @@ void sendPinValues() {
     }
   }
 
+  for (int pinNumber = 0; pinNumber < 8; pinNumber++) {
+    if (sounds[pinNumber] == 1) {
+      sendSoundValue(pinNumber);
+      // callOK();
+    }
+  }
+
   if (isUltrasonic) {
     sendUltrasonic();
     // callOK();
@@ -427,12 +466,37 @@ void sendPinValues() {
     sendMpuValue();
   }
 }
+//   // Motor Speed Reporting (Using MOTOR type as a sensor feedback)
+//   reportMotorSpeed(1); // M1
+//   reportMotorSpeed(2); // M2
+// }
+
+// void reportMotorSpeed(int port) {
+//   writeHead();
+//   sendShort(motorSpeeds[port - 1]);
+//   writeSerial(port - 1); // port 0, 1
+//   writeSerial(MOTOR);
+//   writeEnd();
+// }
+
+float mpuYaw = 0;
+unsigned long lastMpuTime = 0;
 
 void sendMpuValue() {
   Wire.beginTransmission(MPU_ADDR);
+  if (Wire.endTransmission() != 0) {
+    // Communication error, try to wake up again
+    Wire.beginTransmission(MPU_ADDR);
+    Wire.write(0x6B);
+    Wire.write(0);
+    Wire.endTransmission();
+    return; 
+  }
+
+  Wire.beginTransmission(MPU_ADDR);
   Wire.write(0x3B);
-  Wire.endTransmission(false);
-  Wire.requestFrom(MPU_ADDR, 14, true);
+  Wire.endTransmission(true);
+  Wire.requestFrom(MPU_ADDR, 14);
 
   if (Wire.available() >= 14) {
     int16_t ax = Wire.read() << 8 | Wire.read();
@@ -443,8 +507,26 @@ void sendMpuValue() {
     int16_t gy = Wire.read() << 8 | Wire.read();
     int16_t gz = Wire.read() << 8 | Wire.read();
 
-    int16_t values[] = {ax, ay, az, gx, gy, gz};
-    for (int i = 0; i < 6; i++) {
+    float roll = atan2((float)ay, (float)az) * 57.29578;
+    float pitch = atan2(-(float)ax, sqrt((float)ay * ay + (float)az * az)) * 57.29578;
+    // float temperature = (tmp / 340.0) + 36.53; // Internal chip temperature
+
+    unsigned long now = millis();
+    if (lastMpuTime > 0) {
+      float dt = (now - lastMpuTime) / 1000.0;
+      if (dt > 0 && dt < 0.2) { // Sanity check for dt
+        mpuYaw += (gz / 131.0) * dt;
+      }
+    }
+    lastMpuTime = now;
+
+    if (roll < 0) roll += 360.0;
+    if (pitch < 0) pitch += 360.0;
+    float yaw = fmod(mpuYaw, 360.0);
+    if (yaw < 0) yaw += 360.0;
+
+    int16_t values[] = {ax, ay, az, gx, gy, gz, (int16_t)roll, (int16_t)pitch, (int16_t)yaw};
+    for (int i = 0; i < 9; i++) {
       writeHead();
       sendShort(values[i]);
       writeSerial(i);
@@ -455,11 +537,17 @@ void sendMpuValue() {
 }
 
 void sendUltrasonic() {
+  if (trigPin == echoPin) {
+    pinMode(trigPin, OUTPUT);
+  }
   digitalWrite(trigPin, LOW);
   delayMicroseconds(2);
   digitalWrite(trigPin, HIGH);
   delayMicroseconds(10);
   digitalWrite(trigPin, LOW);
+  if (trigPin == echoPin) {
+    pinMode(echoPin, INPUT);
+  }
   float value = pulseIn(echoPin, HIGH, 30000) / 29.0 / 2.0;
 
   writeHead();
@@ -560,6 +648,28 @@ void sendAnalogValue(int pinNumber) {
   sendFloat(analogRead(pinNumber));
   writeSerial(pinNumber);
   writeSerial(ANALOG);
+  writeEnd();
+}
+
+void sendSoundValue(int pin) {
+  unsigned long startMillis = millis();
+  unsigned int signalMax = 0;
+  unsigned int signalMin = 1024;
+  while (millis() - startMillis < 50) {
+    int sample = analogRead(pin);
+    if (sample < 1024) {
+      if (sample > signalMax)
+        signalMax = sample;
+      else if (sample < signalMin)
+        signalMin = sample;
+    }
+  }
+  int value = signalMax - signalMin;
+
+  writeHead();
+  sendShort(value);
+  writeSerial(pin);
+  writeSerial(SOUND);
   writeEnd();
 }
 
