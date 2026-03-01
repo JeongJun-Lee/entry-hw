@@ -16,3 +16,6 @@ build/*.zip
 *.build.js
 *.bundle.js
 *.map
+
+# Arduino Tool Aliases
+app/firmwares/Arduino15

@@ -33,6 +33,10 @@
             {
                 "from": "app/validator/mac/validator.txt",
                 "to": ""
+            },
+            {
+                "from": "app/firmwares/Arduino15_mac",
+                "to": "firmwares/Arduino15"
             }
         ]
     },
@@ -46,6 +50,10 @@
             {
                 "from": "app/validator/win/validator.exe",
                 "to": ""
+            },
+            {
+                "from": "app/firmwares/Arduino15_win",
+                "to": "firmwares/Arduino15"
             }
         ]
     },
@@ -71,7 +79,12 @@
         {
             "from": "app/firmwares",
             "to": "firmwares",
-            "filter": ["!examples/"]
+            "filter": [
+                "!examples/",
+                "!Arduino15_win/",
+                "!Arduino15_mac/",
+                "!Arduino15/"
+            ]
         },
         {
             "from": "app/drivers",

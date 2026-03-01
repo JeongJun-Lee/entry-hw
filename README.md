@@ -58,3 +58,18 @@ npm install --global node-gyp
 ## Copyright and License
 
 [The MIT License (MIT)](https://github.com/entrylabs/entry-hw/blob/master/LICENSE)
+
+## Arduino Tools Management
+
+`Arduino15` 폴더는 OS별(Windows, Mac)로 실행 파일이 다르므로 Git에서 각각 관리합니다. 개발 및 빌드 환경 구성을 위해 아래 가이드를 참고하세요.
+
+### 1. OS별 링크 도구 요약 가이드
+
+| 작업 | 윈도우 (CMD/PowerShell) | 맥 (Terminal) |
+| :--- | :--- | :--- |
+| **링크 생성** | `mklink /J Arduino15 Arduino15_win` | `ln -s Arduino15_mac Arduino15` |
+| **링크 삭제** | `rmdir Arduino15` | `rm Arduino15` |
+
+### 2. 빌드 주의사항
+*   **Git 관리**: Git에는 `Arduino15_win`과 `Arduino15_mac` 폴더만 추적됩니다. 개발 시 생성한 `Arduino15` 링크는 `.gitignore`에 의해 제외됩니다.
+*   **패키징**: `electron-builder.json` 설정에 따라 빌드 시 각각의 OS에 맞는 `Arduino15_xxx` 폴더가 최종 패키지의 `firmwares/Arduino15` 경로로 자동 매핑됩니다.
