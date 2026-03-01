@@ -13,6 +13,8 @@
         "webpack:dev": "cross-env NODE_ENV=development webpack",
         "webpack:prod": "cross-env NODE_ENV=production webpack",
         "webpack:watch": "cross-env NODE_ENV=development webpack -w",
+        "build:firmware:nano_ext": "cd app/firmwares && ./arduino-cli compile --fqbn arduino:avr:nano --config-file arduino-cli.yaml examples/arduino_nano_ext/arduino_nano_ext.ino --output-dir . && mv arduino_nano_ext.ino.hex arduino_nano_ext.hex && rm -f arduino_nano_ext.ino.*",
+        "build:firmware:arduino_ext": "cd app/firmwares && ./arduino-cli compile --fqbn arduino:avr:uno --config-file arduino-cli.yaml examples/arduino_ext/arduino_ext.ino --output-dir . && mv arduino_ext.ino.hex arduino_ext.hex && rm -f arduino_ext.ino.*",
         "update:licence": "lcdoc make -o app/OPENSOURCE.md -d 1",
         "dist:win32": "cross-env BUILD_MODE=STANDALONE npm run webpack:prod && electron-builder --win --ia32",
         "dist:mac:notarize": "cross-env BUILD_MODE=STANDALONE npm run webpack:prod && cross-env NOTARIZE=true CSC_NAME=\"Connect Foundation (DLFUSDA3L5)\" electron-builder",

@@ -14,11 +14,11 @@ const platform = process.platform;
 class Compiler {
     private compilerProcess?: ChildProcess;
 
-    private _compileArduino(): Promise<any[]> {
+    private _compileArduino(fqbn: string = 'arduino:avr:uno'): Promise<any[]> {
         return new Promise((resolve) => {
             let cliName;
             let cliCmd = 'compile';
-            let cliFqbn = 'arduino:avr:uno';
+            let cliFqbn = fqbn;
             let cliConf = 'arduino-cli.yaml';
             let outputDir = '"' + directoryPaths.firmwares() + '"'; // To block the blank in the middle of path
 
@@ -58,20 +58,25 @@ class Compiler {
 
 
     compile(firmwareName: string): Promise<boolean> {
-        if (firmwareName == 'Arduino' || firmwareName == 'ArduinoEx') {
-            return new Promise((resolve, reject) => {this._compileArduino()
+        if (firmwareName == 'Arduino' || firmwareName == 'ArduinoEx' || firmwareName == 'ArduinoNanoExt') {
+            let fqbn = 'arduino:avr:uno';
+            if (firmwareName == 'ArduinoNanoExt') {
+                fqbn = 'arduino:avr:nano:cpu=atmega328old';
+            }
+            return new Promise((resolve, reject) => {
+                this._compileArduino(fqbn)
                     .then(([error, ...args]) => {
                         if (error) {
                             rendererConsole.log('CompileError', error.message);
                             console.log(error.message);
                             reject(error);
-                            
+
                         } else {
                             logger.info('firmware flash success');
                             resolve(true);
                         }
                     });
-                });
+            });
         } else {
             return Promise.reject(new Error('Not supported compile request'));
         }

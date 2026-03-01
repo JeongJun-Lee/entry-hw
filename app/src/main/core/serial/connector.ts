@@ -412,11 +412,18 @@ class SerialConnector extends BaseConnector {
         if (this.hwModule && this.hwModule.disconnect) {
             this.hwModule.disconnect(this.serialPort);
         }
-        if (this.serialPort && this.serialPort.isOpen) {
-            this.serialPort.close((e) => {
-                logger.info(`serialport closed, ${e?.name}`);
-                this.serialPort = undefined;
-            });
+        if (this.serialPort) {
+            const port = this.serialPort;
+            this.serialPort = undefined;
+            if (port.isOpen) {
+                port.close((e) => {
+                    if (e) {
+                        logger.warn(`serialport closed error, ${e.message}`);
+                    } else {
+                        logger.info('serialport closed');
+                    }
+                });
+            }
         }
     }
 
@@ -445,7 +452,7 @@ class SerialConnector extends BaseConnector {
                         this.isSending = false;
                         return;
                     }
-                    if (this.serialPort) {
+                    if (this.serialPort && this.serialPort.isOpen) {
                         this.serialPort.drain((drainError) => {
                             if (drainError) {
                                 logger.error(`SerialPort drain error: ${drainError.message}`);
@@ -454,6 +461,8 @@ class SerialConnector extends BaseConnector {
                             this.isSending = false;
                             callback && callback();
                         });
+                    } else {
+                        this.isSending = false;
                     }
                 });
             }
