@@ -258,8 +258,11 @@ Module.prototype.handleRemoteData = function (handler) {
                     }
                 }
 
+                // 시간 순서가 맞는지 확인 (최신 명령 보장)
                 if (self.digitalPortTimeList[port] < data.time) {
                     self.digitalPortTimeList[port] = data.time;
+
+                    // 출력 명령(SET)은 값이 바뀔 때만 전송 (불필요한 트래픽 제거)
                     if (!self.isRecentData(port, data.type, data.data, self.actionTypes.SET)) {
                         self.recentCheckData[port] = {
                             type: data.type,
@@ -284,7 +287,7 @@ Module.prototype.handleRemoteData = function (handler) {
 
 /**
  * 기존에 수신했던 데이터인가
- * 기존에 수신했던 데이터인지 확인합니다. 예를들어 무한루프에서 상태가 변하지 않을 경우 추가로 신호를 하드웨어에 보내거나, 
+ * 기존에 수신했던 데이터인지 확인합니다. 예를들어 무한루프에서 상태가 변하지 않을 경우 추가로 신호를 하드웨어에 보내거나,
  * 또는 포트 구독의 경우 등 불필요한 오버헤드를 발생시킬 필요가 없으므로, 같은 신호에 대해서는 중복으로 보내지 않도록 만듭니다.
  * 하지만, Tone과 같이 같은 신호라도 출력데이터를 보내야하므로 별도의 예외처리가 필요합니다.
 **/
@@ -340,6 +343,17 @@ Module.prototype.isRecentData = function (port, type, data, action) {
         isRecent = false;
     }
 
+    // SET 요청(출력)은 값이 같으면 전송하지 않음 (Deduplication)
+    if (action === this.actionTypes.SET) {
+        if (this.recentCheckData[port] &&
+            this.recentCheckData[port].action === this.actionTypes.SET &&
+            this.recentCheckData[port].type === type &&
+            this.recentCheckData[port].data === data) {
+            return true;
+        }
+        return false;
+    }
+
     return isRecent;
 };
 
@@ -349,13 +363,23 @@ Module.prototype.isRecentData = function (port, type, data, action) {
     master 모드인 경우 하드웨어로부터 데이터 받자마자 바로 송신한다.
 */
 Module.prototype.requestLocalData = function () {
-    if (!this.sp) { return null; }
+    const self = this;
 
-    // 버퍼가 너무 많이 쌓이면(지연 발생) 오래된 패킷 버림
-    if (this.sendBuffers.length > 100) {
-        this.sendBuffers = [];
-        this.isDraing = false;
-        return null;
+    // 자동 폴링(Auto-Poll) 구현: 100ms마다 센서 전체 요청
+    const now = new Date().getTime();
+    if (now - this.lastAutoPollTime > 100) {
+        this.lastAutoPollTime = now;
+
+        let autoBuffer = new Buffer([]);
+        // 아날로그 전체 (A0~A7)
+        for (let i = 0; i < 8; i++) {
+            autoBuffer = Buffer.concat([autoBuffer, this.makeSensorReadBuffer(this.sensorTypes.ANALOG, i)]);
+        }
+        // 디지털 전체 (D0~D13)
+        for (let i = 0; i < 14; i++) {
+            autoBuffer = Buffer.concat([autoBuffer, this.makeSensorReadBuffer(this.sensorTypes.DIGITAL, i)]);
+        }
+        this.sendBuffers.push(autoBuffer);
     }
 
     if (!this.isDraing && this.sendBuffers.length > 0) {
@@ -369,7 +393,10 @@ Module.prototype.requestLocalData = function () {
         });
     }
 
-    return null;
+    // 버퍼가 너무 쌓이면(100개 초과) 지연 방지를 위해 초기화
+    if (this.sendBuffers.length > 100) {
+        this.sendBuffers = [];
+    }
 };
 
 Module.prototype.initProperties = function (obj) {
