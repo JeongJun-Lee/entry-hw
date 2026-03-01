@@ -136,7 +136,8 @@ class MainRouter {
             const lastSerialPortCOMPort = connectorSerialPort && connectorSerialPort.path;
             this.firmwareTryCount = 0;
 
-            if ((firmwareName as IUploadableFirmware).name == 'Arduino') {
+            if ((firmwareName as IUploadableFirmware).name == 'Arduino' ||
+                (firmwareName as IUploadableFirmware).name == 'ArduinoNanoExt') {
                 logger.info('source compile requested');
                 try {
                     await this.compiler.compile((firmwareName as IUploadableFirmware).name);
@@ -429,14 +430,15 @@ class MainRouter {
         // console.log(data); // To chceck if Entry sent the block really in the low level
         if (handler.read('name') == 'arduino' ||
             handler.read('name') == 'ArduinoExt' ||
+            handler.read('name') == 'ArduinoNanoExt' ||
             handler.read('name') == 'ITPLE') {
-            this.handleFlashFirmware(handler.read('frame'));
+            this.handleFlashFirmware(handler.read('frame'), handler.read('name'));
         } else if (hwModule.handleRemoteData) {
             hwModule.handleRemoteData(handler);
         }
     }
 
-    async handleFlashFirmware(source: string) {
+    async handleFlashFirmware(source: string, hwName: string) {
         // Save the source to firmwares.ino      
         try {
             if (!fs.existsSync(directoryPaths.firmwares())) { // Check the directry is exist
@@ -444,7 +446,7 @@ class MainRouter {
             }
             fs.writeFileSync(path.join(directoryPaths.firmwares(), 'firmwares.ino'), source);
 
-            await this.flashFirmware({ name: 'Arduino', fileName: 'firmwares.ino' });
+            await this.flashFirmware({ name: hwName, fileName: 'firmwares.ino' });
             this.sendEncodedDataToServer({ upload: 'Upload success!!!' });
             this.sendState(HardwareStatement.scanFailed); // Since flash has finished, reconnection needs
         } catch (error) {

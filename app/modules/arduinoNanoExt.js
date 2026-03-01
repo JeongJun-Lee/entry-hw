@@ -95,6 +95,7 @@ function Module() {
     this.lastSendTime = 0;
     this.isDraing = false;
     this.isNewConn = false; // 최초 연결시마다 포트구독을 재구독 하기 위해
+    this.lastMpuTime = 0;
 }
 
 let sensorIdx = 0;
@@ -194,11 +195,17 @@ Module.prototype.handleRemoteData = function (handler) {
 
     if (getDatas) {
         // MPU 데이터 강제 요청 (블록 사용 안해도 상시 모니터링)
-        if (!getDatas[self.sensorTypes.MPU]) {
+        // 통신 부하를 획기적으로 줄이기 위해 500ms(2Hz) 주기로만 요청 (대시보드 표시용)
+        const now = new Date().getTime();
+        if (!getDatas[self.sensorTypes.MPU] && (now - self.lastMpuTime > 500)) {
             getDatas[self.sensorTypes.MPU] = {
                 port: 0,
-                time: new Date().getTime(),
+                time: now,
             };
+            self.lastMpuTime = now;
+        } else if (getDatas[self.sensorTypes.MPU]) {
+            // MPU 블록이 직접 사용될 때는 블록 실행 주기에 맞춤
+            self.lastMpuTime = now;
         }
 
         Object.keys(getDatas).forEach((key) => {
@@ -213,8 +220,13 @@ Module.prototype.handleRemoteData = function (handler) {
                 isSend = dataObj.port.every(p => dataObj.time > self.digitalPortTimeList[p]);
                 if (isSend) dataObj.port.forEach(p => self.digitalPortTimeList[p] = dataObj.time);
             }
-            if (isSend && !self.isRecentData(dataObj.port, key, dataObj.data)) {
-                self.recentCheckData[dataObj.port] = { type: key, data: dataObj.data };
+            if (isSend && !self.isRecentData(dataObj.port, key, dataObj.data, self.actionTypes.GET)) {
+                self.recentCheckData[dataObj.port] = {
+                    type: key,
+                    data: dataObj.data,
+                    action: self.actionTypes.GET,
+                    time: new Date().getTime()
+                };
                 buffer = Buffer.concat([buffer, self.makeSensorReadBuffer(key, dataObj.port, dataObj.data)]);
             }
         });
@@ -248,8 +260,13 @@ Module.prototype.handleRemoteData = function (handler) {
 
                 if (self.digitalPortTimeList[port] < data.time) {
                     self.digitalPortTimeList[port] = data.time;
-                    if (!self.isRecentData(port, data.type, data.data)) {
-                        self.recentCheckData[port] = { type: data.type, data: data.data };
+                    if (!self.isRecentData(port, data.type, data.data, self.actionTypes.SET)) {
+                        self.recentCheckData[port] = {
+                            type: data.type,
+                            data: data.data,
+                            action: self.actionTypes.SET,
+                            time: new Date().getTime()
+                        };
                         buffer = Buffer.concat([
                             buffer,
                             self.makeOutputBuffer(data.type, port, data.data),
@@ -271,9 +288,21 @@ Module.prototype.handleRemoteData = function (handler) {
  * 또는 포트 구독의 경우 등 불필요한 오버헤드를 발생시킬 필요가 없으므로, 같은 신호에 대해서는 중복으로 보내지 않도록 만듭니다.
  * 하지만, Tone과 같이 같은 신호라도 출력데이터를 보내야하므로 별도의 예외처리가 필요합니다.
 **/
-Module.prototype.isRecentData = function (port, type, data) {
+Module.prototype.isRecentData = function (port, type, data, action) {
     const that = this;
     let isRecent = false;
+    const now = new Date().getTime();
+
+    // GET 요청(센서 읽기)은 100ms(10Hz) 주기로 폴링 제한 (UART 부하 방지)
+    if (action === this.actionTypes.GET) {
+        if (this.recentCheckData[port] &&
+            this.recentCheckData[port].action === this.actionTypes.GET &&
+            this.recentCheckData[port].type === type &&
+            (now - (this.recentCheckData[port].time || 0) < 100)) {
+            return true;
+        }
+        return false;
+    }
 
     if (type == this.sensorTypes.ULTRASONIC) {
         const portString = port.toString();
@@ -321,6 +350,13 @@ Module.prototype.isRecentData = function (port, type, data) {
 */
 Module.prototype.requestLocalData = function () {
     if (!this.sp) { return null; }
+
+    // 버퍼가 너무 많이 쌓이면(지연 발생) 오래된 패킷 버림
+    if (this.sendBuffers.length > 100) {
+        this.sendBuffers = [];
+        this.isDraing = false;
+        return null;
+    }
 
     if (!this.isDraing && this.sendBuffers.length > 0) {
         this.isDraing = true;
@@ -713,6 +749,7 @@ Module.prototype.reset = function () {
     this.isDraing = false;
     this.isNewConn = false;
     this.handshakeTryCount = 0;
+    this.lastMpuTime = 0;
     sensorIdx = 0;
 
     // 센서 데이터 초기화 (이전 출력 값이 입력으로 오해받지 않도록)
@@ -725,6 +762,27 @@ Module.prototype.reset = function () {
     };
     this.sensorData.PULSEIN = {};
     this.sensorData.SOUND = 0;
+};
+
+Module.prototype.setZero = function () {
+    let buffer = new Buffer([]);
+    // 모든 디지털 포트 OFF (2~13)
+    for (let i = 2; i <= 13; i++) {
+        buffer = Buffer.concat([buffer, this.makeOutputBuffer(this.sensorTypes.DIGITAL, i, 0)]);
+    }
+    // 모터 정지 (9, 10은 위 루프에 포함되어 digitalWrite(0) 됨)
+    buffer = Buffer.concat([buffer, this.makeOutputBuffer(this.sensorTypes.MOTOR, 1, 0)]);
+    buffer = Buffer.concat([buffer, this.makeOutputBuffer(this.sensorTypes.MOTOR, 2, 0)]);
+    // 버저 정지
+    buffer = Buffer.concat([buffer, this.makeOutputBuffer(this.sensorTypes.TONE, 4, { value: 0, duration: 0 })]);
+    // LCD 클리어
+    buffer = Buffer.concat([buffer, this.makeOutputBuffer(this.sensorTypes.LCD_CLEAR, 0, 0)]);
+
+    if (this.sp) {
+        this.sp.write(buffer);
+    }
+    this.recentCheckData = {};
+    this.reset();
 };
 
 Module.prototype.lostController = function (connector, stateCallback) {
