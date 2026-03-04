@@ -240,7 +240,6 @@ Module.prototype.handleRemoteData = function (handler) {
                 if (data.type === self.sensorTypes.DIGITAL) {
                     self.sensorData.DIGITAL[port] = data.data;
                 } else if (data.type === self.sensorTypes.PWM) {
-                    self.sensorData.ANALOG[port] = data.data;
                     self.sensorData.DIGITAL[port] = data.data; // PWM은 디지털 핀 모니터링에서도 보여야 함
                 } else if (data.type === self.sensorTypes.ANALOG) {
                     self.sensorData.ANALOG[port] = data.data;
@@ -251,10 +250,8 @@ Module.prototype.handleRemoteData = function (handler) {
                     // 블록은 '1','2'를 사용하고, 모니터링 내부 변수는 M1/M2(물리9,10)를 사용
                     if (port == '1' || port == '9') {
                         self.sensorData.M1 = val;
-                        self.sensorData.DIGITAL['9'] = val;
                     } else if (port == '2' || port == '10') {
                         self.sensorData.M2 = val;
-                        self.sensorData.DIGITAL['10'] = val;
                     }
                 }
 
@@ -379,6 +376,31 @@ Module.prototype.requestLocalData = function () {
         for (let i = 0; i < 14; i++) {
             autoBuffer = Buffer.concat([autoBuffer, this.makeSensorReadBuffer(this.sensorTypes.DIGITAL, i)]);
         }
+
+        // 엔트리 블록에서 요청된 소리 센서(SOUND), DHT, IR 리모컨이 있다면 버퍼에 추가조회
+        this.activeSoundPorts.forEach((soundPort) => {
+            autoBuffer = Buffer.concat([autoBuffer, this.makeSensorReadBuffer(this.sensorTypes.SOUND, soundPort)]);
+        });
+
+        this.activeDhtTempPorts.forEach((dhtPort) => {
+            autoBuffer = Buffer.concat([autoBuffer, this.makeSensorReadBuffer(this.sensorTypes.DHTTEMP, dhtPort)]);
+        });
+
+        this.activeDhtHumiPorts.forEach((dhtPort) => {
+            autoBuffer = Buffer.concat([autoBuffer, this.makeSensorReadBuffer(this.sensorTypes.DHTHUMI, dhtPort)]);
+        });
+
+        this.activeIrremotePorts.forEach((irPort) => {
+            autoBuffer = Buffer.concat([autoBuffer, this.makeSensorReadBuffer(this.sensorTypes.IRREMOTE, irPort)]);
+        });
+
+        // 엔트리 블록에서 초음파 센서(ULTRASONIC) 요청이 한 번이라도 있었다면 포트에 맞게 버퍼 추가조회
+        if (this.activeUltrasonicPorts && this.activeUltrasonicPorts.length >= 2) {
+            const trig = this.activeUltrasonicPorts[0];
+            const echo = this.activeUltrasonicPorts[1];
+            autoBuffer = Buffer.concat([autoBuffer, this.makeSensorReadBuffer(this.sensorTypes.ULTRASONIC, trig, echo)]);
+        }
+
         this.sendBuffers.push(autoBuffer);
     }
 
@@ -450,7 +472,13 @@ Module.prototype.handleLocalData = function (data) {
             }
             case self.sensorTypes.DIGITAL: {
                 // this.initProperties(self.sensorData.DIGITAL)
-                self.sensorData.DIGITAL[port] = value;
+                if (port === 8) {
+                    // 조이스틱 버튼(8번 핀)은 하드웨어에서 안 눌렀을 때 1, 눌렀을 때 0이 들어옴.
+                    // 모니터 대시보드에서 좀 더 직관적인 (안 누름 0, 누름 1) 값으로 보여주기 위해 뒤집음
+                    self.sensorData.DIGITAL[port] = value === 0 ? 1 : 0;
+                } else {
+                    self.sensorData.DIGITAL[port] = value;
+                }
                 break;
             }
             case self.sensorTypes.ANALOG: {
@@ -554,6 +582,7 @@ Module.prototype.makeSensorReadBuffer = function (device, port, data) {
         case this.sensorTypes.IRREMOTE:
         case this.sensorTypes.ANALOG: // AnalogRead
         case this.sensorTypes.DIGITAL: // DigitalRead
+        case this.sensorTypes.SOUND: // SoundRead
             buffer = new Buffer([
                 255,
                 85,
@@ -775,6 +804,15 @@ Module.prototype.reset = function () {
     this.lastSendTime = 0;
     this.isDraing = false;
     this.isNewConn = false;
+    this.lastAutoPollTime = 0;
+    this.activeUltrasonicPorts = null; // 초음파 센터 활성 포트 (배열: [trig, echo] 또는 null)
+    this.activeSoundPorts = new Set(); // 소리 센서 활성 포트 저장
+
+    // DHT, IR Remote 센서 활성 포트 추적
+    this.activeDhtTempPorts = new Set();
+    this.activeDhtHumiPorts = new Set();
+    this.activeIrremotePorts = new Set();
+
     this.handshakeTryCount = 0;
     this.lastMpuTime = 0;
     sensorIdx = 0;
