@@ -19,6 +19,10 @@ function Module() {
         NEOPIXELINIT : 16,
         NEOPIXELRAINBOW : 17,
         NEOPIXELEACH : 18,
+        LCDINIT: 19,
+        LCD: 20,
+        LCDCLEAR: 21,
+        TEMPCHECK: 22,
     };
 
     this.actionTypes = {
@@ -62,6 +66,7 @@ function Module() {
         },
         PULSEIN: {},
         TIMER: 0,
+        TEMPCHECK: 0,
     };
 
     this.defaultOutput = {};
@@ -109,6 +114,7 @@ Module.prototype.validateLocalData = function(data) {
     return true;
 };
 
+// 엔트리로 전달할 데이터
 Module.prototype.requestRemoteData = function(handler) {
     var self = this;
     if (!self.sensorData) {
@@ -255,6 +261,7 @@ Module.prototype.requestLocalData = function() {
     return null;
 };
 
+ // 하드웨어에서 온 데이터 처리 로직
 /*
 ff 55 idx size data a
 */
@@ -267,6 +274,7 @@ Module.prototype.handleLocalData = function(data) {
             return;
         }
         var readData = data.subarray(2, data.length);
+
         var value;
         switch (readData[0]) {
             case self.sensorValueSize.FLOAT: {
@@ -287,6 +295,9 @@ Module.prototype.handleLocalData = function(data) {
         var type = readData[readData.length - 1];
         var port = readData[readData.length - 2];
 
+        
+
+        
         switch (type) {
             case self.sensorTypes.DIGITAL: {
                 self.sensorData.DIGITAL[port] = value;
@@ -308,6 +319,10 @@ Module.prototype.handleLocalData = function(data) {
                 self.sensorData.TIMER = value;
                 break;
             }
+            case self.sensorTypes.TEMPCHECK: {
+                self.sensorData.TEMPCHECK = value;
+                break;
+            }
             default: {
                 break;
             }
@@ -323,6 +338,7 @@ ff 55 len idx action device port  slot  data a
 Module.prototype.makeSensorReadBuffer = function(device, port, data) {
     var buffer;
     var dummy = new Buffer([10]);
+
     if (device == this.sensorTypes.ULTRASONIC) {
         buffer = new Buffer([
             255,
@@ -333,6 +349,17 @@ Module.prototype.makeSensorReadBuffer = function(device, port, data) {
             device,
             port[0],
             port[1],
+            10,
+        ]);
+    } else if (device == this.sensorTypes.TEMPCHECK)  {
+        buffer = new Buffer([
+            255,
+            85,
+            5,
+            sensorIdx,
+            this.actionTypes.GET,
+            device,
+            port,
             10,
         ]);
     } else if (!data) {
@@ -383,6 +410,7 @@ Module.prototype.makeOutputBuffer = function(device, port, data) {
         case this.sensorTypes.METRIXDRAW:
         case this.sensorTypes.NEOPIXELCLEAR:
         case this.sensorTypes.NEOPIXELRAINBOW:
+        case this.sensorTypes.LCDCLEAR:
         {
             value.writeInt16LE(data);
 
@@ -401,12 +429,13 @@ Module.prototype.makeOutputBuffer = function(device, port, data) {
         case this.sensorTypes.METRIX: 
         case this.sensorTypes.METRIXROWCOLCLEAR:
         {
-            var value2 = new Buffer(2);
+            const value1 = new Buffer(2);
+            const value2 = new Buffer(2);
             if ($.isPlainObject(data)) {
-                value.writeInt16LE(data.value1);
+                value1.writeInt16LE(data.value1);
                 value2.writeInt16LE(data.value2);
             } else {
-                value.writeInt16LE(0);
+                value1.writeInt16LE(0);
                 value2.writeInt16LE(0);
             }
 
@@ -419,18 +448,19 @@ Module.prototype.makeOutputBuffer = function(device, port, data) {
                 device,
                 port,
             ]);
-            buffer = Buffer.concat([buffer, value, value2, dummy]);
+            buffer = Buffer.concat([buffer, value1, value2, dummy]);
             break;
         }
-        case this.sensorTypes.NEOPIXELINIT:{
+        case this.sensorTypes.NEOPIXELINIT:
+        {
+            const neoCount = new Buffer(2);
             var bright = new Buffer(2);
-            var neo_count = new Buffer(2);
             
             if ($.isPlainObject(data)) {
-                neo_count.writeInt16LE(data.value1);
+                neoCount.writeInt16LE(data.value1);
                 bright.writeInt16LE(data.value2);
             } else {
-                neo_count.writeInt16LE(0);
+                neoCount.writeInt16LE(0);
                 bright.writeInt16LE(0);
             }
 
@@ -443,25 +473,26 @@ Module.prototype.makeOutputBuffer = function(device, port, data) {
                 device,
                 port,
             ]);
-            buffer = Buffer.concat([buffer, neo_count, bright, dummy]);
+            buffer = Buffer.concat([buffer, neoCount, bright, dummy]);
             break;
         }
-        case this.sensorTypes.NEOPIXEL:{
+        case this.sensorTypes.NEOPIXEL:
+        {
             //var count_value = new Buffer(2);
-            var r_value = new Buffer(2);
-            var g_value = new Buffer(2);
-            var b_value = new Buffer(2);
+            const rValue = new Buffer(2);
+            const gValue = new Buffer(2);
+            const bValue = new Buffer(2);
             
             if ($.isPlainObject(data)) {
                // count_value.writeInt16LE(data.count);
-                r_value.writeInt16LE(data.R_val);
-                g_value.writeInt16LE(data.G_val);
-                b_value.writeInt16LE(data.B_val);
+                rValue.writeInt16LE(data.R_val);
+                gValue.writeInt16LE(data.G_val);
+                bValue.writeInt16LE(data.B_val);
             } else {
                 //count_value.writeInt16LE(0);
-                r_value.writeInt16LE(0);
-                g_value.writeInt16LE(0);
-                b_value.writeInt16LE(0);
+                rValue.writeInt16LE(0);
+                gValue.writeInt16LE(0);
+                bValue.writeInt16LE(0);
             }
 
             buffer = new Buffer([
@@ -473,7 +504,98 @@ Module.prototype.makeOutputBuffer = function(device, port, data) {
                 device,
                 port,
             ]);
-            buffer = Buffer.concat([buffer, r_value, g_value, b_value, dummy]);
+            buffer = Buffer.concat([buffer, rValue, gValue, bValue, dummy]);
+            break;
+        }
+        case this.sensorTypes.NEOPIXELEACH:
+        {
+            const cntValue = new Buffer(2);
+            const rVal = new Buffer(2);
+            const gVal = new Buffer(2);
+            const bVal = new Buffer(2);
+            
+            if ($.isPlainObject(data)) {
+                cntValue.writeInt16LE(data.CNT_val);
+                rVal.writeInt16LE(data.R_val);
+                gVal.writeInt16LE(data.G_val);
+                bVal.writeInt16LE(data.B_val);
+            } else {
+                cntValue.writeInt16LE(0);
+                rVal.writeInt16LE(0);
+                gVal.writeInt16LE(0);
+                bVal.writeInt16LE(0);
+            }
+
+            buffer = new Buffer([
+                255,
+                85,
+                12,
+                sensorIdx,
+                this.actionTypes.SET,
+                device,
+                port,
+            ]);
+            buffer = Buffer.concat([buffer, cntValue, rVal, gVal, bVal, dummy]);
+            break;
+        }
+        case this.sensorTypes.LCDINIT:
+        {
+            const listVal = new Buffer(2);
+
+            if ($.isPlainObject(data)) {
+                listVal.writeInt16LE(data.list);
+            } else {
+                listVal.writeInt16LE(0);
+            }
+
+            buffer = new Buffer([
+                255,
+                85,
+                6,
+                sensorIdx,
+                this.actionTypes.SET,
+                device,
+                port,
+            ]);
+
+            buffer = Buffer.concat([buffer, listVal, dummy]);
+           
+            break;
+        }
+        case this.sensorTypes.LCD:
+        {
+            const rowValue = new Buffer(2);
+            const colValue = new Buffer(2);
+            const val = new Buffer(2);
+            let textLen = 0;
+            let text;
+            
+            if ($.isPlainObject(data)) {
+                textLen = ('' + `${data.value}`).length;
+                text = Buffer.from('' + `${data.value}`, 'ascii');
+                rowValue.writeInt16LE(data.row);
+                colValue.writeInt16LE(data.col);
+                val.writeInt16LE(textLen);
+            } else {
+                rowValue.writeInt16LE(0);
+                colValue.writeInt16LE(0);
+
+                textLen = 0;
+                text = Buffer.from('', 'ascii');
+                val.writeInt16LE(textLen);
+            }
+
+            buffer = new Buffer([
+                255,
+                85,
+                10 + textLen,
+                sensorIdx,
+                this.actionTypes.SET,
+                device,
+                port,
+            ]);
+            
+            buffer = Buffer.concat([buffer, rowValue, colValue, val, text, dummy]);
             break;
         }
         case this.sensorTypes.NEOPIXELEACH:{
@@ -545,6 +667,7 @@ Module.prototype.getDataByBuffer = function(buffer) {
     return datas;
 };
 
+// 하드웨어 연결 해제 시 호출
 Module.prototype.disconnect = function(connect) {
     var self = this;
     connect.close();
@@ -553,6 +676,7 @@ Module.prototype.disconnect = function(connect) {
     }
 };
 
+// 엔트라와의 연결 종료 후 처리 코드
 Module.prototype.reset = function() {
     this.lastTime = 0;
     this.lastSendTime = 0;

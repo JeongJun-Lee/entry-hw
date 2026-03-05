@@ -43,6 +43,26 @@ const HardwareTitle = styled.h2`
     display: flex;
 `;
 
+const SUPPORTED_HARDWARE_IDS = [
+    '050601', // Neo Soco (neobot_soco)
+    '010101', // Arduino Uno (arduino)
+    '010199', // Arduino Compatible (arduinoCompatible)
+    '010901', // Arduino Ext (arduinoExt)
+    '010904', // Arduino Ext BT (arduinoExt_bt)
+    '011001', // Arduino Nano (arduinoNano)
+    '011301', // Rauf NanoBoard (arduinoNanoExt)
+    '120101', // EV3 (ev3)
+    '120102', // EV3 HID (ev3_hid)
+    '050401', // NEOCODING Game Theme (neobot_game_theme)
+    '050301', // NEOCODING Robot Theme (neobot_robot_theme)
+    '050302', // NEOCODING Robot Theme New (neobot_robot_theme_dongle)
+    '050201', // NEOCODING SensorTheme (neobot_sensor_theme)
+    '220301', // micro:bit V1 + V2 (microbit2)
+    '020402', // Hamster (hamster)
+    '5E0101', // ITPLE Board (ITPLE)
+    '020901', // Turtle (turtle)
+];
+
 const HardwareElement: React.FC<{ hardware: IHardwareConfig }> = (props) => {
     const { translator, rendererRouter } = usePreload();
     const dispatch = useDispatch();
@@ -52,6 +72,11 @@ const HardwareElement: React.FC<{ hardware: IHardwareConfig }> = (props) => {
     const [isImageSrcNotFound, setImageNotFound] = useState(false);
     const langType = useMemo(() => translator.currentLanguage, [translator]);
     const onElementClick = useCallback(() => {
+        if (!SUPPORTED_HARDWARE_IDS.includes(hardware.id)) {
+            alert(translator.translate('If you need support, please contact RoboticsWare'));
+            return;
+        }
+
         if (availableType === HardwareAvailableTypeEnum.available) {
             selectHardware(dispatch)(hardware);
             changeCurrentPageState(dispatch)(HardwarePageStateEnum.connection);
@@ -70,12 +95,12 @@ const HardwareElement: React.FC<{ hardware: IHardwareConfig }> = (props) => {
         const imageBaseUrl = rendererRouter.sharedObject.moduleResourceUrl;
 
         switch (availableType) {
-        case HardwareAvailableTypeEnum.needUpdate:
-        case HardwareAvailableTypeEnum.needDownload:
-            return `${imageBaseUrl}/${hardware.moduleName}/files/image`;
-        case HardwareAvailableTypeEnum.available:
-        default:
-            return `${rendererRouter.baseModulePath}/${hardware.icon}`;
+            case HardwareAvailableTypeEnum.needUpdate:
+            case HardwareAvailableTypeEnum.needDownload:
+                return `${imageBaseUrl}/${hardware.moduleName}/files/image`;
+            case HardwareAvailableTypeEnum.available:
+            default:
+                return `${rendererRouter.baseModulePath}/${hardware.icon}`;
         }
     }, [isImageSrcNotFound, availableType]);
 

@@ -1,5 +1,3 @@
-'use strict';
-const { slice } = require('../../webpack.config');
 const BaseModule = require('./baseModule');
 
 class CodeWiz extends BaseModule {
@@ -8,7 +6,7 @@ class CodeWiz extends BaseModule {
         this.receiveType = {
             SENSOR_TYPE1: 0,
             SENSOR_TYPE2: 1,
-
+            HUSKY_RESULTS: 2,
             BOOLEAN: 3,
             INT: 4,
             FLOAT: 5,
@@ -50,8 +48,14 @@ class CodeWiz extends BaseModule {
             GYRO_X: 0,
             GYRO_Y: 0,
             GYRO_Z: 0,
+            HUSKY_READ:{
+                _type:0,
+                _count:0,
+                _list:[],
+            },
         };
         this.isDraing = false;
+        this.isFirst = true;
     }
 
     /*
@@ -71,15 +75,32 @@ class CodeWiz extends BaseModule {
     */
     requestInitialData(sp) {
         this.sp = sp;
+        this.sp.binding.openOptions.hupcl=false;
         // reset
-        sp.set({ dtr: false, rts: true });
-        sp.set({ dtr: false, rts: false });
-
+        // this.sp.set({ dtr: false, rts: true });
+        // this.sp.set({ dtr: false, rts: false });
+        this.connectApp0();
         return true;
     }
+    __sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+    async connectApp0() {
+        const runApp0=[0xC0,0x00,0xE0,0x00,0x00,0x00,0x00,0x00,0x00,0xC0];
+        // console.log('this.sp:',this.sp);
+        // FactoryApp 진입
+        this.sp.set({ dtr: false, rts: true });
+        await this.__sleep(200);
+        this.sp.set({ dtr: true, rts: false });
+        await this.__sleep(800);
+        this.sp.set({ dtr: false, rts: false });
+        await this.__sleep(1000);
 
+        this.sp.write(runApp0);
+    }
     // 연결 후 초기에 수신받아서 정상연결인지를 확인해야하는 경우 사용합니다.
     checkInitialData(data, config) {
+        // this.connectApp0();
         return true;
     }
 
@@ -139,7 +160,7 @@ class CodeWiz extends BaseModule {
 
         let buffer = null;
         if (orderData) {
-            this.handler.write('runOK', false);
+            // this.handler.write('runOK', false);
             const keys = Object.keys(orderData);
             keys.forEach((id) => {
                 const data = orderData[id];
@@ -147,6 +168,9 @@ class CodeWiz extends BaseModule {
                     buffer = this.makeSendMessage(data.type, data.value);
                     if (buffer?.length > 0) {
                         this.sendBuffers.push(buffer);
+                        this.curId = id;
+                        // this.handler.write(id, {value:null});
+
                         // console.log('this.sendBuffers', this.sendBuffers);
                     }
                 }
@@ -164,10 +188,18 @@ class CodeWiz extends BaseModule {
         if (!str) {
             return [];
         }
-        let ret = [str.length];
+        // let ret = [str.length];
+        let ret = [];
         for (let i = 0; i < str.length; ++i) {
-            ret.push(str[i].charCodeAt());
+            // ret.push(str[i].charCodeAt());
+            let c = str[i].charCodeAt();
+            if (c > 0xff) {
+                ret.push(0x08, c >> 8, c & 0xff);
+            } else {
+                ret.push(c);
+            }
         }
+        ret.unshift(ret.length);
         return ret;
     }
 
@@ -261,12 +293,28 @@ class CodeWiz extends BaseModule {
                     this.shouldUpdateSensor2 = true;
                     return;
                 }
+                case this.receiveType.HUSKY_RESULTS: {
+                    this.sensorData.HUSKY_READ._type = readData[2];
+                    this.sensorData.HUSKY_READ._count = readData[3];
+                    this.sensorData.HUSKY_READ._list = [];
+                    for (let i = 0; i < readData[3]; ++i) {
+                        this.sensorData.HUSKY_READ._list.push([
+                            readData[9 * i + 4],
+                            readData[9 * i + 5] << 8 | readData[9 * i + 6],
+                            readData[9 * i + 7] << 8 | readData[9 * i + 8],
+                            readData[9 * i + 9] << 8 | readData[9 * i + 10],
+                            readData[9 * i + 11] << 8 | readData[9 * i + 12],
+                        ]);
+                    }
+                    this.shouldUpdateHusky = true;
+                    return;
+                }
                 case this.receiveType.RUN_OK: {
-                    this.handler.write('runOK', { value: 'runOK' });
+                    this.handler.write(this.curId, { value: 'runOK' });
                     return;
                 }
                 case this.receiveType.BOOLEAN: {
-                    this.handler.write('runOK', { value: readData[2] === 1 });
+                    this.handler.write(this.curId, { value: readData[2] === 1 });
                     return;
                 }
                 case this.receiveType.INT: {
@@ -275,7 +323,7 @@ class CodeWiz extends BaseModule {
                     if (_sign) {
                         _value *= -1;
                     }
-                    this.handler.write('runOK', { value: _value });
+                    this.handler.write(this.curId, { value: _value });
                     return;
                 }
                 case this.receiveType.FLOAT: {
@@ -286,7 +334,7 @@ class CodeWiz extends BaseModule {
                         _value *= -1;
                     }
                     _value /= 10;
-                    this.handler.write('runOK', { value: _value });
+                    this.handler.write(this.curId, { value: _value });
                     return;
                 }
                 default: {
@@ -301,19 +349,24 @@ class CodeWiz extends BaseModule {
      * @param {*} handler
      */
     requestRemoteData(handler) {
-        if (this.shouldUpdateSensor1) {
+        if (this.isFirst || this.shouldUpdateSensor1) {
             this.defaultSensorList.forEach((value, index, arr) => {
                 handler.write(value, this.sensorData[value]);
             });
             this.shouldUpdateSensor1 = false;
         }
 
-        if (this.shouldUpdateSensor2) {
+        if (this.isFirst || this.shouldUpdateSensor2) {
             this.defaultSensorList2.forEach((value, index, arr) => {
                 handler.write(value, this.sensorData[value]);
             });
             this.shouldUpdateSensor2 = false;
         }
+        if (this.isFirst || this.shouldUpdateHusky) {
+            handler.write("HUSKY_READ", this.sensorData.HUSKY_READ);
+            this.shouldUpdateHusky = false;
+        }
+        this.isFirst = false;
     }
 } // end CodeWiz
 

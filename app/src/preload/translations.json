@@ -281,5 +281,10 @@
 		"ko": "펌웨어 설치가 필요한 경우, USB 케이블로 연결 후 '아두이노(확장모드)'를 선택해주세요. 무선 펌웨어 설치는 지원하지 않습니다.",
 		"uz": "Agar qurilma kichik dasturi yuklab qo'yish kerak bo'lsa, USB kabelni bog'lab <<ArduinoExt Uno>>ni tanlab o'rnating. Simsiz tarmog'ida qurilma kichik dasturi yuklab qo'yishni qo'llab-quvvatlanmaydi.",
 		"ru": "Для установки прошивки подключитесь через USB-кабель и выберите «ArduinoExt». Беспроводная установка прошивки не поддерживается."
+	},
+	"If you need support, please contact RoboticsWare": {
+		"ko": "추가적인 HW 지원에 대한 도움이 필요하시면 로보틱스웨어에 문의해주세요.",
+		"uz": "Qo'shimcha qurilma bo'yicha yordam kerak bo'lsa, RoboticsWarega murojaat qiling.",
+		"ru": "Если вам нужна поддержка, пожалуйста, свяжитесь с RoboticsWare."
 	}
 }
