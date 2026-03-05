@@ -39,9 +39,9 @@
 #define LCD_INIT 15  // f
 #define LCD_PRINT 16 // 10
 #define LCD_CLEAR 17 // 11
-#define MPU 18
-#define MOTOR 19
-#define SOUND 20
+#define MPU 18       // 12
+#define MOTOR 19     // 13
+#define SOUND 20     // 14
 
 // actionsTypes
 #define GET 1
@@ -66,9 +66,8 @@ Servo servos[8]; // 아두이노 최대 연결가능 서보모터 수
 // int motorSpeeds[2] = {0, 0};
 
 // 울트라 소닉
-int trigPin = 13;
-int echoPin = 12;
-boolean isUltrasonic = false;
+int trigPin = -1;
+int echoPin = -1;
 
 // 온습도
 DHT *dhtObj = NULL;
@@ -85,8 +84,6 @@ boolean isMpu = false;
 #define MPU_ADDR 0x68
 
 // 포트별 상태: 1이 되면 값을 read해서 엔트리로 전송
-int analogs[8] = {0, 0, 0, 0, 0, 0, 0, 0};
-int sounds[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 int digitals[14] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 int servo_pins[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 
@@ -131,11 +128,7 @@ void setup() {
   pinMode(13, OUTPUT);
   digitalWrite(13, LOW);
 
-  // 아날로그 포트 상시 모니터링 위해 포트 On
-  for (int pinNumber = 0; pinNumber < (sizeof(analogs) / sizeof(int));
-       pinNumber++) {
-    analogs[pinNumber] = 1;
-  }
+  // 아우디노 나노는 디지털 8번핀(조이스틱 버튼)을 상시 모니터링합니다.
 
   // 디지털 포트 모니터링 On JoyBtn
   digitals[8] = 1;
@@ -161,9 +154,7 @@ void loop() {
       setPinValue(serialRead & 0xff);
     }
   }
-  delay(15);
   sendPinValues(); // 포트 상태값 포함한 요청값 회신
-  delay(10);
 }
 
 /*
@@ -223,10 +214,7 @@ void parseData() {
       echoPin = readBuffer(7);
       digitals[trigPin] = 0; // Report Off
       digitals[echoPin] = 0; // Report Off
-      pinMode(trigPin, OUTPUT);
-      pinMode(echoPin, INPUT);
-      delay(50);
-      isUltrasonic = true;
+      sendUltrasonic();
     } else if (device == DHTTEMP) { // DHTINIT에 의해 초기화를 별도로 수행
       isDhtTemp = true;
     } else if (device == DHTHUMI) {
@@ -250,9 +238,7 @@ void parseData() {
       }
     } else if (device == DIGITAL) {
       // 신규 요청이 기 사용중(구독중)인 포트와 겹치면 기존 것은 중지
-      if (port == trigPin || port == echoPin) {
-        isUltrasonic = false;
-      } else if (port == dhtPin) {
+      if (port == dhtPin) {
         isDhtTemp = false;
         isDhtHumi = false;
       } else if (port == irrPin) {
@@ -260,9 +246,9 @@ void parseData() {
       }
       digitals[port] = 1;
     } else if (device == ANALOG) {
-      analogs[port] = 1;
+      sendAnalogValue(port);
     } else if (device == SOUND) {
-      sounds[port] = 1;
+      sendSoundValue(port);
     }
   } break;
   case SET: { // 매번 엔트리에서 값을 set하는 방식
@@ -276,12 +262,7 @@ void parseData() {
     }
     // 상시 모니터링 포트 재설정
     digitals[8] = 1; // JoyBtn 상시 모니터링 유지
-    for (int i = 0; i < 8; i++) {
-        analogs[i] = 1; // 아날로그 포트 상시 모니터링 유지
-        sounds[i] = 0;
-    }
-
-    isUltrasonic = false;
+    // 아날로그/사운드 포트는 상시 모니터링 안함 (GET 요청시에만 응답)
     isDhtTemp = false;
     isDhtHumi = false;
     isIrremote = false;
@@ -419,6 +400,9 @@ void runModule(int device) {
 
 // For port monitoring in Entry
 void sendPinValues() {
+  static unsigned long lastSendTime = 0;
+  if (millis() - lastSendTime < 20) return; // 50Hz Rate Limit (Non-blocking)
+  lastSendTime = millis();
   for (int pinNumber = 0; pinNumber < (sizeof(digitals) / sizeof(int));
        pinNumber++) {
     if (digitals[pinNumber] == 1) {
@@ -426,26 +410,8 @@ void sendPinValues() {
       // callOK();
     }
   }
-
-  for (int pinNumber = 0; pinNumber < (sizeof(analogs) / sizeof(int));
-       pinNumber++) {
-    if (analogs[pinNumber] == 1) {
-      sendAnalogValue(pinNumber);
-      // callOK();
-    }
-  }
-
-  for (int pinNumber = 0; pinNumber < 8; pinNumber++) {
-    if (sounds[pinNumber] == 1) {
-      sendSoundValue(pinNumber);
-      // callOK();
-    }
-  }
-
-  if (isUltrasonic) {
-    sendUltrasonic();
-    // callOK();
-  }
+  // 사운드/아날로그 센서는 parseData에서 실시간 응답하므로 루프 제거됨
+  // 초음파 센서는 parseData에서 실시간 응답하므로 루프 제거됨
 
   if (isDhtTemp) {
     sendDhtTempValue();

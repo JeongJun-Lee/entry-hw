@@ -90,6 +90,11 @@ class HidScanner extends BaseScanner<HidConnector> {
             throw e;
         }
     }
+
+    public stopScan() {
+        super.stopScan();
+        this.isScanning = false;
+    }
 }
 
 export default HidScanner;
