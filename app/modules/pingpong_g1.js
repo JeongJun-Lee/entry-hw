@@ -1,6 +1,6 @@
-const BaseModule = require('./baseModule');
+const PingpongBase = require('./pingpong_base');
 
-class PingpongG1 extends BaseModule {
+class PingpongG1 extends PingpongBase {
     constructor() {
         super();
 
@@ -72,9 +72,23 @@ class PingpongG1 extends BaseModule {
                 0xff, 0xff, 0xff, 0xff, 0x00, 0xc8 /* continuous sampling*/, 0xb8, 0x00, 0x0b, 20,
                 0x01,
             ]);
+        } else if (method === 'dongleReset') {
+            result = Buffer.from([
+                0xDD,
+                0xDD,
+                0xDD,
+                0xDD,
+                0x00,
+                0x00,
+                0xDA,
+                0x00,
+                0x0B,
+                0x00,
+                0xCD,                
+            ]);
         }
         return result;
-    }
+        }
 
     /*
 	sendRemoteRequest() {
@@ -180,7 +194,6 @@ class PingpongG1 extends BaseModule {
         if (!this.isDraing && this.sendBuffer.length > 0) {
             this.isDraing = true;
             const msg = this.sendBuffer.shift();
-            //console.log('P:requestLocalData() : ', msg, this.sendBuffer.length);
             this.sp.write(msg, () => {
                 if (self.sp) {
                     self.sp.drain(() => {
@@ -195,7 +208,6 @@ class PingpongG1 extends BaseModule {
 
     // 하드웨어에서 온 데이터 처리
     handleLocalData(data) {
-        //console.log('P:handle LocalData:(%d) %s ', data.length, this.dbgHexstr(data));
         if (!this.isConnected) {
         }
 
@@ -246,7 +258,6 @@ class PingpongG1 extends BaseModule {
 
     // 엔트리로 전달할 데이터
     requestRemoteData(handler) {
-        //console.log('P:request RD: ');
         const self = this;
         Object.keys(this.readValue).forEach((key) => {
             if (self.readValue[key] !== undefined) {
@@ -270,7 +281,7 @@ class PingpongG1 extends BaseModule {
             this.sp.write(this.makePackets('setColorLed'), (err) => {});
         }, 500);
 
-        setTimeout(() => {
+        setTimeout(() => { //YIM's 모든 센서가 연결된 후에 보내야하는데 여기서 보내지는게 오류...
             this.sp.write(this.makePackets('getSensorData'), (err) => {
                 console.log('done.........');
             });
@@ -278,27 +289,27 @@ class PingpongG1 extends BaseModule {
     }
 
     // 하드웨어 연결 해제 시 호출됩니다.
-    disconnect(connect) {
-        console.log('P:disconnect: ');
+    // disconnect(connect) {
+    //     console.log('P:disconnect: ');
 
-        //console.log('.. ', this.sp.isOpen);
-        if (this.sp) {
-            // set led
-            //this.sp.write( Buffer.from('ffffffff0000ce000e0200000150', 'hex') );
-            // getSensor disable
-            //this.sp.write( Buffer.from('ffffffff00c8b8000b0001', 'hex') );
+    //     //console.log('.. ', this.sp.isOpen);
+    //     if (this.sp) {
+    //         // set led
+    //         //this.sp.write( Buffer.from('ffffffff0000ce000e0200000150', 'hex') );
+    //         // getSensor disable
+    //         //this.sp.write( Buffer.from('ffffffff00c8b8000b0001', 'hex') );
 
-            this.sp.write(this.makePackets('disconnect'), (err) => {
-                if (this.sp.isOpen) {
-                    console.log('Disconnect');
-                    connect.close();
-                }
-                this.sp = null;
-            });
-        } else {
-            connect.close();
-        }
-    }
+    //         this.sp.write(this.makePackets('disconnect'), (err) => {
+    //             if (this.sp.isOpen) {
+    //                 console.log('Disconnect');
+    //                 connect.close();
+    //             }
+    //             this.sp = null;
+    //         });
+    //     } else {
+    //         connect.close();
+    //     }
+    // }
 
     // 엔트리와의 연결 종료 후 처리 코드입니다.
     reset() {
