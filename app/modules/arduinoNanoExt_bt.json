@@ -1,0 +1,32 @@
+{
+    "id": "011302",
+    "name": {
+        "en": "Rauf NanoBoard (BT)",
+        "ko": "Rauf 나노보드 (블루투스)"
+    },
+    "category": "board",
+    "platform": [
+        "win32",
+        "darwin"
+    ],
+    "icon": "arduinoNanoExt_bt.png",
+    "module": "arduinoNanoExt.js",
+    "driver": {
+        "win32-ia32": "arduino/dpinst-x86.exe",
+        "win32-x64": "arduino/dpinst-amd64.exe"
+    },
+    "reconnect": true,
+    "hardware": {
+        "type": "bluetooth",
+        "control": "slave",
+        "duration": 32,
+        "vendor": "Arduino",
+        "baudRate": 115200,
+        "byteDelimiter": [
+            13,
+            10
+        ],
+        "firmwarecheck": false,
+        "softwareReset": false
+    }
+}
