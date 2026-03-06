@@ -51,6 +51,7 @@ const SUPPORTED_HARDWARE_IDS = [
     '010904', // Arduino Ext BT (arduinoExt_bt)
     '011001', // Arduino Nano (arduinoNano)
     '011301', // Rauf NanoBoard (arduinoNanoExt)
+    '011302', // Rauf NanoBoard BT (arduinoNanoExt_bt)
     '120101', // EV3 (ev3)
     '120102', // EV3 HID (ev3_hid)
     '050401', // NEOCODING Game Theme (neobot_game_theme)
