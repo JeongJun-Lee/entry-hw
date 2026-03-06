@@ -1,5 +1,4 @@
 import SerialConnector from './connector';
-import { compact } from 'lodash';
 
 type IElectedResult = { port: string; connector: SerialConnector; };
 
@@ -10,67 +9,58 @@ const electPort = async (
     beforeConnectCallback: (connector: SerialConnector) => void,
     handshakePayload?: () => string | undefined,
 ) => {
-    // 선출 후보 포트 모두 오픈
-    const connectors = await _initialize(ports, hwConfig, hwModule);
-
-    if (!connectors || connectors.length === 0) {
+    if (!ports || ports.length === 0) {
         return;
     }
 
-    // TODO
-    //  현재는 여러포트가 걸리면 위에 있는 친구를 펌웨어 업로드용 포트로 잡는다.
-    //  이는 프로세스 자체의 변경이 필요하므로 기획팀 논의를 거쳐서
-    //  '펌웨어 클릭 > 포트가 여러개인경우 목록노출 > 선택적 플래시' 프로세스로 추후개발필요
-    if (beforeConnectCallback) {
-        const { connector } = connectors[0];
-        beforeConnectCallback(connector);
-    }
+    // 선출 후보 포트별 커넥터 객체 미리 생성
+    const connectors: IElectedResult[] = ports.map((port) => ({
+        port,
+        connector: new SerialConnector(hwModule, hwConfig),
+    }));
 
-    // 전부 checkInitialData 로직 수행
+    let isBeforeConnectCalled = false;
+
     try {
-        const electedConnector = await Promise.race(
-            connectors.map(async (connectorObject) => {
-                const { connector } = connectorObject;
-                await connector.initialize(handshakePayload);
-                return connectorObject;
-            }),
-        );
+        const electedConnector = await new Promise<IElectedResult | undefined>((resolve, reject) => {
+            let errorCount = 0;
 
-        // 선출되지 못한 포트들 전부 다시 닫기
-        _finalize(connectors.filter(({ port }) => port !== electedConnector.port));
+            connectors.forEach(async (connectorObject) => {
+                try {
+                    const { connector, port } = connectorObject;
+                    await connector.open(port);
+
+                    if (beforeConnectCallback && !isBeforeConnectCalled) {
+                        isBeforeConnectCalled = true;
+                        beforeConnectCallback(connector);
+                    }
+
+                    await connector.initialize(handshakePayload);
+                    resolve(connectorObject);
+                } catch (e) {
+                    console.log(`port ${connectorObject.port} elect initialize error`, e);
+                    errorCount++;
+                    if (errorCount === connectors.length) {
+                        reject(new Error('All ports failed to elect'));
+                    }
+                }
+            });
+        });
+
+        if (electedConnector) {
+            // 선출되지 못한 포트들 전부 다시 닫기
+            _finalize(connectors.filter(({ port }) => port !== electedConnector.port));
+        } else {
+            _finalize(connectors);
+        }
 
         return electedConnector;
     } catch (e) {
-        // 에러 발생(타임아웃 등) 시 열려있는 모든 포트 닫기
+        // 모든 포트가 에러 발생(타임아웃 등) 시 열려있는 모든 포트 닫기
         _finalize(connectors);
-        // throw e; // 에러를 던지면 Uncaught Exception 팝업이 뜨므로 제거
         return undefined;
     }
 };
-
-/**
- * 선출후보인 모든 포트를 전부 커넥터 오픈한다.
- * 결과는 this.connectors 에 저장한다
- * @private
- */
-const _initialize: (
-    ports: string[], hwConfig: IHardwareModuleConfig, hwModule: IHardwareModule,
-) => Promise<IElectedResult[]> = async (
-    ports, hwConfig, hwModule,
-) => {
-        const portList = await Promise.all(ports.map(async (port) => {
-            try {
-                const connector = new SerialConnector(hwModule, hwConfig);
-                await connector.open(port);
-                return { port, connector };
-            } catch (e) {
-                console.log(`port ${port} elect initilize error`, e);
-                return undefined;
-            }
-        }));
-
-        return compact(portList);
-    };
 
 const _finalize = (connectors: IElectedResult[]) => {
     connectors.forEach(({ connector }) => {

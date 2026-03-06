@@ -44,7 +44,7 @@ const HardwareTitle = styled.h2`
 `;
 
 const SUPPORTED_HARDWARE_IDS = [
-    '050601', // Neo Soco (neobot_soco)
+    '050501', // Neo Soco (neobot_purple)
     '010101', // Arduino Uno (arduino)
     '010199', // Arduino Compatible (arduinoCompatible)
     '010901', // Arduino Ext (arduinoExt)

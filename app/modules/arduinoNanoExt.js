@@ -37,8 +37,7 @@ function Module() {
     };
 
     // Entry.js쪽에서 특정 port(예를들어 stepper motor 14번)를 사용한다고, 여기에 반영 필요!
-    // 맨 처음 0번째는 세지 않음(배열1~13번째 값이 포트1~13과 맵핑), Stepper 14, LCD 15
-    this.digitalPortTimeList = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    this.digitalPortTimeList = {};
 
     this.sensorData = {
         DIGITAL: {
@@ -175,12 +174,18 @@ Module.prototype.requestRemoteData = function (handler) {
                         handler.write('a' + i, value);
                     }
                 }
-            } else if (key === 'SOUND') {
+            } else if (key === 'SOUND' || key === 'ULTRASONIC') {
                 if (typeof self.sensorData[key] === 'object') {
-                    Object.keys(self.sensorData[key]).forEach((soundPort) => {
-                        const value = self.sensorData[key][soundPort];
+                    Object.keys(self.sensorData[key]).forEach((sensorPort) => {
+                        const value = self.sensorData[key][sensorPort];
                         if (value !== undefined) {
-                            handler.write('a' + soundPort, value);
+                            // Map digital pins 14(A0), 15(A1), 16(A2) to a0, a1, a2
+                            let mappedPort = sensorPort;
+                            if (sensorPort === '14') mappedPort = '0';
+                            else if (sensorPort === '15') mappedPort = '1';
+                            else if (sensorPort === '16') mappedPort = '2';
+
+                            handler.write('a' + mappedPort, value);
                         }
                     });
                 }
@@ -221,28 +226,38 @@ Module.prototype.handleRemoteData = function (handler) {
             let isSend = false;
             const dataObj = getDatas[key];
             if (typeof dataObj.port === 'string' || typeof dataObj.port === 'number') {
-                if (dataObj.time > self.digitalPortTimeList[dataObj.port]) {
+                const getPortKey = 'GET_' + dataObj.port;
+                if (!self.digitalPortTimeList[getPortKey] || dataObj.time > self.digitalPortTimeList[getPortKey]) {
                     isSend = true;
-                    self.digitalPortTimeList[dataObj.port] = dataObj.time;
+                    self.digitalPortTimeList[getPortKey] = dataObj.time;
                 }
             } else if (Array.isArray(dataObj.port)) {
-                isSend = dataObj.port.every(p => dataObj.time > self.digitalPortTimeList[p]);
-                if (isSend) dataObj.port.forEach(p => self.digitalPortTimeList[p] = dataObj.time);
+                isSend = dataObj.port.every(p => {
+                    const getPortKey = 'GET_' + p;
+                    return !self.digitalPortTimeList[getPortKey] || dataObj.time > self.digitalPortTimeList[getPortKey];
+                });
+                if (isSend) dataObj.port.forEach(p => self.digitalPortTimeList['GET_' + p] = dataObj.time);
             }
-            if (isSend && !self.isRecentData(dataObj.port, key, dataObj.data, self.actionTypes.GET)) {
 
-                // Track active SOUND, ULTRASONIC, DHT, IR, ANALOG ports for auto-polling using timeouts
-                const sensorTypeNo = Number(key);
-                if ([self.sensorTypes.ULTRASONIC, self.sensorTypes.SOUND, self.sensorTypes.DHTTEMP, self.sensorTypes.DHTHUMI, self.sensorTypes.IRREMOTE, self.sensorTypes.ANALOG].includes(sensorTypeNo)) {
-                    if (dataObj.port !== undefined) {
-                        if (!self.activeSensorTimers[sensorTypeNo]) {
-                            self.activeSensorTimers[sensorTypeNo] = {};
-                        }
-                        self.activeSensorTimers[sensorTypeNo][dataObj.port] = new Date().getTime();
+            // Track active SOUND, ULTRASONIC, DHT, IR, ANALOG ports for auto-polling using timeouts
+            // (MUST BE DONE BEFORE isRecentData CHECK to ensure sensors don't expire prematurely)
+            const sensorTypeNo = Number(key);
+            if ([self.sensorTypes.ULTRASONIC, self.sensorTypes.SOUND, self.sensorTypes.DHTTEMP, self.sensorTypes.DHTHUMI, self.sensorTypes.IRREMOTE, self.sensorTypes.ANALOG].includes(sensorTypeNo)) {
+                if (dataObj.port !== undefined) {
+                    if (!self.activeSensorTimers[sensorTypeNo]) {
+                        self.activeSensorTimers[sensorTypeNo] = {};
+                    }
+                    if (Array.isArray(dataObj.port)) {
+                        self.activeSensorTimers[sensorTypeNo][dataObj.port.join(',')] = new Date().getTime();
+                    } else {
+                        self.activeSensorTimers[sensorTypeNo][String(dataObj.port)] = new Date().getTime();
                     }
                 }
+            }
 
-                self.recentCheckData[dataObj.port] = {
+            if (isSend && !self.isRecentData(dataObj.port, key, dataObj.data, self.actionTypes.GET)) {
+                const getPortKey = Array.isArray(dataObj.port) ? 'GET_' + dataObj.port.join(',') : 'GET_' + dataObj.port;
+                self.recentCheckData[getPortKey] = {
                     type: key,
                     data: dataObj.data,
                     action: self.actionTypes.GET,
@@ -277,17 +292,18 @@ Module.prototype.handleRemoteData = function (handler) {
                 }
 
                 // 시간 순서가 맞는지 확인 (최신 명령 보장)
-                if (self.digitalPortTimeList[port] < data.time) {
+                const setPortKey = 'SET_' + port;
+                if (!self.digitalPortTimeList[setPortKey] || self.digitalPortTimeList[setPortKey] < data.time) {
                     // 출력 명령(SET)은 값이 바뀔 때만 전송 (불필요한 트래픽 제거 및 Rate Limiting)
                     const recentStatus = self.isRecentData(port, data.type, data.data, self.actionTypes.SET);
 
                     if (recentStatus === true) {
-                        self.digitalPortTimeList[port] = data.time;
+                        self.digitalPortTimeList[setPortKey] = data.time;
                     } else if (recentStatus === "throttle") {
                         // Rate limited: 처리 보류. 시간값을 업데이트하지 않아 다음 틱에 재시도되도록 함
                     } else {
-                        self.digitalPortTimeList[port] = data.time;
-                        self.recentCheckData[port] = {
+                        self.digitalPortTimeList[setPortKey] = data.time;
+                        self.recentCheckData[setPortKey] = {
                             type: data.type,
                             data: data.data,
                             action: self.actionTypes.SET,
@@ -319,30 +335,34 @@ Module.prototype.isRecentData = function (port, type, data, action) {
     let isRecent = false;
     const now = new Date().getTime();
 
+    // Resolve array ports (like ultrasonic [14, 14]) to a string for object keys
+    const portStr = Array.isArray(port) ? port.join(',') : String(port);
+    const checkKey = (action === this.actionTypes.GET ? 'GET_' : 'SET_') + portStr;
+
     // SET 요청(출력) 처리
     if (action === this.actionTypes.SET) {
-        if (this.recentCheckData[port] &&
-            this.recentCheckData[port].action === this.actionTypes.SET &&
-            this.recentCheckData[port].type === type) {
+        if (this.recentCheckData[checkKey] &&
+            this.recentCheckData[checkKey].action === this.actionTypes.SET &&
+            this.recentCheckData[checkKey].type === type) {
 
-            if (this.recentCheckData[port].data === data) {
+            if (this.recentCheckData[checkKey].data === data) {
                 return true;
             }
 
-            // 값이 다르더라도 너무 자주(예: 30ms 이내) 변하면 큐가 넘치는 것을 방지 (Rate Limiting)
-            if (now - (this.recentCheckData[port].time || 0) < 30) {
+            // 값이 다르더라도 너무 자주(예: 20ms 이내) 변하면 큐가 넘치는 것을 방지 (Rate Limiting)
+            if (now - (this.recentCheckData[checkKey].time || 0) < 20) {
                 return "throttle";
             }
         }
         return false;
     }
 
-    // GET 요청(센서 읽기)은 30ms(33Hz) 주기로 폴링 제한 (UART 부하 방지)
+    // GET 요청(센서 읽기)은 20ms(50Hz) 주기로 폴링 제한 (UART 부하 방지)
     if (action === this.actionTypes.GET) {
-        if (this.recentCheckData[port] &&
-            this.recentCheckData[port].action === this.actionTypes.GET &&
-            this.recentCheckData[port].type === type &&
-            (now - (this.recentCheckData[port].time || 0) < 30)) {
+        if (this.recentCheckData[checkKey] &&
+            this.recentCheckData[checkKey].action === this.actionTypes.GET &&
+            this.recentCheckData[checkKey].type === type &&
+            (now - (this.recentCheckData[checkKey].time || 0) < 20)) {
             return true;
         }
         return false;
@@ -395,9 +415,9 @@ Module.prototype.isRecentData = function (port, type, data, action) {
 Module.prototype.requestLocalData = function () {
     const self = this;
 
-    // 자동 폴링(Auto-Poll) 구현: 30ms마다 센서 전체 요청
+    // 자동 폴링(Auto-Poll) 구현: 20ms마다 센서 전체 요청
     const now = new Date().getTime();
-    if (now - this.lastAutoPollTime > 30) {
+    if (now - this.lastAutoPollTime > 20) {
         this.lastAutoPollTime = now;
 
         let autoBuffer = new Buffer([]);
@@ -424,7 +444,10 @@ Module.prototype.requestLocalData = function () {
                     // 1초 이상 블록 요청이 없으면 모니터링 값 초기화
                     const device = parseInt(key);
                     if (device == this.sensorTypes.ULTRASONIC) {
-                        this.sensorData.ULTRASONIC = 0;
+                        if (this.sensorData.ULTRASONIC) {
+                            const trigPin = portStr.split(',')[0];
+                            this.sensorData.ULTRASONIC[trigPin] = 0;
+                        }
                     } else if (device == this.sensorTypes.SOUND) {
                         if (this.sensorData.SOUND) this.sensorData.SOUND[portStr] = 0;
                     } else if (device == this.sensorTypes.DHTTEMP) {
@@ -520,7 +543,10 @@ Module.prototype.handleLocalData = function (data) {
                 break;
             }
             case self.sensorTypes.ULTRASONIC: {
-                self.sensorData.ULTRASONIC = value;
+                if (typeof self.sensorData.ULTRASONIC !== 'object') {
+                    self.sensorData.ULTRASONIC = {};
+                }
+                self.sensorData.ULTRASONIC[port] = value;
                 break;
             }
             case self.sensorTypes.TIMER: {
