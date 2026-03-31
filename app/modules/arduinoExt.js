@@ -33,9 +33,12 @@ function Module() {
         SHORT: 3,
     };
 
-    // Entry.js쪽에서 특정 port(예를들어 stepper motor 14번)를 사용한다고, 여기에 반영 필요!
-    // 맨 처음 0번째는 세지 않음(배열1~13번째 값이 포트1~13과 맵핑), Stepper 14, LCD 15
-    this.digitalPortTimeList = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    // GET/SET 요청별로 타임스탬프를 분리 관리 (nano_ext 체리픽)
+    // 키 형식: 'GET_${port}' 또는 'SET_${port}'
+    this.digitalPortTimeList = {};
+
+    this.lastAutoPollTime = 0;   // auto-poll 주기 추적
+    this.activeSensorTimers = {}; // 활성 센서 타이머 (만료 관리)
 
     this.sensorData = {
         DIGITAL: {
@@ -103,6 +106,12 @@ Module.prototype.getProfiles = function () {
 // 초기 연결성정(handshake과정) 완료 후에 호출됨
 Module.prototype.setSerialPort = function (sp) {
     this.sp = sp;
+    // nano_ext 체리픽: SerialPort 에러 이벤트 핸들러 등록
+    if (this.sp && typeof this.sp.on === 'function') {
+        this.sp.on('error', (err) => {
+            console.error('SerialPort Error Handled:', err);
+        });
+    }
     this.reset();
 };
 
@@ -122,6 +131,7 @@ Module.prototype.requestInitialData = function () {
     }
 
     this.handshakeTryCount++;
+    this.isNewConn = true; // nano_ext 체리픽: 연결 시도마다 isNewConn 갱신
 
     // slave mode라서 hw로 먼저 초기 연결요청을 보내야 함
     return this.makeOutputBuffer(this.sensorTypes.RESET, 0, 0); // 최초 연결시, 하드웨어 초기화 수행
@@ -194,74 +204,99 @@ Module.prototype.handleRemoteData = function (handler) {
         keys.forEach((key) => {
             let isSend = false;
             const dataObj = getDatas[key];
-            // To chceck if Entry sent the block really
-            // console.log(`getDatas: key=${key} port=${dataObj.port} data=${dataObj.data}`); 
+
             if (
                 typeof dataObj.port === 'string' ||
                 typeof dataObj.port === 'number'
             ) {
-                const time = this.digitalPortTimeList[dataObj.port];
-                if (dataObj.time > time) {
+                // nano_ext 체리픽: 'GET_port' prefix로 GET/SET 타임스탬프 분리
+                const getPortKey = 'GET_' + dataObj.port;
+                if (!self.digitalPortTimeList[getPortKey] || dataObj.time > self.digitalPortTimeList[getPortKey]) {
                     isSend = true;
-                    this.digitalPortTimeList[dataObj.port] = dataObj.time;
+                    self.digitalPortTimeList[getPortKey] = dataObj.time;
                 }
-                prevKey = key;
             } else if (Array.isArray(dataObj.port)) { // For example, port of UltraSonic are array
-                isSend = dataObj.port.every((port) => {
-                    const time = this.digitalPortTimeList[port];
-                    return dataObj.time > time;
+                isSend = dataObj.port.every((p) => {
+                    const getPortKey = 'GET_' + p;
+                    return !self.digitalPortTimeList[getPortKey] || dataObj.time > self.digitalPortTimeList[getPortKey];
                 });
-
                 if (isSend) {
-                    dataObj.port.forEach((port) => {
-                        this.digitalPortTimeList[port] = dataObj.time;
+                    dataObj.port.forEach((p) => {
+                        self.digitalPortTimeList['GET_' + p] = dataObj.time;
                     });
                 }
             }
-            if (isSend) {
-                // Support composite key format 'deviceType_port' (e.g. '1_2' = DIGITAL port 2)
-                // This allows multiple ports of the same device type to coexist in sendQueue.GET
-                const device = (typeof key === 'string' && key.includes('_'))
-                    ? key.split('_')[0]
-                    : key;
-                if (!this.isRecentData(dataObj.port, device, dataObj.data)) {
-                    this.recentCheckData[dataObj.port] = {
-                        type: device,
-                        data: dataObj.data,
-                    };
-                    buffer = Buffer.concat([
-                        buffer,
-                        this.makeSensorReadBuffer(
-                            device,
-                            dataObj.port,
-                            dataObj.data,
-                        ),
-                    ]);
+
+            // nano_ext 체리픽: composite key 파싱 (e.g. '1_2' = DIGITAL port 2)
+            const device = (typeof key === 'string' && key.includes('_'))
+                ? key.split('_')[0]
+                : key;
+
+            // nano_ext 체리픽: activeSensorTimers — 블록 사용 중인 센서 추적 (만료 관리용)
+            const sensorTypeNo = Number(device);
+            if ([self.sensorTypes.ULTRASONIC, self.sensorTypes.ANALOG, self.sensorTypes.DHTTEMP,
+                 self.sensorTypes.DHTHUMI, self.sensorTypes.IRREMOTE].includes(sensorTypeNo)) {
+                if (dataObj.port !== undefined) {
+                    if (!self.activeSensorTimers[sensorTypeNo]) {
+                        self.activeSensorTimers[sensorTypeNo] = {};
+                    }
+                    const portKey = Array.isArray(dataObj.port) ? dataObj.port.join(',') : String(dataObj.port);
+                    self.activeSensorTimers[sensorTypeNo][portKey] = new Date().getTime();
                 }
+            }
+
+            if (isSend && !self.isRecentData(dataObj.port, device, dataObj.data, self.actionTypes.GET)) {
+                const getPortKey = Array.isArray(dataObj.port)
+                    ? 'GET_' + dataObj.port.join(',')
+                    : 'GET_' + dataObj.port;
+                self.recentCheckData[getPortKey] = {
+                    type: device,
+                    data: dataObj.data,
+                    action: self.actionTypes.GET,
+                    time: new Date().getTime(),
+                };
+                buffer = Buffer.concat([
+                    buffer,
+                    self.makeSensorReadBuffer(device, dataObj.port, dataObj.data),
+                ]);
             }
         });
     }
 
     // HW에 값을 설정하기 요청
     if (setDatas) {
-        const setKeys = Object.keys(setDatas);
-        setKeys.forEach((port) => {
+        Object.keys(setDatas).forEach((port) => {
             const data = setDatas[port];
-            // To chceck if Entry sent the block really
-            // console.log(`setDatas: key=${data.type} port=${port} data=${JSON.stringify(data.data)}`); 
-            // console.log(`digitalPortTimeList[${port}]=${this.digitalPortTimeList[port]} data.time=${data.time}`); 
             if (data) {
-                if (this.digitalPortTimeList[port] < data.time) {
-                    this.digitalPortTimeList[port] = data.time;
+                // nano_ext 체리픽: SET 루프백 모니터링 — 펌웨어 응답 없이도 대시보드 즉시 반영
+                if (data.type === self.sensorTypes.DIGITAL) {
+                    self.sensorData.DIGITAL[port] = data.data;
+                } else if (data.type === self.sensorTypes.PWM) {
+                    self.sensorData.DIGITAL[port] = data.data;
+                }
 
-                    if (!this.isRecentData(port, data.type, data.data)) {
-                        this.recentCheckData[port] = {
+                // nano_ext 체리픽: 'SET_port' prefix로 타임스탬프 분리
+                const setPortKey = 'SET_' + port;
+                if (!self.digitalPortTimeList[setPortKey] || self.digitalPortTimeList[setPortKey] < data.time) {
+                    // nano_ext 체리픽: SET Rate Limiting — 값이 같으면 true, 20ms 이내면 throttle
+                    const recentStatus = self.isRecentData(port, data.type, data.data, self.actionTypes.SET);
+
+                    if (recentStatus === true) {
+                        // 동일 데이터: 타임스탬프만 갱신, HW 전송 생략
+                        self.digitalPortTimeList[setPortKey] = data.time;
+                    } else if (recentStatus === 'throttle') {
+                        // Rate limited: 이번 틱 전송 보류, 다음 틱에 재시도
+                    } else {
+                        self.digitalPortTimeList[setPortKey] = data.time;
+                        self.recentCheckData[setPortKey] = {
                             type: data.type,
                             data: data.data,
+                            action: self.actionTypes.SET,
+                            time: new Date().getTime(),
                         };
                         buffer = Buffer.concat([
                             buffer,
-                            this.makeOutputBuffer(data.type, port, data.data),
+                            self.makeOutputBuffer(data.type, port, data.data),
                         ]);
                     }
                 }
@@ -271,52 +306,52 @@ Module.prototype.handleRemoteData = function (handler) {
 
     if (buffer.length) {
         this.sendBuffers.push(buffer);
-        console.log('sendBuf= ', this.sendBuffers);
     }
 };
 
 /**
- * 기존에 수신했던 데이터인가
- * 기존에 수신했던 데이터인지 확인합니다. 예를들어 무한루프에서 상태가 변하지 않을 경우 추가로 신호를 하드웨어에 보내거나, 
- * 또는 포트 구독의 경우 등 불필요한 오버헤드를 발생시킬 필요가 없으므로, 같은 신호에 대해서는 중복으로 보내지 않도록 만듭니다.
- * 하지만, Tone과 같이 같은 신호라도 출력데이터를 보내야하므로 별도의 예외처리가 필요합니다.
-**/
-Module.prototype.isRecentData = function (port, type, data) {
-    let isRecent = false;
+ * nano_ext 체리픽: action(GET/SET) 파라미터 추가, GET 20ms Rate Limit, SET throttle 지원
+ *
+ * @param {number|number[]} port - 포트 번호 또는 포트 배열
+ * @param {number|string}   type - sensorType 번호
+ * @param {*}               data - 전송 데이터
+ * @param {number}          action - actionTypes.GET(1) 또는 actionTypes.SET(2). 없으면 legacy 경로
+ * @returns {boolean|'throttle'} true=중복/생략, false=전송, 'throttle'=잠시 대기
+ **/
+Module.prototype.isRecentData = function (port, type, data, action) {
+    const now = new Date().getTime();
+    const portStr = Array.isArray(port) ? port.join(',') : String(port);
+    const checkKey = (action === this.actionTypes.GET ? 'GET_' : 'SET_') + portStr;
 
-    if (type == this.sensorTypes.ULTRASONIC) {
-        const portString = port.toString();
-        let isGarbageClear = false;
-        Object.keys(this.recentCheckData).forEach((key) => {
-            const recent = this.recentCheckData[key];
-            if (key === portString) {
-
+    // SET 요청: 동일 값이면 생략, 20ms 이내 변경이면 throttle
+    if (action === this.actionTypes.SET) {
+        if (this.recentCheckData[checkKey] &&
+            this.recentCheckData[checkKey].action === this.actionTypes.SET &&
+            this.recentCheckData[checkKey].type === type) {
+            if (this.recentCheckData[checkKey].data === data) {
+                return true; // 동일 값: 중복 전송 생략
             }
-            if (key !== portString &&
-                (recent.type == this.sensorTypes.ULTRASONIC)) {
-                delete this.recentCheckData[key];
-                isGarbageClear = true;
+            // 값은 다르지만 20ms 이내: Rate Limit
+            if (now - (this.recentCheckData[checkKey].time || 0) < 20) {
+                return 'throttle';
             }
-        });
-
-        if ((port in this.recentCheckData && isGarbageClear) || !(port in this.recentCheckData) ||
-            this.isNewConn) {
-            isRecent = false;
-            this.isNewConn = false; // Re-subscribe when hw is connected newly
-        } else {
-            isRecent = true;
         }
-    } else if (port in this.recentCheckData && type != this.sensorTypes.TONE) { // 예외로 계속 데이터 보내야 하는 경우에 추가!
-        if (
-            this.recentCheckData[port].type === type &&
-            JSON.stringify(this.recentCheckData[port].data) === JSON.stringify(data) // 데이터까지 동일해야 동일 데이터로 간주
-        ) {
-            console.log(`isRecent is True, type= ${type}, data= ` + JSON.stringify(this.recentCheckData[port].data));
-            isRecent = true;
-        }
+        return false;
     }
 
-    return isRecent;
+    // GET 요청: 20ms(50Hz) 이내 같은 포트/타입 요청은 중복 억제
+    if (action === this.actionTypes.GET) {
+        if (this.recentCheckData[checkKey] &&
+            this.recentCheckData[checkKey].action === this.actionTypes.GET &&
+            this.recentCheckData[checkKey].type === type &&
+            (now - (this.recentCheckData[checkKey].time || 0) < 20)) {
+            return true;
+        }
+        return false;
+    }
+
+    // legacy 경로 (action 미전달 시 기존 동작 유지)
+    return false;
 };
 
 /*
@@ -337,6 +372,49 @@ Module.prototype.requestLocalData = function () {
             });
         }
         return null;
+    }
+
+    // nano_ext 체리픽: activeSensorTimers 기반 Auto-Poll + 센서 만료 처리 (20ms 주기)
+    const now = new Date().getTime();
+    if (now - this.lastAutoPollTime > 20) {
+        this.lastAutoPollTime = now;
+        let autoBuffer = new Buffer([]);
+
+        const activeTimers = this.activeSensorTimers || {};
+        Object.keys(activeTimers).forEach((key) => {
+            const ports = activeTimers[key];
+            Object.keys(ports).forEach((portStr) => {
+                if (now - ports[portStr] < 1000) {
+                    // 1초 이내 블록 요청이 있으면 자동 재요청
+                    const device = parseInt(key);
+                    if (device === this.sensorTypes.ULTRASONIC) {
+                        const portArr = portStr.split(',').map(Number);
+                        autoBuffer = Buffer.concat([autoBuffer, this.makeSensorReadBuffer(device, portArr)]);
+                    } else {
+                        autoBuffer = Buffer.concat([autoBuffer, this.makeSensorReadBuffer(device, parseInt(portStr))]);
+                    }
+                } else {
+                    // 1초 이상 블록 요청 없으면 해당 센서 값 0으로 초기화
+                    const device = parseInt(key);
+                    if (device === this.sensorTypes.ULTRASONIC) {
+                        this.sensorData.ULTRASONIC = 0;
+                    } else if (device === this.sensorTypes.DHTTEMP) {
+                        this.sensorData.DHTTEMP = 0;
+                    } else if (device === this.sensorTypes.DHTHUMI) {
+                        this.sensorData.DHTHUMI = 0;
+                    } else if (device === this.sensorTypes.IRREMOTE) {
+                        this.sensorData.IRREMOTE = 0;
+                    } else if (device === this.sensorTypes.ANALOG) {
+                        if (this.sensorData.ANALOG) this.sensorData.ANALOG[portStr] = 0;
+                    }
+                    delete ports[portStr];
+                }
+            });
+        });
+
+        if (autoBuffer.length > 0) {
+            this.sendBuffers.push(autoBuffer);
+        }
     }
 
     if (!this.isDraing && this.sendBuffers.length > 0) {
@@ -717,10 +795,30 @@ Module.prototype.reset = function () {
     this.handshakeTryCount = 0;
     sensorIdx = 0;
 
+    // nano_ext 체리픽: 재연결 시 센서 구독/상태 전부 초기화
     this.sensorData.PULSEIN = {};
-    // Clear recentCheckData so that subscriptions are re-sent after reconnect
-    // (firmware clears digitals[] and analogs[] on RESET, so we must re-subscribe)
+    this.recentCheckData = {};      // 구독 재요청 보장
+    this.lastAutoPollTime = 0;      // auto-poll 타이머 리셋
+    this.activeSensorTimers = {};   // 활성 센서 타이머 초기화
+};
+
+// nano_ext 체리픽: 연결 종료 시 모든 출력 핀 OFF + 상태 초기화
+Module.prototype.setZero = function () {
+    let buffer = new Buffer([]);
+    // 모든 디지털 포트 OFF (2~13, 단 시리얼 0~1 및 LED 13 제외)
+    for (let i = 2; i <= 12; i++) {
+        buffer = Buffer.concat([buffer, this.makeOutputBuffer(this.sensorTypes.DIGITAL, i, 0)]);
+    }
+    // 버저 정지
+    buffer = Buffer.concat([buffer, this.makeOutputBuffer(this.sensorTypes.TONE, 4, { value: 0, duration: 0 })]);
+    // LCD 클리어
+    buffer = Buffer.concat([buffer, this.makeOutputBuffer(this.sensorTypes.LCD_CLEAR, 0, 0)]);
+
+    if (this.sp) {
+        this.sp.write(buffer);
+    }
     this.recentCheckData = {};
+    this.reset();
 };
 
 Module.prototype.lostController = function (connector, stateCallback) {

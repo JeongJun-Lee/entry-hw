@@ -239,9 +239,15 @@ Module.prototype.handleRemoteData = function (handler) {
                 if (isSend) dataObj.port.forEach(p => self.digitalPortTimeList['GET_' + p] = dataObj.time);
             }
 
+            // Composite key 파싱: '2_3' → device='2' (ANALOG port 3)
+            // block에서 composite key를 너기면 Number(키)가 NaN이 되므로 원래 sensorType을 추출
+            const device = (typeof key === 'string' && key.includes('_'))
+                ? key.split('_')[0]
+                : key;
+
             // Track active SOUND, ULTRASONIC, DHT, IR, ANALOG ports for auto-polling using timeouts
             // (MUST BE DONE BEFORE isRecentData CHECK to ensure sensors don't expire prematurely)
-            const sensorTypeNo = Number(key);
+            const sensorTypeNo = Number(device);
             if ([self.sensorTypes.ULTRASONIC, self.sensorTypes.SOUND, self.sensorTypes.DHTTEMP, self.sensorTypes.DHTHUMI, self.sensorTypes.IRREMOTE, self.sensorTypes.ANALOG].includes(sensorTypeNo)) {
                 if (dataObj.port !== undefined) {
                     if (!self.activeSensorTimers[sensorTypeNo]) {
@@ -255,15 +261,15 @@ Module.prototype.handleRemoteData = function (handler) {
                 }
             }
 
-            if (isSend && !self.isRecentData(dataObj.port, key, dataObj.data, self.actionTypes.GET)) {
+            if (isSend && !self.isRecentData(dataObj.port, device, dataObj.data, self.actionTypes.GET)) {
                 const getPortKey = Array.isArray(dataObj.port) ? 'GET_' + dataObj.port.join(',') : 'GET_' + dataObj.port;
                 self.recentCheckData[getPortKey] = {
-                    type: key,
+                    type: device,
                     data: dataObj.data,
                     action: self.actionTypes.GET,
                     time: new Date().getTime()
                 };
-                buffer = Buffer.concat([buffer, self.makeSensorReadBuffer(key, dataObj.port, dataObj.data)]);
+                buffer = Buffer.concat([buffer, self.makeSensorReadBuffer(device, dataObj.port, dataObj.data)]);
             }
         });
     }
