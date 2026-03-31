@@ -122,10 +122,7 @@ void setup() {
   pinMode(13, OUTPUT);
   digitalWrite(13, LOW);
 
-  // 아날로그 포트 상시 모니터링 위해 포트 On
-  for (int pinNumber = 0; pinNumber < (sizeof(analogs)/sizeof(int)); pinNumber++) {
-    analogs[pinNumber] = 1;
-  }
+  // 아날로그 포트는 구독 요청(GET) 시에만 활성화 (상시 ON 제거 → 구독 기반으로 전환)
 }
 
 void loop() {
@@ -135,9 +132,7 @@ void loop() {
       setPinValue(serialRead & 0xff); 
     }
   } 
-  delay(15);
   sendPinValues(); // 포트 상태값 포함한 요청값 회신
-  delay(10);
 }
 
 /*
@@ -233,9 +228,9 @@ void parseData() {
       for (int pinNumber = 0; pinNumber < (sizeof(digitals)/sizeof(int)); pinNumber++) {
         digitals[pinNumber] = 0;
       }
-      // for (int pinNumber = 0; pinNumber < (sizeof(analogs)/sizeof(int)); pinNumber++) {
-      //   analogs[pinNumber] = 0;
-      // }
+      for (int pinNumber = 0; pinNumber < (sizeof(analogs)/sizeof(int)); pinNumber++) {
+        analogs[pinNumber] = 0; // 구독 기반으로 전환: 재연결 시 analogs도 초기화
+      }
       isUltrasonic = false;
       isDhtTemp = false;
       isDhtHumi = false;
@@ -354,7 +349,10 @@ void runModule(int device) {
 }
 
 // For port monitoring in Entry
-void sendPinValues() {  
+void sendPinValues() {
+  static unsigned long lastSendTime = 0;
+  if (millis() - lastSendTime < 20) return; // 50Hz Rate Limit (Non-blocking)
+  lastSendTime = millis();
   for (int pinNumber = 0; pinNumber < (sizeof(digitals)/sizeof(int)); pinNumber++) {
     if (digitals[pinNumber] == 1) {
       sendDigitalValue(pinNumber);

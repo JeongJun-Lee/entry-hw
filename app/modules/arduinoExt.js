@@ -219,15 +219,20 @@ Module.prototype.handleRemoteData = function (handler) {
                 }
             }
             if (isSend) {
-                if (!this.isRecentData(dataObj.port, key, dataObj.data)) {
+                // Support composite key format 'deviceType_port' (e.g. '1_2' = DIGITAL port 2)
+                // This allows multiple ports of the same device type to coexist in sendQueue.GET
+                const device = (typeof key === 'string' && key.includes('_'))
+                    ? key.split('_')[0]
+                    : key;
+                if (!this.isRecentData(dataObj.port, device, dataObj.data)) {
                     this.recentCheckData[dataObj.port] = {
-                        type: key,
+                        type: device,
                         data: dataObj.data,
                     };
                     buffer = Buffer.concat([
                         buffer,
                         this.makeSensorReadBuffer(
-                            key,
+                            device,
                             dataObj.port,
                             dataObj.data,
                         ),
@@ -713,6 +718,9 @@ Module.prototype.reset = function () {
     sensorIdx = 0;
 
     this.sensorData.PULSEIN = {};
+    // Clear recentCheckData so that subscriptions are re-sent after reconnect
+    // (firmware clears digitals[] and analogs[] on RESET, so we must re-subscribe)
+    this.recentCheckData = {};
 };
 
 Module.prototype.lostController = function (connector, stateCallback) {
