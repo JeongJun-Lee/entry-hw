@@ -58,7 +58,7 @@ class Compiler {
 
 
     compile(firmwareName: string): Promise<boolean> {
-        if (firmwareName == 'Arduino' || firmwareName == 'ArduinoEx' || firmwareName == 'ArduinoNanoExt') {
+        if (firmwareName == 'Arduino' || firmwareName == 'ArduinoExt' || firmwareName == 'ArduinoNanoExt') {
             let fqbn = 'arduino:avr:uno';
             if (firmwareName == 'ArduinoNanoExt') {
                 fqbn = 'arduino:avr:nano:cpu=atmega328old';

@@ -137,6 +137,7 @@ class MainRouter {
             this.firmwareTryCount = 0;
 
             if ((firmwareName as IUploadableFirmware).name == 'Arduino' ||
+                (firmwareName as IUploadableFirmware).name == 'ArduinoExt' ||
                 (firmwareName as IUploadableFirmware).name == 'ArduinoNanoExt') {
                 logger.info('source compile requested');
                 try {
