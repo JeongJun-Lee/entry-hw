@@ -81,6 +81,8 @@ function Module() {
     this.lastSendTime = 0;
     this.isDraing = false;
     this.isNewConn = false; // 최초 연결시마다 포트구독을 재구독 하기 위해
+    this.lastHeartbeatTime = 0;
+    this.heartbeatInterval = 1000;
 }
 
 let sensorIdx = 0;
@@ -177,7 +179,7 @@ Module.prototype.requestRemoteData = function (handler) {
             if (key === 'DIGITAL') { // For legacy port reading
                 for (let i = 0; i < Object.keys(this.sensorData[key]).length; i++) {
                     const value = this.sensorData[key][i];
-                    handler.write(i, value);
+                    handler.write(i.toString(), value);
                 }
             } else if (key === 'ANALOG') { // For legacy port reading
                 for (let i = 0; i < Object.keys(this.sensorData[key]).length; i++) {
@@ -193,6 +195,7 @@ Module.prototype.requestRemoteData = function (handler) {
 
 // 엔트리로부터 받은 데이터에 대한 처리
 Module.prototype.handleRemoteData = function (handler) {
+    const self = this;
     const getDatas = handler.read('GET');
     const setDatas = handler.read('SET') || this.defaultOutput;
     const time = handler.read('TIME');
@@ -235,7 +238,7 @@ Module.prototype.handleRemoteData = function (handler) {
             // nano_ext 체리픽: activeSensorTimers — 블록 사용 중인 센서 추적 (만료 관리용)
             const sensorTypeNo = Number(device);
             if ([self.sensorTypes.ULTRASONIC, self.sensorTypes.ANALOG, self.sensorTypes.DHTTEMP,
-                 self.sensorTypes.DHTHUMI, self.sensorTypes.IRREMOTE].includes(sensorTypeNo)) {
+            self.sensorTypes.DHTHUMI, self.sensorTypes.IRREMOTE].includes(sensorTypeNo)) {
                 if (dataObj.port !== undefined) {
                     if (!self.activeSensorTimers[sensorTypeNo]) {
                         self.activeSensorTimers[sensorTypeNo] = {};
@@ -414,6 +417,13 @@ Module.prototype.requestLocalData = function () {
 
         if (autoBuffer.length > 0) {
             this.sendBuffers.push(autoBuffer);
+        } else {
+            // 슬레이브 모드 하트비트: 자동 폴링 요청이 없을 때 1000ms 주기로 디지털 0번(RX) 상태 요청
+            // 이를 통해 시리얼 입력을 트리거하여 대시보드 UI 갱신을 유도함
+            if (now - this.lastHeartbeatTime > this.heartbeatInterval) {
+                this.lastHeartbeatTime = now;
+                this.sendBuffers.push(this.makeSensorReadBuffer(this.sensorTypes.DIGITAL, 0, this.actionTypes.GET));
+            }
         }
     }
 
@@ -790,6 +800,8 @@ Module.prototype.reset = function () {
     this.sendBuffers = [];
     this.lastTime = 0;
     this.lastSendTime = 0;
+    this.sensorData.TIMER = 0;
+    this.digitalPortTimeList = {};
     this.isDraing = false;
     this.isNewConn = false;
     this.handshakeTryCount = 0;

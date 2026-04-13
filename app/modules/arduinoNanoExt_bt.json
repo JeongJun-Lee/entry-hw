@@ -1,8 +1,8 @@
 {
     "id": "011302",
     "name": {
-        "en": "Rauf NanoBoard (BT)",
-        "ko": "Rauf 나노보드 (블루투스)"
+        "en": "UzRobot Nano (BT)",
+        "ko": "UzRobot Nano (블루투스)"
     },
     "category": "board",
     "platform": [

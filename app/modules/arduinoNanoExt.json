@@ -1,8 +1,8 @@
 {
     "id": "011301",
     "name": {
-        "en": "Rauf NanoBoard",
-        "ko": "Rauf 나노보드"
+        "en": "UzRobot Nano",
+        "ko": "UzRobot Nano"
     },
     "category": "board",
     "platform": [
