@@ -47,8 +47,8 @@ class Neobot extends BaseModule {
         this.dataFrame = null;
 
         // 엔트리용, Init by undefined
-        this.etSendBuf = new Array(this.LOCAL_MAP.length);  // 엔트리로 전송
-        this.etRecvBuf = new Array(this.REMOTE_MAP.length); // 엔트리에서 수신
+        this.etSendBuf = new Array(this.LOCAL_MAP.length).fill(0);  // 엔트리로 전송
+        this.etRecvBuf = new Array(this.REMOTE_MAP.length).fill(0); // 엔트리에서 수신
     }
     
     /*
@@ -64,6 +64,12 @@ class Neobot extends BaseModule {
         this.currMode = CurrMode.ENTRY_MODE;
         this.needAckChk = false;
         this.dataFrame = null;
+        this.hwSendBuf.length = 0;
+    }
+
+    reset() {
+        this.etRecvBuf.fill(0);
+        this.etSendBuf.fill(0);
         this.hwSendBuf.length = 0;
     }
 
@@ -161,9 +167,11 @@ class Neobot extends BaseModule {
 
         // Cmd data handling in Entry Mode
         if (this.currMode === CurrMode.ENTRY_MODE && !this.dataFrame) { 
-            this.initArr(this.etRecvBuf);
             this.REMOTE_MAP.forEach(function(key, idx) {
-                this.etRecvBuf[idx] = handler.read(key);
+                const val = handler.read(key);
+                if (val !== undefined) {
+                    this.etRecvBuf[idx] = val;
+                }
             }.bind(this));
         }
     }
@@ -200,7 +208,8 @@ class Neobot extends BaseModule {
             checksum = checksum & 255;
             this.hwSendBuf.push(checksum);
 
-            this.initArr(this.etRecvBuf);
+            // No longer clearing etRecvBuf to allow continuous polling
+            // this.initArr(this.etRecvBuf);
 
         } else if (this.currMode === CurrMode.ENTRY_MODE && this.isEmptyArr(this.etRecvBuf)) {
             this.hwSendBuf.length = 0; // If nothing to send, clear sending buffer
