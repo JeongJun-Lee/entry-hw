@@ -99,7 +99,7 @@ boolean isStart = false;
 LCDI2C_RussianLatin *lcdObj = NULL;
 
 byte findI2CAddress() {
-  byte error, address = 0, foundAddress;
+  byte error, address = 0, foundAddress = 0x27;
 
   for (address = 1; address < 127; address++ ) {
     Wire.beginTransmission(address);
@@ -249,7 +249,7 @@ void runModule(int device) {
     case DIGITAL: {      
       setPortWritable(pin);
       int v = readBuffer(7);
-      digitalWrite(pin, v);
+      digitalWrite(pin, v ? HIGH : LOW);
     }
     break;
     case PWM: {
@@ -273,8 +273,10 @@ void runModule(int device) {
       setPortWritable(pin);
       int v = readBuffer(7);
       if (v >= 0 && v <= 180) { // 서모모터 SG-90으로 가정해 180까지
-        Servo sv = servos[searchServoPin(pin)];
-        sv.attach(pin);
+        Servo &sv = servos[searchServoPin(pin)];
+        if (!sv.attached()) {
+          sv.attach(pin);
+        }
         sv.write(v);
       }
     }
@@ -459,7 +461,9 @@ void sendIrrecvValue() {
 }
 
 void sendDigitalValue(int pinNumber) {
-  pinMode(pinNumber, INPUT);
+  if (pinNumber >= 2) { // 시리얼 TX/RX(0, 1번) 핀 보호
+    pinMode(pinNumber, INPUT);
+  }
   writeHead();
   sendFloat(digitalRead(pinNumber));
   writeSerial(pinNumber);

@@ -71,7 +71,7 @@ function Module() {
         ULTRASONIC: 0,
         DHTTEMP: 0,
         DHTHUMI: 0,
-        IRREMOTE: 0,
+        IRREMOTE: -1,
         SOUND: 0,
         accelX: 0,
         accelY: 0,
@@ -346,7 +346,13 @@ Module.prototype.isRecentData = function (port, type, data, action) {
     const checkKey = (action === this.actionTypes.GET ? 'GET_' : 'SET_') + portStr;
 
     // SET 요청(출력) 처리
+    // TONE/LCD_CLEAR/LCD_INIT은 같은 값이라도 매번 실행되어야 하므로 예외 처리
     if (action === this.actionTypes.SET) {
+        if (type === this.sensorTypes.TONE ||
+            type === this.sensorTypes.LCD_CLEAR ||
+            type === this.sensorTypes.LCD_INIT) {
+            return false;
+        }
         if (this.recentCheckData[checkKey] &&
             this.recentCheckData[checkKey].action === this.actionTypes.SET &&
             this.recentCheckData[checkKey].type === type) {
@@ -364,11 +370,13 @@ Module.prototype.isRecentData = function (port, type, data, action) {
     }
 
     // GET 요청(센서 읽기)은 20ms(50Hz) 주기로 폴링 제한 (UART 부하 방지)
+    // SOUND 센서는 펌웨어 샘플링 윈도우를 고려해 50ms(20Hz)로 제한
     if (action === this.actionTypes.GET) {
+        const minInterval = Number(type) === this.sensorTypes.SOUND ? 50 : 20;
         if (this.recentCheckData[checkKey] &&
             this.recentCheckData[checkKey].action === this.actionTypes.GET &&
             this.recentCheckData[checkKey].type === type &&
-            (now - (this.recentCheckData[checkKey].time || 0) < 20)) {
+            (now - (this.recentCheckData[checkKey].time || 0) < minInterval)) {
             return true;
         }
         return false;
@@ -461,10 +469,11 @@ Module.prototype.requestLocalData = function () {
                     } else if (device == this.sensorTypes.DHTHUMI) {
                         this.sensorData.DHTHUMI = 0;
                     } else if (device == this.sensorTypes.IRREMOTE) {
-                        this.sensorData.IRREMOTE = 0;
+                        this.sensorData.IRREMOTE = -1;
                     } else if (device == this.sensorTypes.ANALOG) {
                         if (this.sensorData.ANALOG) this.sensorData.ANALOG[portStr] = 0;
                     }
+                    delete ports[portStr];
                 }
             });
         });
@@ -797,8 +806,9 @@ Module.prototype.makeOutputBuffer = function (device, port, data) {
 
             if ($.isPlainObject(data)) {
                 // numeric 데이터로 들어오는 경우가 있으므로, 문자열로 변경하기
-                textLen = ('' + data.text).length;
+                // UTF-8 멀티바이트 문자(키릴문자 등) 지원을 위해 글자 수가 아닌 바이트 길이 사용
                 text = Buffer.from("" + data.text);
+                textLen = text.length;
                 row.writeInt8(data.row);
                 bufLen.writeInt8(textLen);
                 column.writeInt8(data.column);
@@ -896,8 +906,8 @@ Module.prototype.setZero = function () {
     // 모터 정지 (9, 10은 위 루프에 포함되어 digitalWrite(0) 됨)
     buffer = Buffer.concat([buffer, this.makeOutputBuffer(this.sensorTypes.MOTOR, 1, 0)]);
     buffer = Buffer.concat([buffer, this.makeOutputBuffer(this.sensorTypes.MOTOR, 2, 0)]);
-    // 버저 정지
-    buffer = Buffer.concat([buffer, this.makeOutputBuffer(this.sensorTypes.TONE, 4, { value: 0, duration: 0 })]);
+    // 버저 정지 (나노 보드 부저는 D7)
+    buffer = Buffer.concat([buffer, this.makeOutputBuffer(this.sensorTypes.TONE, 7, { value: 0, duration: 0 })]);
     // LCD 클리어
     buffer = Buffer.concat([buffer, this.makeOutputBuffer(this.sensorTypes.LCD_CLEAR, 0, 0)]);
 

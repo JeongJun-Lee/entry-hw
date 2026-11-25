@@ -70,7 +70,7 @@ function Module() {
         ULTRASONIC: 0,
         DHTTEMP: 0,
         DHTHUMI: 0,
-        IRREMOTE: 0,
+        IRREMOTE: -1,
     };
 
     this.defaultOutput = {};
@@ -291,6 +291,8 @@ Module.prototype.handleRemoteData = function (handler) {
                         // Rate limited: 이번 틱 전송 보류, 다음 틱에 재시도
                     } else {
                         self.digitalPortTimeList[setPortKey] = data.time;
+                        // 출력으로 전환된 포트는 펌웨어에서 digitals[port]=0 되므로 GET 구독 캐시도 해제
+                        delete self.recentCheckData['GET_' + port];
                         self.recentCheckData[setPortKey] = {
                             type: data.type,
                             data: data.data,
@@ -327,7 +329,13 @@ Module.prototype.isRecentData = function (port, type, data, action) {
     const checkKey = (action === this.actionTypes.GET ? 'GET_' : 'SET_') + portStr;
 
     // SET 요청: 동일 값이면 생략, 20ms 이내 변경이면 throttle
+    // 단, TONE/LCD_CLEAR/LCD_INIT은 같은 값이라도 매번 실행되어야 하므로 예외 처리
     if (action === this.actionTypes.SET) {
+        if (type === this.sensorTypes.TONE ||
+            type === this.sensorTypes.LCD_CLEAR ||
+            type === this.sensorTypes.LCD_INIT) {
+            return false;
+        }
         if (this.recentCheckData[checkKey] &&
             this.recentCheckData[checkKey].action === this.actionTypes.SET &&
             this.recentCheckData[checkKey].type === type) {
@@ -342,12 +350,22 @@ Module.prototype.isRecentData = function (port, type, data, action) {
         return false;
     }
 
-    // GET 요청: 20ms(50Hz) 이내 같은 포트/타입 요청은 중복 억제
+    // GET 요청 (우노 구독형 모델):
+    // 펌웨어(arduino_ext.ino)가 1회 구독 후 sendPinValues()로 20ms마다 자동 푸시하므로
+    // 동일 포트/타입에 대해 중복 GET 전송 금지 (특히 ULTRASONIC은 펌웨어 delay(50)으로 기아 발생)
     if (action === this.actionTypes.GET) {
+        if (Number(type) === this.sensorTypes.ULTRASONIC) {
+            // 다른 핀 조합의 초음파 구독이 남아 있으면 정리하여 재구독 보장
+            Object.keys(this.recentCheckData).forEach((key) => {
+                const recent = this.recentCheckData[key];
+                if (key !== checkKey && recent && Number(recent.type) === this.sensorTypes.ULTRASONIC) {
+                    delete this.recentCheckData[key];
+                }
+            });
+        }
         if (this.recentCheckData[checkKey] &&
             this.recentCheckData[checkKey].action === this.actionTypes.GET &&
-            this.recentCheckData[checkKey].type === type &&
-            (now - (this.recentCheckData[checkKey].time || 0) < 20)) {
+            Number(this.recentCheckData[checkKey].type) === Number(type)) {
             return true;
         }
         return false;
@@ -377,27 +395,21 @@ Module.prototype.requestLocalData = function () {
         return null;
     }
 
-    // nano_ext 체리픽: activeSensorTimers 기반 Auto-Poll + 센서 만료 처리 (20ms 주기)
+    // 우노 구독형 모델: 20ms Auto-Poll 재전송 제거 (펌웨어가 구독 후 자동 푸시함)
+    // 대신 1초 이상 블록 요청이 없는 센서의 대시보드 표시값 만료 관리만 수행
     const now = new Date().getTime();
-    if (now - this.lastAutoPollTime > 20) {
+    if (now - this.lastAutoPollTime > 100) {
         this.lastAutoPollTime = now;
-        let autoBuffer = new Buffer([]);
 
+        let hasActiveSensor = false;
         const activeTimers = this.activeSensorTimers || {};
         Object.keys(activeTimers).forEach((key) => {
             const ports = activeTimers[key];
             Object.keys(ports).forEach((portStr) => {
                 if (now - ports[portStr] < 1000) {
-                    // 1초 이내 블록 요청이 있으면 자동 재요청
-                    const device = parseInt(key);
-                    if (device === this.sensorTypes.ULTRASONIC) {
-                        const portArr = portStr.split(',').map(Number);
-                        autoBuffer = Buffer.concat([autoBuffer, this.makeSensorReadBuffer(device, portArr)]);
-                    } else {
-                        autoBuffer = Buffer.concat([autoBuffer, this.makeSensorReadBuffer(device, parseInt(portStr))]);
-                    }
+                    hasActiveSensor = true;
                 } else {
-                    // 1초 이상 블록 요청 없으면 해당 센서 값 0으로 초기화
+                    // 1초 이상 블록 요청 없으면 해당 센서 표시값 초기화
                     const device = parseInt(key);
                     if (device === this.sensorTypes.ULTRASONIC) {
                         this.sensorData.ULTRASONIC = 0;
@@ -406,7 +418,7 @@ Module.prototype.requestLocalData = function () {
                     } else if (device === this.sensorTypes.DHTHUMI) {
                         this.sensorData.DHTHUMI = 0;
                     } else if (device === this.sensorTypes.IRREMOTE) {
-                        this.sensorData.IRREMOTE = 0;
+                        this.sensorData.IRREMOTE = -1;
                     } else if (device === this.sensorTypes.ANALOG) {
                         if (this.sensorData.ANALOG) this.sensorData.ANALOG[portStr] = 0;
                     }
@@ -415,11 +427,9 @@ Module.prototype.requestLocalData = function () {
             });
         });
 
-        if (autoBuffer.length > 0) {
-            this.sendBuffers.push(autoBuffer);
-        } else {
-            // 슬레이브 모드 하트비트: 자동 폴링 요청이 없을 때 1000ms 주기로 디지털 0번(RX) 상태 요청
-            // 이를 통해 시리얼 입력을 트리거하여 대시보드 UI 갱신을 유도함
+        if (!hasActiveSensor) {
+            // 슬레이브 모드 하트비트: 활성 센서가 없을 때 1000ms 주기로 디지털 0번(RX) 상태 요청
+            // (펌웨어에서 0~1번 핀 pinMode 변경 차단됨)
             if (now - this.lastHeartbeatTime > this.heartbeatInterval) {
                 this.lastHeartbeatTime = now;
                 this.sendBuffers.push(this.makeSensorReadBuffer(this.sensorTypes.DIGITAL, 0, this.actionTypes.GET));
@@ -723,8 +733,9 @@ Module.prototype.makeOutputBuffer = function (device, port, data) {
 
             if ($.isPlainObject(data)) {
                 // numeric 데이터로 들어오는 경우가 있으므로, 문자열로 변경하기
-                textLen = ('' + data.text).length;
+                // UTF-8 멀티바이트 문자(키릴문자 등) 지원을 위해 글자 수가 아닌 바이트 길이 사용
                 text = Buffer.from("" + data.text);
+                textLen = text.length;
                 row.writeInt8(data.row);
                 bufLen.writeInt8(textLen);
                 column.writeInt8(data.column);

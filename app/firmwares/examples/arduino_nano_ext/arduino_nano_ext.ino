@@ -104,7 +104,7 @@ boolean isStart = false;
 LCDI2C_RussianLatin *lcdObj = NULL;
 
 byte findI2CAddress() {
-  byte error, address = 0, foundAddress;
+  byte error, address = 0, foundAddress = 0x27;
 
   for (address = 1; address < 127; address++) {
     Wire.beginTransmission(address);
@@ -212,8 +212,9 @@ void parseData() {
     if (device == ULTRASONIC) {
       trigPin = readBuffer(6);
       echoPin = readBuffer(7);
-      digitals[trigPin] = 0; // Report Off
-      digitals[echoPin] = 0; // Report Off
+      // IN1~IN3(14~16번)은 digitals[14] 범위 밖이므로 배열 범위 체크 필수
+      if (trigPin >= 0 && trigPin < 14) digitals[trigPin] = 0; // Report Off
+      if (echoPin >= 0 && echoPin < 14) digitals[echoPin] = 0; // Report Off
       sendUltrasonic();
     } else if (device == DHTTEMP) { // DHTINIT에 의해 초기화를 별도로 수행
       isDhtTemp = true;
@@ -266,7 +267,7 @@ void parseData() {
     isDhtTemp = false;
     isDhtHumi = false;
     isIrremote = false;
-    isMpu = true; // MPU 상시 모니터링 유지
+    // isMpu는 setup()에서 실제 MPU6050 감지된 상태를 유지 (미장착 보드에서 I2C 재시도 방지)
     callResetOK();
   } break;
   }
@@ -280,7 +281,7 @@ void runModule(int device) {
   case DIGITAL: {
     setPortWritable(pin);
     int v = readBuffer(7);
-    digitalWrite(pin, v);
+    digitalWrite(pin, v ? HIGH : LOW);
   } break;
   case PWM: {
     setPortWritable(pin);
@@ -301,8 +302,10 @@ void runModule(int device) {
     setPortWritable(pin);
     int v = readBuffer(7);
     if (v >= 0 && v <= 180) { // 서모모터 SG-90으로 가정해 180까지
-      Servo sv = servos[searchServoPin(pin)];
-      sv.attach(pin, 500, 2500);
+      Servo &sv = servos[searchServoPin(pin)];
+      if (!sv.attached()) {
+        sv.attach(pin, 500, 2500);
+      }
       sv.write(v);
     }
   } break;
@@ -621,7 +624,8 @@ void sendSoundValue(int pin) {
   unsigned long startMillis = millis();
   unsigned int signalMax = 0;
   unsigned int signalMin = 1024;
-  while (millis() - startMillis < 50) {
+  // 50ms 블로킹 시 32ms 폴링 주기를 초과해 시리얼 버퍼가 밀리므로 15ms로 단축
+  while (millis() - startMillis < 15) {
     int sample = analogRead(pin);
     if (sample < 1024) {
       if (sample > signalMax)
@@ -724,7 +728,7 @@ int searchServoPin(int pin) {
 }
 
 void setPortWritable(int pin) {
-  if (digitals[pin] == 1) { // 리포팅 중였으면 Report Off
+  if (pin >= 0 && pin < 14 && digitals[pin] == 1) { // 리포팅 중였으면 Report Off
     digitals[pin] = 0;
   }
   pinMode(pin, OUTPUT);
