@@ -38,7 +38,7 @@ const DevicePanel: React.FC = () => {
                 <div id="firmwareButtonSet">
                     <FirmwareButtonSetElement buttonSet={firmware} />
                 </div>
-            ) : (selectedHardware.id === "010904" || selectedHardware.id === "010905") && (
+            ) : (selectedHardware.id === "010904" || selectedHardware.id === "011302") && (
                 <div style={{ marginTop: '10px', fontSize: '12px', color: '#666', wordBreak: 'keep-all' }}>
                     {translator.translate('Firmware Install Guide')}
                 </div>
