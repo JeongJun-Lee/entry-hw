@@ -81,7 +81,7 @@ class SerialConnector extends BaseConnector {
                     if (this.options.type === 'bluetooth') {
                         setTimeout(() => {
                             resolve(this.serialPort);
-                        }, 1500);
+                        }, 3000);
                     } else {
                         resolve(this.serialPort);
                     }
@@ -142,11 +142,11 @@ class SerialConnector extends BaseConnector {
             };
             this.serialPort.on('error', errorHandler);
 
-            // 4.5초 타임아웃
+            // 10초 타임아웃
             timeoutId = setTimeout(() => {
                 logger.error('initialize connection timeout');
                 safeReject(new Error('Connection timeout'));
-            }, 4500);
+            }, 10000);
 
             const {
                 control,

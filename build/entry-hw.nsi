@@ -193,10 +193,12 @@ Function LaunchLink
 FunctionEnd
 
 Function .onInit
-  FindProcDLL::FindProc "${APP_NAME}"
-  StrCmp $R0 1 mfound notRunning
+  nsProcess::_FindProcess "${APP_NAME}"
+  Pop $R0
+  StrCmp $R0 0 mfound notRunning
   mfound:
-	KillProcDLL::KillProc "${APP_NAME}"
+	nsProcess::_KillProcess "${APP_NAME}"
+	Pop $R0
   notRunning:
 
   ReadRegStr $R0 HKLM \
